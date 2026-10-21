@@ -326,3 +326,11 @@ worksheets, with every original relationship retained. The published
 `diagnostics/publication-integrity.json` records both hashes and package
 differences; `diagnostics/exact-inputs.zip` preserves the original containers
 and was verified against their trial hashes. No numerical input was changed.
+
+## Local bounded memory study
+
+The local `codex/mrio-memory` branches preserve the KL formulation and profile
+MARIO/CVXLab memory with one-sector CHR inputs. No new database was accepted.
+See the [study guide](memory-study/README.md), [implementation report](memory-study/changes-it.md)
+and [results and RAM estimates](memory-study/results-it.md). Preparation-only
+profiles must not be interpreted as successful solves.
