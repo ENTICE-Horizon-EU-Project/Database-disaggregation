@@ -1,51 +1,78 @@
 # Source data explorer
 
-`write_source_dashboard` makes one local HTML file for browsing the original
-files in `Data collection/Final`. It is independent of the solved database,
-MARIO, the optimisation model and the notebook. No web service is required.
+`write_source_dashboard` makes one local English HTML page with three views:
+**Total production**, **Trades** and **Cost structure**.
 
 ```python
 from pathlib import Path
 from entice_inventory.reporting import write_source_dashboard
 
-data_root = Path("/your/local/Data split")
 write_source_dashboard(
-    data_root / "Data collection/Final",
+    Path("/your/local/Data split/Data collection/Final"),
     "results/ENTICE_data_sources.html",
-    database_url="MARIO_workshop_dashboard.html",  # optional link
 )
 ```
 
-Open the HTML in a current browser. Choose a file and sheet, search the displayed
-table, or open its original file. Excel column letters and source row numbers
-are retained. Long cells show their full content on hover. The interface is in
-Italian and uses the ENTICE branding. No supporting files are written.
+Open the HTML in a current browser. The collection-lead overview filters the
+sources by partner. Partner attribution follows `General info → Lead`; joint
+leads remain joint rather than being counted twice. The counts refer to source
+partner templates, not to completed datasets or coverage. Purdue is also
+credited for its shared tables.
 
-Excel and CSV tables are embedded, compressed and decoded when selected.
-The catalogue also includes other file formats. GDX contents are not decoded;
-where a same-named Excel/CSV file exists, a button opens that file's tables.
-This pairing does not establish numerical equivalence between the two files.
+The three views expose:
 
-Values are read literally: no currency, year or unit conversion, reconciliation,
-aggregation or formula recalculation takes place. Excel number formats and date
-styles are not applied. Cached formula values, when present, are the values saved
-by the source workbook. Missing caches remain distinct from zeros and are marked
-`ƒx`; “Mostra formule” displays their expressions. Empty cells appear as `—`.
-Search normally omits rows containing only formulas without cached values;
-turning on formulas includes them. All saved formula cells remain embedded.
-Hidden sheets remain selectable and are labelled. File read failures are shown.
+- **Total production:** `Total production` from partner `Inventory_*.xlsx`
+  templates, and `splttargs.xlsx → REPOUT` from Purdue.
+- **Trades:** Purdue `trade.xlsx → NTSCIF` (CIF values) and
+  `splttargs.xlsx → BLTTRD` (bilateral targets), kept separate.
+- **Cost structure:** intermediate inputs and primary factors from partner
+  `Unit process` sheets; Purdue `EXIOIOT.csv`, `COPCOSTS.csv` and
+  `costsup.xlsx → NFCOSTSHR / PFCOSTSHR / KFCOSTSHR`.
 
-The HTML is a snapshot and embeds source tables. Regenerate it after editing
-the inputs, and share it under the same conditions as those inputs. The original
-file links refer to the creator's local paths and may differ on another machine.
+Select a producing region and data type for a partner cost structure. Its input
+values, units, source and notes are shown together. Energy/emissions extension
+rows are omitted. Purdue tables have sector/region/input filters as applicable;
+trade tables have sector/origin/destination filters. Search and pagination apply
+to the selected data. Production rows without a region identifier are omitted
+as unfilled template rows. Other supporting sheets, tariff tables, VA.xlsx,
+GDX files and duplicate supporting CSV deliveries are not browsing entries.
+
+Underlined cluster names open a definition dialog:
+
+- Partner sector, region and factor memberships come from that exact workbook's
+  `Sector`, `Region` and `Primary input` sheets. Standard groupings and custom
+  definitions (including carried-forward labels) retain original member names
+  and available GTAP codes. Sector and factor namespaces stay separate;
+  direct `Capital` must not be mistaken for the custom `CAPITAL` cluster.
+- `GLOBAL` explains the catch-all convention. It is not assigned an invented
+  fixed list of countries or interpreted as an unconditional world total.
+- Purdue aggregate input codes use the repository's existing GTAPCE-to-GTAP12
+  classification. The dialog labels that mapping as such. An optional
+  `matching="/path/to/GTAP12_matching.xlsx"` selects a different workbook;
+  without an available matching file these codes remain plain text.
+
+Source values are read literally: no currency, year or unit conversion,
+normalisation or formula recalculation. In particular, raw EXIOIOT values are
+not presented as already-normalised shares. Cached formula values remain the
+values saved by the source workbook; absent caches are marked `ƒx`, and zeros
+remain distinct from blanks (`—`). “Show formulas” exposes expressions.
+Headers preserve years and units; hover reveals full cell content and source
+coordinates. Excel number formats and date styles are not applied.
+
+All data are embedded in the HTML, compressed and decoded on selection. No web
+service or model database is required and only the requested HTML is written.
+The page is a snapshot: regenerate it after editing source files, and share it
+under the same conditions as the input data. Original-file links refer to the
+creator's local paths and may differ on another machine.
 
 Verification:
 
 ```bash
-PYTHONPATH=src python -m pytest -q tests/test_source_dashboard.py
+PYTHONPATH=src python -m pytest -q tests/test_source_dashboard.py tests/test_analysis_api.py
 node tests/source_dashboard_smoke.cjs /path/to/ENTICE_data_sources.html
 ```
 
-The JavaScript smoke check exercises loading each file, searches, pagination,
-formula selection, binary alternatives and stale asynchronous loads. It tests
-the UI logic with a minimal DOM, not a rendered browser layout.
+The JavaScript smoke check exercises loading every dataset, category and lead
+filters, cost-region selection, trade-sector filtering, cluster dialogs, search,
+pagination and stale asynchronous loads using a minimal DOM. It does not verify
+rendered browser layout.

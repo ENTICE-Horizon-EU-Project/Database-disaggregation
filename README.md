@@ -334,5 +334,5 @@ thresholds and sensitivity experiments still need agreement with the project tea
 Use the repository directly for input metadata, preparation, monetary IO analysis,
 reference comparisons and standalone reports. See [the notebook API guide](docs/notebook-api.md).
 
-For a simple standalone browser of the original Excel/CSV files in
-`Data collection/Final`, see [the source data explorer](docs/source-data-explorer.md).
+For a standalone view of production, trade and cost-structure inputs, including
+collection leads and cluster definitions, see [the source data explorer](docs/source-data-explorer.md).
