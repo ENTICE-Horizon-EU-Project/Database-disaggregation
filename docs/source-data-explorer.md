@@ -1,7 +1,7 @@
 # Data collection dashboard
 
 The dashboard has one economic data model and three views. Its controls select
-activities and regions, never source files or worksheets. Every active activity
+activities and regions, never source files or worksheets. Every new sector
 remains in the same sector selector, including activities whose current source
 is missing or reported only at product-group level.
 
@@ -20,7 +20,7 @@ arguments select another explicitly configured set of pipeline inputs.
 ## Data boundary and source rules
 
 `SourceCollection` builds the complete activity universe from the adopted
-reconciliation policy: the current selection has **67 active activities**.
+reconciliation policy: the current selection has **67 new sectors**.
 Archived agricultural drafts and inactive catalogue records are outside that
 selection. The canonical activity name comes from the policy rather than a
 possibly copied template label.
@@ -63,26 +63,26 @@ hashes, classification/registry fingerprints and the exact policy digest.
 
 ## Views
 
-- **Total Production:** choose a sector for its regional observations, or choose
-  a region to compare all active sectors. Bars and values share a common unit
-  (million USD) and the adopted production reference year. Group totals are
-  labelled and are never copied into their member-country values. No missing
+- **Total Production:** choose a sector for its regional observations. Bars and
+  values share a common unit (million USD) and the adopted reference year. Group
+  totals are labelled and never copied into member-country values. No missing
   observation becomes zero. Share-derived estimates are labelled.
-- **Cost Structure:** choose a sector to compare recipes across producing
-  regions/groups, or choose a region to compare sector recipes. Rows are input
-  sectors/factors/groups and columns are comparisons. Values are **input cost
-  per 100 output units**, not a new normalisation to 100. Existing totals can
-  differ from 100. The initial view ranks the largest 25 input categories;
-  search or “Show all inputs” exposes the remainder. Group names open exact
-  membership definitions. For a country, its direct recipe takes precedence;
-  otherwise a single collected group recipe or single estimated group recipe
-  can be shown. Conflicting overlapping group recipes remain unresolved and
-  refer the user to the sector view, where all group observations are visible.
-- **Trades:** choose a product, origins and destinations to inspect a bilateral
-  matrix. Both region axes can be searched and matrix columns are paginated.
-  International source-parameter zeros remain zero; the domestic diagonal is
-  outside scope. A group-only product series has an explicit coverage label
-  and lists its member activities. Unavailable series have an empty state.
+- **Cost Structure:** choose a sector to compare its recipes across producing
+  regions/groups. Values are input cost per 100 output units, without a new
+  normalisation. The initial view ranks the largest 25 input categories; search
+  or “Show all inputs” exposes the remainder. Group names open exact membership
+  definitions. Comparison columns are paginated.
+- **Trades:** choose a product, origins and destinations to inspect a compact
+  canvas heatmap containing all selected regions together. Axes display only
+  region codes, with tick spacing adapted to the available size. Hover or tap
+  any cell for full names and its trade value; arrow keys also inspect cells.
+  There are no values printed inside the heatmap. International source-parameter
+  zeros remain zero, while the domestic diagonal is outside scope. Product-group
+  coverage and unavailable series retain their explicit labels.
+
+Only the sector-led views are exposed: there is no “Explore by” mode selector or
+“by Region” view. Selectors, search fields and control buttons have a common
+42-pixel height. The footer reads “Dashboard developed by POLIMI & eNextGen”.
 
 All three views show collection attribution for the current selection. The
 interface is English and uses ENTICE branding. All data are embedded in one
@@ -100,6 +100,7 @@ node tests/source_dashboard_smoke.cjs /path/to/ENTICE_data_sources.html
 The Python tests cover the common schema, role-specific attribution, source
 precedence, composite coverage, missing versus zero, functional amounts,
 conflicting duplicates and shared geographic rules. The JavaScript check opens
-every activity in all three views and exercises both comparison directions,
-cluster dialogs, exact trade values, coverage labels, search and pagination.
+every new sector in all three views and exercises cluster dialogs, full trade
+matrices, code-only axes, exact hover values, zero/diagonal cells, keyboard
+inspection, high-density canvas scaling, filters, search and cost pagination.
 It uses a minimal DOM and does not verify rendered browser layout.
