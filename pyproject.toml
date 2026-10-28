@@ -17,6 +17,8 @@ export = ["pandas", "pyarrow"]
 plots = ["pandas", "numpy", "matplotlib"]
 reconcile = ["pandas>=2.3.3", "numpy", "pyarrow", "scipy", "cvxpy"]
 benchmark = ["pandas", "numpy", "pyarrow", "scipy"]
+analysis = ["pandas>=2.1", "numpy", "pyarrow", "scipy", "plotly"]
+mappings = ["h5py"]
 
 # Note: the database steps in scripts/run_d24_pipeline.py also require `mario`,
 # which is installed separately (local/Git checkout), not from PyPI.
@@ -26,6 +28,7 @@ where = ["src"]
 
 [tool.setuptools.package-data]
 "entice_inventory.core" = ["benchmark_dashboard.html"]
+"entice_inventory.reporting" = ["templates/*.html", "templates/*.js", "assets/*.svg", "assets/*.png"]
 
 [tool.setuptools.data-files]
 "share/entice-inventory/registry" = [

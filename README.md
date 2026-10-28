@@ -328,3 +328,8 @@ are not rewritten to claim that an old run used today's configuration.
 Structural checks and successful optimisation do not by themselves validate
 economic assumptions. The first offline benchmark is available; economic review
 thresholds and sensitivity experiments still need agreement with the project team.
+
+## Notebook API
+
+Use the repository directly for input metadata, preparation, monetary IO analysis,
+reference comparisons and standalone reports. See [the notebook API guide](docs/notebook-api.md).
