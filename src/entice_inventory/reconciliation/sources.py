@@ -17,6 +17,40 @@ def number(value, *, context):
     return result
 
 
+def observation_geographies(observations, policy, sector, regions):
+    """Apply the adopted inclusive/residual scopes without fitting any values."""
+    cluster_rows = [o for o in observations if o['kind']=='cluster']
+    configured = policy['geography'].get('cluster_modes', {}).get(sector, {})
+    explicit = {o['members'][0] for o in observations if o['kind']=='direct' and o['value']>0}
+    explicit |= set().union(*(set(o['members']) for o in cluster_rows if set(o['members'])!=set(regions)))
+    result = []
+    for raw in observations:
+        observation = dict(raw)
+        override = configured.get(observation['identifier'], {})
+        members = set(observation['members'])-set(override.get('exclude', []))
+        if override.get('mode')=='residual':
+            members -= explicit
+        observation['members'] = sorted(members)
+        observation['override'] = override
+        result.append(observation)
+    return result
+
+
+def selected_trade_observations(sector, policy, sources, *, include_composites=False):
+    """Select a source using the pipeline's precedence, without reallocating it."""
+    if sector in policy['trade'].get('parent_pattern_only', []):
+        return {}, None, 'unavailable'
+    if policy['sectors'][sector]['output_source']['kind']=='purdue' and sector in sources.domain_sectors:
+        return sources.paired_trade.get(sector, {}), sector, 'paired'
+    if any(v>0 for v in sources.customs_trade.get(sector, {}).values()):
+        return sources.customs_trade[sector], sector, 'direct'
+    if include_composites:
+        for group, members in policy['trade'].get('composites', {}).items():
+            if sector in members and any(v>0 for v in sources.customs_trade.get(group, {}).values()):
+                return sources.customs_trade[group], group, 'composite'
+    return {}, None, 'unavailable'
+
+
 class Sources:
     def __init__(self, paths, registry, native, policy, audit):
         self.paths, self.registry, self.native, self.policy, self.audit = paths, registry, native, policy, audit

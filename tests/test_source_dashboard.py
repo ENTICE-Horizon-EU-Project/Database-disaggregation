@@ -1,105 +1,113 @@
 import base64
+import copy
 import gzip
+import hashlib
 import json
 import re
-import zipfile
-from io import BytesIO
-from xml.etree import ElementTree as E
+from pathlib import Path
+from types import SimpleNamespace
 
+import pandas as pd
+import pytest
 from openpyxl import Workbook
-from entice_inventory.reporting import write_source_dashboard
-from entice_inventory.reporting.source_dashboard import _xlsx_tables, _csv_table, _template_clusters
+
+from entice_inventory.reporting import SourceCollection, write_source_dashboard
+from entice_inventory.reporting.collection import select_trade
+from entice_inventory.reconciliation.policy import load_policy
+from entice_inventory.reconciliation.sources import observation_geographies, selected_trade_observations
 
 
-def workbook(path):
-    book=Workbook();sheet=book.active;sheet.title='Total production'
-    sheet.append(['Region','2017 Value','2023 Value','Unit'])
-    sheet.append(['Producing region','MUSD 2017','MUSD 2023',None])
-    sheet.append(['USA',0,42,'MUSD 2023']);sheet.append(['IND',None,'=C3*2',None])
-    sheet.append(['<script>alert(1)</script>',None,False,None]);sheet['AA8']='wide column'
-    for i in range(9,80):sheet.append(['USA' if i%2 else 'IND',str(i),str(i),'MUSD'])
-    info=book.create_sheet('General info');info['A4']='Lead';info['D4']='POLIMI';info['A5']='New sector';info['D5']='Example sector'
-    up=book.create_sheet('Unit process');up['G1']='EU28';up['I1']='USA';up['G2']='monetary';up['I2']='monetary';up['G3']=1;up['H3']='USD'
-    up.append([])
-    for row,values in [(6,['Sector','Power','ENERGY','GLOBAL','Source A','',0,'USD',0.5,'USD']),
-                       (7,['Primary_input','Rents','CAPITAL','GLOBAL','Source A','',0.6,'USD',0.3,'USD']),
-                       (8,['Primary_input','Direct capital','Capital','GLOBAL','Source A','',0.4,'USD',0.2,'USD']),
-                       (9,['Emissions','CO2','CO2','GLOBAL','Source A','',5,'ton',3,'ton'])]:
-        for col,value in enumerate(values,1):up.cell(row,col,value)
-    for name in ('Sector','Region','Primary input'):book.create_sheet(name)
-    s=book['Sector'];s.append(['Identifiers','Sector','Code']);s.cell(3,1,'NACE_35');s.cell(3,2,'Gas power');s.cell(3,3,'GasBL');s.cell(4,1,'NACE_35');s.cell(4,2,'Wind power');s.cell(4,3,'WindBL')
-    s.cell(369,1,'ENERGY');s.cell(369,2,'Gas power');s.cell(370,2,'Wind power')
-    r=book['Region'];r.cell(4,1,'EUROPE');r.cell(4,2,'France');r.cell(4,3,'FRA');r.cell(5,1,'EUROPE');r.cell(5,2,'Germany');r.cell(5,3,'DEU');r.cell(328,1,'EU28');r.cell(328,2,'France');r.cell(329,2,'Germany')
-    f=book['Primary input'];f.cell(3,1,'Land');f.cell(3,3,'land');f.cell(4,1,'Capital');f.cell(4,3,'capital');f.cell(17,1,'CAPITAL');f.cell(17,2,'Land');f.cell(18,2,'Capital')
-    book.create_sheet('GTAP totals').append(['Not a data collection view'])
-    book.save(path)
+def inventory(path, code, lead, amount=1., coefficient=.3):
+    book=Workbook();s=book.active;s.title='Summary'
+    for i,row in enumerate([['INFO'],['Sector',code,code+' activity'],['Parent sector','NFM'],['Inventory version','test'],['Data collection lead',lead],[],['Sources'],['Research reference','https://example.org']],1):
+        for j,value in enumerate(row,1):s.cell(i,j,value)
+    s=book.create_sheet('Master');s.append(['Region','Sector','Inventory sheet','Quantity','Unit','Final consumption','Consumption category','Parent Sector','Leave empty','Source','Notes','Add or Split']);s.append(['USA',code,'recipe',amount,'M USD',None,None,'NFM',None,None,None,'Split'])
+    s=book.create_sheet('recipe');s.append(['Quantity','Unit','Input','Item type','DB Item','DB Region','Change type']);s.append([coefficient,'M USD',None,'Sector','ELECTRICITY','GLOBAL','Update']);s.append([.7,'M USD',None,'Factor of production','Capital','GLOBAL','Update'])
+    s=book.create_sheet('Regions Clusters');s.append(['GLOBAL']);s.append(['USA']);s.append(['AUS'])
+    s=book.create_sheet('Sectors Clusters');s.append(['ELECTRICITY']);s.append(['CoalBL']);s.append(['WindBL'])
+    book.create_sheet('Factors Clusters').append([None]);s=book.create_sheet('DB units');s.append(['Level','Item','Unit']);s.append(['Factor of production','Capital','M USD'])
+    s=book.create_sheet('Total outputs');s.append(['Sector','Region','Quantity','Unit']);s.append([code,'USA',100,'M USD']);book.save(path)
 
 
-def test_saved_values_zero_missing_and_formulas_remain_distinct(tmp_path):
-    path=tmp_path/'input.xlsx';workbook(path);raw=path.read_bytes()
-    table=dict(_xlsx_tables(raw))['Total production'];rows={n:{c:(v,f) for c,v,f in cells} for n,cells in table['rows']}
-    assert rows[3][2]==('0',None) and rows[4][3]==(None,'=C3*2')
-    assert rows[5][3]==(False,None) and rows[8][27][0]=='wide column'
-    assert table['uncached_formulas']==1 and table['header_rows']==[1,2]
-    out=BytesIO()
-    with zipfile.ZipFile(BytesIO(raw)) as source,zipfile.ZipFile(out,'w') as target:
-        for name in source.namelist():
-            content=source.read(name)
-            if name=='xl/worksheets/sheet1.xml':
-                tree=E.fromstring(content);ns={'s':'http://schemas.openxmlformats.org/spreadsheetml/2006/main'}
-                cell=tree.find('.//s:c[@r="C4"]',ns);value=cell.find('s:v',ns)
-                if value is None:value=E.SubElement(cell,'{'+ns['s']+'}v')
-                value.text='84';content=E.tostring(tree)
-            target.writestr(name,content)
-    table=dict(_xlsx_tables(out.getvalue()))['Total production'];rows={n:{c:(v,f) for c,v,f in cells} for n,cells in table['rows']}
-    assert rows[4][3]==('84','=C3*2') and table['uncached_formulas']==0
+@pytest.fixture
+def source_fixture(tmp_path):
+    root=tmp_path/'inputs';root.mkdir();inv=root/'inventories';inv.mkdir();partner=root/'partners';partner.mkdir();base=root/'baseline';base.mkdir()
+    for code,lead in [('APP','ORDECSYS'),('MCU','EXIOIOT pipeline'),('NMC','ICCS')]:inventory(inv/f'{code}.xlsx',code,lead)
+    b=Workbook();s=b.active;s.title='General info';s['A4']='Lead';s['D4']='ORDECSYS';s['A5']='New sector';s['D5']='Copied name does not define the activity';s['D7']='NFM'
+    s=b.create_sheet('Region');s.append(['Groups','Name','Code']);s.append([]);s.append(['GLOBAL','Global','GLOBAL']);s.append(['OCEANIA','Australia','AUS']);s.append(['NORTH AMERICA','United States of America','USA'])
+    s=b.create_sheet('Total production');s.append(['Region','Parent','Source','Notes','2017','Unit','2023 Value','Unit']);s.append(['Region',None,None,None,None,None,'(free to fill)','MUSD']);s.append(['United States of America',None,None,None,None,None,25,'MUSD']);s.append(['Australia',None,None,None,None,None,'=G3*2','MUSD']);b.save(partner/'production.xlsx')
+    b=Workbook();b.remove(b.active)
+    for name,values in {'REG':[['Region','Value'],['USA',True],['AUS',True]],'REPSEC':[['Sector','Value'],['MCU',True]],'REPOUT':[['Region','Sector','Value'],['USA','MCU',20]],'BLTTRD':[['Origin','Destination','Sector','Value'],['USA','AUS','MCU',5]]}.items():
+        s=b.create_sheet(name)
+        for row in values:s.append(row)
+    paired=root/'paired.xlsx';b.save(paired)
+    b=Workbook();s=b.active;s.title='NTSCIF'
+    for row in [['Sector','Origin','Destination','Value'],['MCU','USA','AUS',999],['ALM','USA','AUS',3],['ALM','USA','USA',7]]:s.append(row)
+    customs=root/'customs.xlsx';b.save(customs)
+    x=pd.DataFrame({'X':[100.,100.,100.,100.,100.,100.]},index=pd.MultiIndex.from_product([['USA','AUS'],['NFM','OXT','EEQ']],names=['Region','Sector']));x.to_parquet(base/'X.parquet')
+    policy,_=load_policy();policy=copy.deepcopy(policy);policy['sectors']={k:v for k,v in policy['sectors'].items() if k in ('APP','MCU','NMC')};policy['sectors']['APP']['output_source'].update(file='production.xlsx');policy['overlap_groups']=[];policy['trade']['composites']={'ALM':['APP']};policy['trade']['parent_pattern_only']=[]
+    registry=SimpleNamespace(regions=lambda:[{'id':'USA','name':'United States of America'},{'id':'AUS','name':'Australia'}],adapters={'GTAP12':{'parent_catalogue':[{'id':c,'name':c+' name'} for c in ['NFM','OXT','EEQ','CoalBL','WindBL']]}},fingerprints={'fixture':'test'})
+    return dict(inventory_dir=inv,baseline_path=base,policy=policy,registry=registry,source_paths={'partner_templates':partner,'purdue_split_targets':paired,'purdue_trade':customs})
 
 
-def test_csv_preserves_quotes_precision_blank_fields_and_source_rows():
-    table=_csv_table(b'country,value,note\nUSA,0,"quoted, text"\nIND,0.0000000000000000123,\n')
-    assert table['rows'][1]==[2,[[1,'USA',None],[2,'0',None],[3,'quoted, text',None]]]
-    assert table['rows'][2][1][1][1]=='0.0000000000000000123'
+def test_pipeline_selection_complete_coverage_and_role_specific_collection(source_fixture):
+    before={str(p):hashlib.sha256(p.read_bytes()).hexdigest() for p in source_fixture['inventory_dir'].parent.rglob('*') if p.is_file()}
+    c=SourceCollection.from_pipeline(**source_fixture)
+    assert set(c.sectors)=={'APP','MCU','NMC'}
+    app=next(s for s in c.metadata['sectors'] if s['id']=='APP')
+    assert app['production']['collector']==app['costs']['collector']=='ORDECSYS'
+    assert app['trades']['collector']=='Purdue'
+    assert c.sectors['APP']['production'][0]['value']==25
+    assert not any(p['geo']=='AUS' for p in c.sectors['APP']['production']) # uncached formula is missing
+    outputs={p['geo']:p['value'] for p in c.sectors['MCU']['production']};assert outputs=={'USA':20,'AUS':0} # declared sparse parameter zero
+    assert not c.sectors['NMC']['production']
+    assert c.sectors['MCU']['trade']['edges']==[['USA','AUS',5.]] # paired source precedes customs
+    assert c.sectors['APP']['trade']['scope']=='product_group' and c.sectors['APP']['trade']['edges']==[['USA','AUS',3.]]
+    assert c.sectors['NMC']['trade']['scope']=='unavailable'
+    assert {str(p):hashlib.sha256(p.read_bytes()).hexdigest() for p in source_fixture['inventory_dir'].parent.rglob('*') if p.is_file()}==before
 
 
-def test_cluster_members_and_codes_follow_template_scopes(tmp_path):
-    path=tmp_path/'input.xlsx';workbook(path)
-    tables=dict(_xlsx_tables(path.read_bytes()));clusters=_template_clusters(tables)
-    assert clusters['sectors']['ENERGY']['members']==[{'name':'Gas power','code':'GasBL'},{'name':'Wind power','code':'WindBL'}]
-    assert clusters['regions']['EU28']['members']==[{'name':'France','code':'FRA'},{'name':'Germany','code':'DEU'}]
-    assert clusters['factors']['CAPITAL']['members']==[{'name':'Land','code':'land'},{'name':'Capital','code':'capital'}]
-    assert 'Capital' not in clusters['factors']
-    assert not clusters['regions']['GLOBAL']['members'] and 'catch-all' in clusters['regions']['GLOBAL']['note']
+def test_costs_have_one_common_schema_and_keep_cluster_members(source_fixture):
+    c=SourceCollection.from_pipeline(**source_fixture)
+    assert all('values' in p for s in c.sectors.values() for p in s['profiles'])
+    electric=next(i for i in c.metadata['items'].values() if i['is_group'])
+    assert [m['code'] for m in electric['members']]==['CoalBL','WindBL']
+    assert all(c.sectors[s]['profiles'][0]['values'][electric['id']]==.3 for s in c.sectors)
+    assert len(c.metadata['items'])==2 # same input group shared across all sectors, rather than duplicated by file
 
 
-def test_only_three_categories_and_one_english_standalone_output(tmp_path):
-    source=tmp_path/'Final';source.mkdir();workbook(source/'Inventory_Test.xlsx')
-    folder=source/'PURDUE';folder.mkdir()
-    (folder/'EXIOIOT.csv').write_text('input,sector,region,value\npdr,pdr,USA,0\n')
-    trade=Workbook();s=trade.active;s.title='NTSCIF';s.append(['Sector','Origin','Destination','Value']);s.append(['pdr','USA','IND',1]);trade.create_sheet('MTRAT').append(['Excluded tariff rates']);trade.save(folder/'trade.xlsx')
-    (folder/'trade.gdx').write_bytes(b'not decoded');(source/'VA.xlsx').write_bytes(b'not a collection view');(source/'unrelated.csv').write_text('ignore,value\nx,1\n')
-    before={str(p.relative_to(source)):p.read_bytes() for p in source.rglob('*') if p.is_file()}
-    output=write_source_dashboard(source,tmp_path/'dashboard.html');text=output.read_text()
-    manifest=json.loads(re.search(r'<script id="source-data" type="application/json">(.*?)</script>',text,re.S)[1])
-    assert len(manifest['files'])==3
-    assert {d['category'] for d in manifest['datasets']}=={'production','trades','costs'}
-    assert {d['sheet'] for d in manifest['datasets']}=={'Total production','Unit process','NTSCIF','Data'}
-    inventory=next(f for f in manifest['files'] if f['partner_template']);assert inventory['contributor']=='POLIMI'
-    assert inventory['clusters']['sectors']['ENERGY']['members'][1]['name']=='Wind power'
-    chunks=dict(re.findall(r'id="chunk-([a-f0-9]+)">([A-Za-z0-9+/=]+)</script>',text))
-    for dataset in manifest['datasets']:assert json.loads(gzip.decompress(base64.b64decode(chunks[dataset['key']])))['rows']
-    assert '<html lang="en">' in text and 'Collection leads' in text
-    assert 'data:image/svg+xml;base64,' in text and not re.search(r'<script[^>]+src=',text)
-    assert 'MARIO_workshop_dashboard' not in text and 'disaggregated' not in text.lower() and 'disaggregato' not in text
-    assert {str(p.relative_to(source)):p.read_bytes() for p in source.rglob('*') if p.is_file()}==before
-    assert {p.name for p in tmp_path.iterdir()}=={'Final','dashboard.html'}
+def test_conflicting_duplicate_inventories_fail(source_fixture):
+    inventory(source_fixture['inventory_dir']/'APP_duplicate.xlsx','APP','ORDECSYS',coefficient=.9)
+    with pytest.raises(ValueError,match='Conflicting duplicate'):SourceCollection.from_pipeline(**source_fixture)
 
 
-def test_same_cluster_name_keeps_each_workbooks_definition(tmp_path):
-    from openpyxl import load_workbook
-    for name in ('First','Second'):workbook(tmp_path/f'Inventory_{name}.xlsx')
-    path=tmp_path/'Inventory_Second.xlsx';book=load_workbook(path);book['Sector'].cell(369,2,'Different member');book.save(path)
-    output=write_source_dashboard(tmp_path,tmp_path/'scoped.html',matching=tmp_path/'absent.xlsx')
-    manifest=json.loads(re.search(r'<script id="source-data" type="application/json">(.*?)</script>',output.read_text(),re.S)[1])
-    first,second=manifest['files']
-    assert first['clusters']['sectors']['ENERGY']['members'][0]['name']=='Gas power'
-    assert second['clusters']['sectors']['ENERGY']['members'][0]['name']=='Different member'
+def test_functional_output_amount_is_retained(source_fixture):
+    inventory(source_fixture['inventory_dir']/'APP.xlsx','APP','ORDECSYS',amount=2.)
+    c=SourceCollection.from_pipeline(**source_fixture);assert sum(c.sectors['APP']['profiles'][0]['values'].values())==.5
+
+
+def test_geography_semantics_shared_with_reconciliation():
+    obs=[dict(identifier='USA',kind='direct',members=['USA'],value=2),dict(identifier='GLOBAL',kind='cluster',members=['USA','AUS','NZL'],value=8),dict(identifier='OCEANIA',kind='cluster',members=['AUS','NZL'],value=3)]
+    policy={'geography':{'cluster_modes':{'X':{'GLOBAL':{'mode':'residual'},'OCEANIA':{'exclude':['NZL']}}}}}
+    result=observation_geographies(obs,policy,'X',['USA','AUS','NZL'])
+    assert result[1]['members']==[] and result[2]['members']==['AUS']
+    assert obs[1]['members']==['USA','AUS','NZL']
+
+
+def test_empty_paired_domain_and_parent_pattern_do_not_fall_back():
+    p={'sectors':{'X':{'output_source':{'kind':'purdue'}}},'trade':{'parent_pattern_only':[],'composites':{'G':['X']}}}
+    s=SimpleNamespace(domain_sectors={'X'},paired_trade={},customs_trade={'X':{('A','B'):99},'G':{('A','B'):50}})
+    assert selected_trade_observations('X',p,s)==({},'X','paired')
+    p['trade']['parent_pattern_only']=['X'];assert select_trade('X',p,s)==({},None,'unavailable')
+
+
+def test_single_english_artifact_and_no_file_navigation(source_fixture,tmp_path):
+    c=SourceCollection.from_pipeline(**source_fixture);out=write_source_dashboard(c,tmp_path/'collection.html');h=out.read_text()
+    m=json.loads(re.search(r'<script id="source-data" type="application/json">(.*?)</script>',h,re.S)[1])
+    assert len(m['sectors'])==3 and len(m['chunks'])==3
+    for code in c.sectors:
+        chunk=re.search(r'id="chunk-'+code+r'">(.*?)</script>',h).group(1)
+        assert json.loads(gzip.decompress(base64.b64decode(chunk)))==c.sectors[code]
+    assert '<html lang="en">' in h and 'Total Production' in h and 'Cost Structure' in h and 'Trades' in h
+    assert 'file-select' not in h and 'source-search' not in h and 'sheet-select' not in h and 'EXIOIOT' not in h
+    assert not re.search(r'<script[^>]+src=',h) and 'MARIO_workshop_dashboard' not in h

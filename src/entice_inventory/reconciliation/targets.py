@@ -7,6 +7,7 @@ import pandas as pd
 from scipy.optimize import lsq_linear
 
 from entice_inventory.core.parent_budgets import ATOL, RTOL
+from .sources import observation_geographies, selected_trade_observations
 
 
 def resolve_parents(policy, targets, registry, native, audit):
@@ -75,20 +76,7 @@ def prepare_outputs(policy, sources, native, geography, targets, parents, old_pa
                         assumption='Transfer child/parent share; all-missing case uses historical global share, including a zero prior')
         cluster_rows = [o for o in observations if o['kind']=='cluster']
         if cluster_rows:
-            configured = policy['geography'].get('cluster_modes',{}).get(sector,{})
-            explicit = {r for r,o in direct.items() if o['value']>0}
-            explicit |= set().union(*(set(o['members']) for o in cluster_rows
-                                     if set(o['members'])!=set(native.regions)))
-            prepared=[]
-            for observation in observations:
-                observation = dict(observation)
-                override = configured.get(observation['identifier'],{})
-                members = set(observation['members'])-set(override.get('exclude',[]))
-                if override.get('mode')=='residual':
-                    members -= explicit
-                observation['members'] = sorted(members)
-                observation['override'] = override
-                prepared.append(observation)
+            prepared=observation_geographies(observations,policy,sector,native.regions)
             available = [r for r in native.regions if parent_x[r]>0]
             scales = np.array([max(parent_x[r],1e-6) for r in available])
             a,b = [],[]
@@ -161,14 +149,10 @@ def prepare_outputs(policy, sources, native, geography, targets, parents, old_pa
 def prepare_trade(policy,sources,native,geography,parents,native_output,final_output,audit):
     selected, labels = {}, {}
     for sector in parents:
-        if sector in policy['trade'].get('parent_pattern_only',[]):
-            continue
-        if policy['sectors'][sector]['output_source']['kind']=='purdue' and sector in sources.domain_sectors:
-            selected[sector]=sources.paired_trade.get(sector,{})
-            labels[sector]='paired'
-        elif any(v>0 for v in sources.customs_trade.get(sector,{}).values()):
-            selected[sector]=sources.customs_trade[sector]
-            labels[sector]='direct'
+        rows,_,kind=selected_trade_observations(sector,policy,sources)
+        if kind!='unavailable':
+            selected[sector]=rows
+            labels[sector]=kind
         if sector in selected:
             audit.record('trade_source_choice',kind='trade_source',sector=sector,selected=labels[sector],
                 source='BLTTRD' if labels[sector]=='paired' else 'NTSCIF',

@@ -1,150 +1,117 @@
 'use strict';
-const sourceData=JSON.parse(document.getElementById('source-data').textContent);
-const byId=id=>document.getElementById(id);
-const sourceState={category:'production',lead:'',dataset:null,file:null,table:null,view:null,filtered:[],page:0,token:0,facets:new Map(),unitColumn:null};
-const PAGE_SIZE=40;
-let currentChunk=null,currentTable=null;
-const textValue=v=>v===null||v===undefined?'':String(v);
-const folded=v=>textValue(v).normalize('NFKD').replace(/[\u0300-\u036f]/g,'').toLowerCase();
-const leadName=s=>s==='PURDUE'?'Purdue':s.replace('ENEXTGEN','eNextGen');
-const node=(tag,text,className)=>{const n=document.createElement(tag);if(text!==undefined)n.textContent=text;if(className)n.className=className;return n};
-const cellAt=(row,col)=>row[1].find(c=>c[0]===col);
-const valueAt=(row,col)=>cellAt(row,col)?.[1];
-const columnName=index=>{let name='';while(index){index--;name=String.fromCharCode(65+index%26)+name;index=Math.floor(index/26)}return name};
-const categoryName=id=>({production:'Total production',trades:'Trades',costs:'Cost structure'})[id];
-const layouts={
- repout:{columns:[[1,'Region','regions'],[2,'Sector','sectors'],[3,'Reported output']],facets:[[2,'Sector'],[1,'Region']]},
- ntscif:{columns:[[1,'Sector','sectors'],[2,'Origin','regions'],[3,'Destination','regions'],[4,'Trade value · M USD']],facets:[[1,'Sector'],[2,'Origin'],[3,'Destination']],note:'Imports at CIF prices for traded sectors, scaled to GTAP [M USD].'},
- blttrd:{columns:[[1,'Origin','regions'],[2,'Destination','regions'],[3,'Sector','sectors'],[4,'Trade value']],facets:[[3,'Sector'],[1,'Origin'],[2,'Destination']],note:'Reported bilateral trade targets (BLTTRD). Values and scale are retained as supplied.'},
- exioiot:{columns:[[1,'Input','input'],[2,'Producing sector','sectors'],[3,'Region','regions'],[4,'Source value']],facets:[[2,'Producing sector'],[3,'Region'],[1,'Input']],note:'EXIOIOT values as supplied. These are not normalised cost shares in this view.'},
- copcosts:{columns:[[1,'Input','input'],[2,'Producing sector','sectors'],[3,'Region','regions'],[4,'Cost share']],facets:[[2,'Producing sector'],[3,'Region'],[1,'Input']],note:'Copper cost shares as supplied by Purdue.'},
- nfcostshr:{columns:[[1,'Region','regions'],[2,'Input component'],[3,'Cost share']],facets:[[1,'Region'],[2,'Input component']]},
- pfcostshr:{columns:[[1,'Input component'],[2,'Cost share']],facets:[]},
- kfcostshr:{columns:[[1,'Input component'],[2,'Cost share']],facets:[]}
-};
-function visibleDatasets(){const q=folded(byId('source-search').value);return sourceData.datasets.filter(d=>{const f=sourceData.files[d.file];return d.category===sourceState.category&&(!sourceState.lead||f.contributor===sourceState.lead)&&folded(d.title+' '+f.path+' '+f.contributor).includes(q)})}
-function renderLeads(){
- const list=byId('lead-list');list.replaceChildren();
- const leads=[...new Set(sourceData.files.map(f=>f.contributor))].sort();
- for(const lead of ['',...leads]){
-  const templates=sourceData.files.filter(f=>f.partner_template&&(!lead||f.contributor===lead)).length;
-  const categories=new Set(sourceData.datasets.filter(d=>!lead||sourceData.files[d.file].contributor===lead).map(d=>d.category));
-  const b=node('button',lead?leadName(lead):'All contributors','lead-button'+(sourceState.lead===lead?' active':''));b.type='button';b.setAttribute('aria-pressed',String(sourceState.lead===lead));
-  b.append(node('span',templates+' partner template'+(templates===1?'':'s')+(categories.has('trades')?' · trade data':'')));
-  b.addEventListener('click',()=>selectLead(lead).catch(showError));list.append(b);
+const data=JSON.parse(document.getElementById('source-data').textContent);
+const el=id=>document.getElementById(id);
+const state={view:'production',mode:'sector',sector:data.sectors.some(s=>s.id==='APP')?'APP':data.sectors[0].id,region:data.regions.USA?'USA':Object.keys(data.regions)[0],page:0,token:0};
+const cache=new Map(),COLS=12;
+const text=v=>v===null||v===undefined?'':String(v);
+const fold=v=>text(v).normalize('NFKD').replace(/[\u0300-\u036f]/g,'').toLowerCase();
+const node=(tag,value,cls)=>{const n=document.createElement(tag);if(value!==undefined)n.textContent=value;if(cls)n.className=cls;return n};
+const sector=id=>data.sectors.find(s=>s.id===id);
+const number=v=>v===null||v===undefined?'—':v!==0&&Math.abs(v)<.001?Number(v).toExponential(2):new Intl.NumberFormat('en-GB',{maximumFractionDigits:2}).format(v);
+function matches(query,...values){return !query||fold(values.join(' ')).includes(query)}
+async function loadSector(id){
+ if(!cache.has(id))cache.set(id,(async()=>{if(typeof DecompressionStream==='undefined')throw new Error('A current browser is required to open the data.');const bytes=Uint8Array.from(atob(el(data.chunks[id]).textContent.trim()),c=>c.charCodeAt(0));return new Response(new Blob([bytes]).stream().pipeThrough(new DecompressionStream('gzip'))).json()})());
+ return cache.get(id);
+}
+function labelCell(name,code,definition){const span=node('span',undefined,'row-label');if(definition){const b=node('button',name,'cluster-link');b.type='button';b.addEventListener('click',()=>openDefinition(definition));span.append(b)}else span.textContent=name;if(code)span.append(node('span',code,'code'));return span}
+function geoDefinition(id){const g=data.geographies[id];return g?.is_group?{name:g.name,kind:'Region group',note:g.estimated?'Existing estimated recipe for the listed regions.':'This observation or recipe covers the listed regions as a group.',members:g.members.map(code=>({code,name:data.regions[code]}))}:null}
+function openDefinition(definition){el('definition-title').textContent=definition.name;el('definition-kind').textContent=definition.kind;el('definition-note').textContent=definition.note||'';const list=el('definition-members');list.replaceChildren();for(const m of definition.members){const li=node('li');li.append(node('code',m.code),node('span',m.name));list.append(li)}if(!el('definition-dialog').open)el('definition-dialog').showModal()}
+function configure(){
+ for(const view of ['production','costs','trades']){el('tab-'+view).className='tab'+(state.view===view?' active':'');el('tab-'+view).setAttribute('aria-pressed',String(state.view===view))}
+ for(const mode of ['sector','region']){el('mode-'+mode).className=state.mode===mode?'active':'';el('mode-'+mode).setAttribute('aria-pressed',String(state.mode===mode))}
+ el('row-search-caption').textContent=state.view==='costs'?'Find an input':state.view==='trades'?'Find an origin region':state.mode==='sector'?'Find a region':'Find a sector';el('column-search-caption').textContent=state.view==='trades'?'Find a destination region':state.mode==='sector'?'Find a region or group':'Find a sector';
+ const trades=state.view==='trades',matrix=state.view!=='production';el('mode-control').hidden=trades;el('sector-control').hidden=!trades&&state.mode!=='sector';el('region-control').hidden=trades||state.mode!=='region';el('origin-control').hidden=!trades;el('destination-control').hidden=!trades;
+ el('column-search-label').hidden=!matrix;el('all-inputs-label').hidden=state.view!=='costs';el('matrix-pager').hidden=!matrix;
+ el('row-search').placeholder=state.view==='costs'?'Input name or code…':trades?'Origin region…':'Region or sector…';el('column-search').placeholder=trades?'Destination region…':state.mode==='sector'?'Region or group…':'Sector name or code…';
+}
+function showError(error){el('view-status').textContent='Unable to display data: '+error.message;el('view-empty').textContent='Data could not be loaded.';el('view-empty').hidden=false}
+function setTitle(eyebrow,title,description){el('view-eyebrow').textContent=eyebrow;el('view-title').textContent=title;el('view-description').textContent=description}
+function tableHead(labels){const head=node('thead'),row=node('tr');for(const [i,label] of labels.entries()){const th=node('th',label,i===0?'sticky-label':'');th.scope='col';row.append(th)}head.append(row);return head}
+function provenance(records){
+ const unique=[...new Set(records.map(s=>s[state.view].collector))].sort();el('collector-summary').textContent='Collected by: '+unique.join(' · ');
+ const groups=new Map();for(const s of records){const info=s[state.view],key=info.collector+'|'+info.reference;let g=groups.get(key);if(!g){g={...info,sectors:[]};groups.set(key,g)}g.sectors.push(s.name)}
+ const list=el('source-list');list.replaceChildren();for(const g of groups.values()){const div=node('div',undefined,'source-entry');div.append(node('strong',g.collector),node('div',g.reference),node('div',g.sectors.length===1?g.sectors[0]:g.sectors.length+' sectors'));div.title=g.sectors.join('\n');list.append(div)}
+ el('source-note').textContent=records.length===1?records[0][state.view].note:'Collection leads are shown for each sector. Missing observations remain unavailable; group observations are not copied into individual-country totals.';
+}
+function empty(message){el('data-table').replaceChildren();el('view-empty').hidden=false;el('view-empty').textContent=message;el('legend').hidden=true;el('view-status').textContent='';el('columns-status').textContent='';el('previous-columns').disabled=true;el('next-columns').disabled=true}
+function productionAt(payload,region){const direct=payload.production.find(r=>r.geo===region);if(direct)return direct;const groups=payload.production.filter(r=>data.geographies[r.geo]?.members.includes(region));return {value:null,status:groups.length?'Reported only for a region group':'Not available',groups:groups.map(r=>data.geographies[r.geo].name)}}
+function renderProduction(payloads){
+ const query=fold(el('row-search').value);let records;
+ if(state.mode==='sector'){
+  const s=sector(state.sector),p=payloads.get(s.id);setTitle('Total Production · '+data.year,s.name,'Production observations in million USD. Region-group totals are shown separately from country observations.');
+  const observed=p.production.map(r=>{const g=data.geographies[r.geo];return {...r,id:r.geo,name:g.name,collector:s.production.collector,definition:geoDefinition(r.geo),status:g.is_group?'Region-group total · '+r.status:r.status}});
+  const covered=new Set(observed.map(r=>r.id));records=[...observed,...Object.entries(data.regions).filter(([id])=>!covered.has(id)).map(([id,name])=>({id,name,...productionAt(p,id),collector:s.production.collector}))];provenance([s]);
+ }else{
+  setTitle('Total Production · '+data.year,data.regions[state.region],'Production by sector, in million USD. A reported group total is not treated as an individual-country value.');
+  records=data.sectors.map(s=>({id:s.id,name:s.name,...productionAt(payloads.get(s.id),state.region),collector:s.production.collector}));provenance(data.sectors);
  }
+ records=records.filter(r=>matches(query,r.name,r.id)).sort((a,b)=>(b.value??-1)-(a.value??-1)||a.name.localeCompare(b.name));
+ const table=el('data-table');table.replaceChildren();el('view-empty').hidden=!!records.length;el('legend').hidden=true;
+ if(!records.length){empty('No observations match the selection.');return}
+ table.append(tableHead([state.mode==='sector'?'Region / region group':'Sector','Production','million USD','Coverage','Collected by']));const head=table.children[0].children[0];head.children[1].className='bar-cell';const body=node('tbody'),max=Math.max(...records.map(r=>r.value||0),1);
+ for(const r of records){const tr=node('tr'),label=node('td',undefined,'sticky-label');label.append(labelCell(r.name,r.id.startsWith('g:')?'':r.id,r.definition));tr.append(label);const bar=node('td',undefined,'bar-cell');if(r.value!==null){const track=node('div',undefined,'bar-track'),fill=node('div',undefined,'bar');fill.style.width=(100*r.value/max)+'%';track.append(fill);bar.append(track)}tr.append(bar);const value=node('td',number(r.value),'number'+(r.value===null?' unavailable':''));value.title=r.value===null?(r.groups||[]).join(', '):text(r.value)+' million USD';tr.append(value,node('td',r.status,'status'),node('td',r.collector));body.append(tr)}
+ table.append(body);el('view-status').textContent=records.filter(r=>r.value!==null).length+' numeric observations · '+records.filter(r=>r.value===null).length+' unavailable country/sector values. No missing value is replaced by zero.';
 }
-function renderSources(){
- for(const category of ['production','trades','costs']){byId('tab-'+category).className='tab'+(sourceState.category===category?' active':'');byId('tab-'+category).setAttribute('aria-pressed',String(sourceState.category===category));byId('count-'+category).textContent=sourceData.datasets.filter(d=>d.category===category&&(!sourceState.lead||sourceData.files[d.file].contributor===sourceState.lead)).length}
- const available=visibleDatasets(),list=byId('source-list');list.replaceChildren();
- for(const d of available){const f=sourceData.files[d.file];const b=node('button',undefined,'source-button'+(sourceState.dataset?.id===d.id?' active':''));b.type='button';b.setAttribute('aria-pressed',String(sourceState.dataset?.id===d.id));b.title=f.path+' · '+d.sheet;b.append(node('span',d.title,'source-name'),node('span',leadName(f.contributor),'source-lead'));b.addEventListener('click',()=>selectDataset(d.id).catch(showError));list.append(b)}
- if(!available.length)list.append(node('p','No matching sources. Select another contributor or clear the search.','empty-list'));
- byId('source-count').textContent=available.length+' source'+(available.length===1?'':'s');
+function profileCandidates(payload,region){return payload.profiles.filter(p=>Object.keys(p.values).length&&data.geographies[p.geo].members.includes(region))}
+function profileAt(payload,region){
+ const direct=payload.profiles.find(p=>p.geo===region&&Object.keys(p.values).length);if(direct)return direct;
+ const candidates=profileCandidates(payload,region),collected=candidates.filter(p=>!data.geographies[p.geo].estimated);
+ if(collected.length===1)return collected[0];if(!collected.length&&candidates.length===1)return candidates[0];return null;
 }
-async function selectLead(lead){sourceState.lead=lead;renderLeads();await refreshSelection()}
-async function selectCategory(category){sourceState.category=category;await refreshSelection()}
-async function refreshSelection(){const available=visibleDatasets();renderSources();if(available.some(d=>d.id===sourceState.dataset?.id))return;if(available.length)await selectDataset(available[0].id);else clearSelection()}
-function clearSelection(){sourceState.token++;sourceState.dataset=null;sourceState.file=null;sourceState.table=null;sourceState.view=null;byId('source-title').textContent='No matching sources';byId('source-lead').textContent=categoryName(sourceState.category);byId('source-info').textContent='Choose another contributor or clear the source search.';byId('source-info').hidden=false;byId('source-path').textContent='';byId('original-link').hidden=true;byId('data-view').hidden=true;byId('cluster-dialog').close()}
-async function unpackTable(key){
- if(currentChunk===key&&currentTable)return currentTable;
- if(typeof DecompressionStream==='undefined')throw new Error('Use a current browser with DecompressionStream support to read these tables.');
- const bytes=Uint8Array.from(atob(byId('chunk-'+key).textContent.trim()),c=>c.charCodeAt(0));
- const table=await new Response(new Blob([bytes]).stream().pipeThrough(new DecompressionStream('gzip'))).json();
- currentChunk=key;currentTable=table;return table;
-}
-function showError(error){byId('table-status').textContent='Unable to read this table: '+error.message;byId('data-table').replaceChildren();byId('page-status').textContent='';byId('previous-page').disabled=true;byId('next-page').disabled=true}
-async function selectDataset(id){
- const d=sourceData.datasets.find(d=>d.id===id);if(!d)throw new Error('Source not found.');const f=sourceData.files[d.file],token=++sourceState.token;
- sourceState.dataset=d;sourceState.file=f;sourceState.category=d.category;sourceState.table=null;sourceState.view=null;sourceState.facets=new Map();sourceState.unitColumn=null;sourceState.filtered=[];sourceState.page=0;
- byId('cluster-dialog').close();byId('source-title').textContent=d.title;byId('source-lead').textContent=leadName(f.contributor)+' · '+categoryName(d.category);byId('source-path').textContent=f.path+' · '+d.sheet;
- const info=[];if(f.info['Parent sector'])info.push('Parent sector: '+f.info['Parent sector']);if(f.info['New sector']&&f.info['New sector']!==f.title)info.push('Sector declared in the file: '+f.info['New sector']);if(f.error)info.push('Incomplete read: '+f.error);
- byId('source-info').textContent=info.join('\n');byId('source-info').hidden=!info.length;byId('original-link').href=f.uri;byId('original-link').hidden=false;byId('data-view').hidden=false;
- byId('table-search').value='';byId('show-formulas').checked=false;byId('facets').replaceChildren();byId('data-table').replaceChildren();byId('table-empty').hidden=true;byId('table-context').hidden=true;byId('table-status').textContent='Loading source data…';byId('page-status').textContent='';byId('previous-page').disabled=true;byId('next-page').disabled=true;
- renderSources();const table=await unpackTable(d.key);if(token!==sourceState.token)return;
- sourceState.table=table;byId('formula-label').hidden=!table.formula_count;buildView();buildFacets();filterTable();
-}
-function buildView(){
- const d=sourceState.dataset,t=sourceState.table;
- if(d.layout==='unit_process'){
-  const rows=t.rows.filter(r=>r[0]>=6&&['sector','primary input','factor of production'].includes(folded(valueAt(r,1)).replace(/_/g,' ')));
-  const header=t.rows.find(r=>r[0]===1),kind=t.rows.find(r=>r[0]===2),functional=t.rows.find(r=>r[0]===3);
-  const regions=(header?.[1]||[]).filter(c=>c[0]>=7&&(c[0]-7)%2===0&&c[1]!==null).map(c=>({col:c[0],region:textValue(c[1]),kind:textValue(kind&&valueAt(kind,c[0])),amount:functional&&valueAt(functional,c[0]),unit:functional&&valueAt(functional,c[0]+1)}));
-  if(sourceState.unitColumn===null)sourceState.unitColumn=regions.find(r=>folded(r.kind)==='monetary')?.col||regions[0]?.col||7;
-  const col=sourceState.unitColumn;
-  sourceState.view={rows,columns:[[1,'Input type'],[2,'Input description'],[3,'Mapped input','mapped'],[4,'Input origin','regions'],[col,'Value'],[col+1,'Unit'],[5,'Source'],[6,'Notes']],regions,facets:[]};
- }else if(d.layout==='production'){
-  const headers=t.rows.filter(r=>r[0]<=2);
-  const columns=t.columns.map(col=>{const labels=headers.map(r=>valueAt(r,col)).filter(v=>v!==null&&v!==undefined&&!/free to fill/i.test(String(v)));return [col,col===1?'Region':labels.join(' · ')||columnName(col),col===1?'regions':null]});
-  sourceState.view={rows:t.rows.filter(r=>r[0]>2&&valueAt(r,1)!==undefined&&valueAt(r,1)!==null&&valueAt(r,1)!==''),columns,facets:[]};
- }else{const layout=layouts[d.layout];if(!layout)throw new Error('Unknown source layout: '+d.layout);sourceState.view={...layout,rows:t.rows.filter(r=>r[0]>1)}}
- renderContext();
-}
-function optionLabel(value){const name=sourceData.sector_names[textValue(value).toLowerCase()];return name?value+' · '+name:textValue(value)}
-function buildFacets(){
- const area=byId('facets');area.replaceChildren();const view=sourceState.view;
- if(view.regions){
-  const label=node('label','Producing region / data type','facet'),select=node('select');select.setAttribute('aria-label','Producing region / data type');
-  for(const r of view.regions){const o=node('option',r.region+(r.kind?' · '+r.kind:''));o.value=String(r.col);select.append(o)}select.value=String(sourceState.unitColumn);
-  select.addEventListener('change',()=>{sourceState.unitColumn=Number(select.value);buildView();filterTable()});label.append(select);area.append(label);
+function pageColumns(columns){const total=columns.length;state.page=Math.min(state.page,Math.max(0,Math.ceil(total/COLS)-1));const start=state.page*COLS;el('columns-status').textContent=total?(start+1)+'–'+Math.min(start+COLS,total)+' of '+total+' columns':'No columns';el('previous-columns').disabled=state.page===0;el('next-columns').disabled=start+COLS>=total;return columns.slice(start,start+COLS)}
+function colour(value,max){if(value<0)return {background:'#eee8f5',color:'#694786'};const t=Math.sqrt(Math.min(1,Math.max(0,value/max)));const a=[246,251,249],b=[24,87,109];return {background:'rgb('+a.map((v,i)=>Math.round(v+(b[i]-v)*t)).join(',')+')',color:t>.65?'#ffffff':'#193c50'}}
+function matrixLegend(unit,max,extra){const legend=el('legend');legend.replaceChildren();legend.hidden=false;legend.append(node('span',unit),node('span','0'),node('span',undefined,'colour-ramp'),node('span',number(max)),node('span',undefined,'missing-key'),node('span','Unavailable / outside scope'));if(extra)legend.append(node('span',extra))}
+function renderCosts(payloads){
+ const q=fold(el('row-search').value),cq=fold(el('column-search').value);let columns;
+ if(state.mode==='sector'){
+  const s=sector(state.sector);setTitle('Cost Structure',s.name,'Compare input recipes across producing regions and the region groups used in the collection.');
+  columns=payloads.get(s.id).profiles.map(p=>{const g=data.geographies[p.geo];return {id:p.geo,name:g.name,profile:p,collector:s.costs.collector,definition:geoDefinition(p.geo),sub:p.status}});provenance([s]);
+ }else{
+  setTitle('Cost Structure',data.regions[state.region],'Compare sector input recipes for this region. Region-group recipes are identified in the columns. Overlapping group recipes are left unresolved.');
+  columns=data.sectors.map(s=>{const payload=payloads.get(s.id),p=profileAt(payload,state.region),alternatives=profileCandidates(payload,state.region);return {id:s.id,name:s.name,profile:p,collector:s.costs.collector,sub:p?(data.geographies[p.geo].is_group?data.geographies[p.geo].name:p.status):alternatives.length>1?'Overlapping group recipes; see sector view':'Not available'}});provenance(data.sectors);
  }
- for(const [col,title] of view.facets){
-  const values=[...new Set(view.rows.map(r=>valueAt(r,col)).filter(v=>v!==null&&v!==undefined&&v!==''))].sort((a,b)=>textValue(a).localeCompare(textValue(b)));
-  const label=node('label',title,'facet'),select=node('select');select.setAttribute('aria-label',title);const all=node('option','All '+title.toLowerCase()+'s');all.value='';select.append(all);
-  for(const value of values){const o=node('option',title.includes('sector')||title==='Input'?optionLabel(value):textValue(value));o.value=textValue(value);select.append(o)}
-  select.value='';select.addEventListener('change',()=>{sourceState.facets.set(col,select.value);filterTable()});label.append(select);area.append(label);
- }
+ columns=columns.filter(c=>matches(cq,c.name,c.id,c.sub)).sort((a,b)=>a.name.localeCompare(b.name));
+ const keys=[...new Set(columns.flatMap(c=>Object.keys(c.profile?.values||{})))];let inputs=keys.map(id=>data.items[id]).filter(i=>matches(q,i.name,...i.members.flatMap(m=>[m.code,m.name])));
+ inputs.sort((a,b)=>Math.max(...columns.map(c=>Math.abs(c.profile?.values[b.id]||0)))-Math.max(...columns.map(c=>Math.abs(c.profile?.values[a.id]||0)))||a.name.localeCompare(b.name));const allCount=inputs.length;if(!el('all-inputs').checked&&!q)inputs=inputs.slice(0,25);
+ const shown=pageColumns(columns);if(state.mode==='region'&&columns.length)provenance(data.sectors.filter(s=>columns.some(c=>c.id===s.id)));if(!shown.length||!inputs.length){empty(shown.some(c=>c.sub.startsWith('Overlapping'))?'Overlapping group recipes: no single recipe can be assigned to this region. Explore the sector view to inspect each group.':'No cost observations match this selection.');return}
+ const table=el('data-table');table.replaceChildren();el('view-empty').hidden=true;const head=node('thead'),hr=node('tr');hr.append(node('th','Input sector / factor','sticky-label'));
+ for(const c of shown){const th=node('th',undefined,'heat-head');th.scope='col';th.append(labelCell(c.name,c.id.startsWith('g:')?'':c.id,c.definition),node('small',c.sub),node('small',c.collector));hr.append(th)}head.append(hr);table.append(head);
+ const max=Math.max(...inputs.flatMap(i=>shown.map(c=>Math.abs(c.profile?.values[i.id]||0)*100)),1e-9),body=node('tbody');
+ for(const i of inputs){const tr=node('tr'),label=node('td',undefined,'sticky-label');label.append(labelCell(i.name,i.kind,i.is_group?{name:i.name,kind:i.kind==='Sector'?'Input-sector group':'Factor group',note:'The listed members are retained as one collected input group. Its value has not been divided between members.',members:i.members}:null));tr.append(label);
+  for(const c of shown){const value=c.profile?(c.profile.values[i.id]||0)*100:null,td=node('td',number(value),'heat-cell'+(value===null?' unavailable':''));if(value!==null)Object.assign(td.style,colour(value,max));td.title=i.name+' → '+c.name+'\n'+(value===null?'No available recipe':text(value)+' per 100 output units')+'\nCollected by: '+c.collector+'\n'+c.sub;tr.append(td)}body.append(tr)}
+ table.append(body);matrixLegend('Input cost per 100 output units',max,'Purple values, if present, are negative.');el('view-status').textContent=inputs.length+' of '+allCount+' input categories · '+columns.length+' comparison columns. Original coefficients are retained; column totals may differ from 100.';
 }
-function clusterFor(value,kind){
- const definitions=sourceState.file?.clusters||{};const key=textValue(value);
- if(kind==='input')return clusterFor(value,'factors')||clusterFor(value,'sectors');
- const groups=definitions[kind]||{};
- return groups[key]||(!sourceState.file?.partner_template?groups[key.toLowerCase()]:null)||null;
+const groupNames={ALM:'Aluminium',IST:'Iron and steel',LBT:'Batteries',PLT:'Plastics',CEMN:'Cement',HYD:'Hydrogen'};
+function renderTrades(payloads){
+ const s=sector(state.sector),p=payloads.get(s.id),trade=p.trade,q=fold(el('row-search').value),cq=fold(el('column-search').value);provenance([s]);
+ let description='International trade in million USD. Rows are origins; columns are destinations.';
+ if(trade.scope==='product_group')description='Collected for the '+(groupNames[trade.product]||trade.product)+' product group. Individual-sector trade is not separately reported. Rows are origins; columns are destinations.';
+ setTitle('Trades'+(trade.scope==='product_group'?' · product-group coverage':''),s.name,description);
+ if(trade.scope==='unavailable'){empty('No directly collected trade series is available for this sector.');return}
+ const origin=el('origin-select').value,destination=el('destination-select').value;
+ const origins=Object.entries(data.regions).filter(([id,name])=>(!origin||id===origin)&&matches(q,id,name)).sort((a,b)=>a[1].localeCompare(b[1]));
+ const columns=Object.entries(data.regions).filter(([id,name])=>(!destination||id===destination)&&matches(cq,id,name)).map(([id,name])=>({id,name})).sort((a,b)=>a.name.localeCompare(b.name));const shown=pageColumns(columns);
+ if(!origins.length||!shown.length){empty('No trade routes match this selection.');return}
+ const values=new Map(trade.edges.map(([o,d,v])=>[o+'|'+d,v]));const max=Math.max(...origins.flatMap(([o])=>shown.map(d=>values.get(o+'|'+d.id)||0)),1e-9);
+ const table=el('data-table');table.replaceChildren();el('view-empty').hidden=true;const head=node('thead'),hr=node('tr');hr.append(node('th','Origin ↓ / destination →','sticky-label'));
+ for(const c of shown){const th=node('th',undefined,'heat-head');th.scope='col';th.append(labelCell(c.name,c.id));hr.append(th)}head.append(hr);table.append(head);const body=node('tbody');
+ for(const [id,name] of origins){const tr=node('tr'),label=node('td',undefined,'sticky-label');label.append(labelCell(name,id));tr.append(label);for(const c of shown){const value=id===c.id?null:values.get(id+'|'+c.id)||0;const td=node('td',number(value),'heat-cell'+(value===null?' unavailable':''));if(value!==null)Object.assign(td.style,colour(value,max));td.title=name+' → '+c.name+'\n'+(value===null?'Domestic flows are outside this view':text(value)+' million USD')+'\nCollected by Purdue'+(trade.scope==='product_group'?'\nCoverage: '+trade.members.map(id=>sector(id)?.name||id).join('; '):'');tr.append(td)}body.append(tr)}table.append(body);matrixLegend('million USD',max);el('view-status').textContent=origins.length+' origin regions · '+columns.length+' destination regions.'+(trade.scope==='product_group'?' The same collected group series applies to: '+trade.members.map(id=>sector(id)?.name||id).join('; ')+'.':'');
 }
-function openCluster(definition){
- byId('cluster-kind').textContent=definition.kind+' · '+(definition.members.length?definition.members.length+' listed member'+(definition.members.length===1?'':'s'):'catch-all identifier');byId('cluster-title').textContent=definition.name;
- byId('cluster-source').textContent='Definition: '+(sourceState.file.partner_template?sourceState.file.name+' · ':'')+definition.source;byId('cluster-note').textContent=definition.note;byId('cluster-note').hidden=!definition.note;
- const list=byId('cluster-members');list.replaceChildren();for(const member of definition.members){const li=node('li'),nested=clusterFor(member.name,definition.kind);if(nested&&nested!==definition){const b=node('button',member.name,'cluster-link');b.type='button';b.addEventListener('click',()=>openCluster(nested));li.append(b)}else li.append(node('span',member.name));if(member.code&&member.code!==member.name)li.append(node('code',member.code));list.append(li)}
- const dialog=byId('cluster-dialog');if(!dialog.open)dialog.showModal();
+async function render(){
+ const token=++state.token;configure();el('view-status').textContent='Loading observations…';el('data-table').replaceChildren();el('view-empty').hidden=true;el('definition-dialog').close();
+ const ids=state.view!=='trades'&&state.mode==='region'?data.sectors.map(s=>s.id):[state.sector];const payloads=new Map(await Promise.all(ids.map(async id=>[id,await loadSector(id)])));if(token!==state.token)return;
+ if(state.view==='production')renderProduction(payloads);else if(state.view==='costs')renderCosts(payloads);else renderTrades(payloads);
 }
-function clusterButton(value,kind){const definition=clusterFor(value,kind);if(!definition)return null;const b=node('button',textValue(value),'cluster-link');b.type='button';b.title='View '+kind+' definition';b.addEventListener('click',()=>openCluster(definition));return b}
-function renderContext(){
- const context=byId('table-context');context.replaceChildren();const view=sourceState.view;
- if(view.regions){const r=view.regions.find(r=>r.col===sourceState.unitColumn);if(r){context.append(node('span','Producing region: '));context.append(clusterButton(r.region,'regions')||node('span',r.region));context.append(node('span',(r.kind?' · '+r.kind:'')+(r.amount!==null&&r.amount!==undefined?' · Functional unit: '+r.amount+' '+textValue(r.unit):'')))}}
- else if(view.note)context.append(node('span',view.note));context.hidden=!context.children.length;
-}
-function cellDisplay(cell){
- if(!cell)return {text:'—',className:'missing',title:'Blank cell'};
- const [,value,formula]=cell;if(byId('show-formulas').checked&&formula)return {text:formula,className:'formula',title:formula+(value!==null?'\nSaved value: '+textValue(value):'\nNo saved result')};
- if(value===null||value==='')return formula?{text:'ƒx',className:'formula',title:formula+'\nNo saved result'}:{text:'—',className:'missing',title:'Blank cell'};
- return {text:textValue(value),className:'',title:textValue(value)+(formula?'\nFormula: '+formula:'')};
-}
-function filterTable(){
- const view=sourceState.view;if(!view)return;const query=folded(byId('table-search').value),formulas=byId('show-formulas').checked,facets=[...sourceState.facets].filter(([,v])=>v!=='');sourceState.filtered=[];
- for(const row of view.rows){
-  if(view.regions){const c=cellAt(row,sourceState.unitColumn);if(!c||c[1]===null&&!c[2])continue}
-  if(facets.some(([col,value])=>textValue(valueAt(row,col))!==value))continue;
-  if(query&&!view.columns.some(([col])=>{const c=cellAt(row,col);return c&&folded(formulas&&c[2]?c[2]:c[1]).includes(query)}))continue;
-  sourceState.filtered.push(row);
- }
- sourceState.page=0;renderTable();
-}
-function renderTable(){
- const view=sourceState.view;if(!view)return;const table=byId('data-table');table.replaceChildren();const head=node('thead'),hr=node('tr');hr.append(node('th','#','row-number'));
- for(const [i,[col,label]] of view.columns.entries()){const th=node('th',undefined,i===0?'first-data':'');th.scope='col';th.append(node('small',columnName(col)),node('span',label,'cell-text'));th.title=label;hr.append(th)}head.append(hr);table.append(head);
- const body=node('tbody'),start=sourceState.page*PAGE_SIZE;
- for(const row of sourceState.filtered.slice(start,start+PAGE_SIZE)){
-  const tr=node('tr');tr.append(node('td',String(row[0]),'row-number'));const cells=new Map(row[1].map(c=>[c[0],c]));
-  for(const [i,[col,,kind]] of view.columns.entries()){const c=cells.get(col),display=cellDisplay(c),td=node('td',undefined,(i===0?'first-data ':'')+display.className);let type=kind;if(type==='mapped')type=folded(valueAt(row,1)).startsWith('primary')?'factors':'sectors';const button=kind&&c&&!display.className?clusterButton(c[1],type):null;const span=node('span',undefined,'cell-text');if(button)span.append(button);else span.textContent=display.text;span.title=columnName(col)+row[0]+'\n'+display.title;td.append(span);tr.append(td)}body.append(tr);
- }
- table.append(body);const count=sourceState.filtered.length;byId('table-empty').hidden=count!==0;byId('table-status').textContent=count.toLocaleString('en-GB')+' row'+(count===1?'':'s')+(byId('table-search').value?' matching the search':'');byId('page-status').textContent=count?(start+1)+'–'+Math.min(start+PAGE_SIZE,count)+' of '+count.toLocaleString('en-GB'):'';byId('previous-page').disabled=sourceState.page===0;byId('next-page').disabled=start+PAGE_SIZE>=count;
-}
-let tableSearchTimer;
-for(const category of ['production','trades','costs'])byId('tab-'+category).addEventListener('click',()=>selectCategory(category).catch(showError));
-byId('source-search').addEventListener('input',()=>refreshSelection().catch(showError));
-byId('table-search').addEventListener('input',()=>{clearTimeout(tableSearchTimer);tableSearchTimer=setTimeout(filterTable,200)});
-byId('show-formulas').addEventListener('change',filterTable);
-byId('previous-page').addEventListener('click',()=>{sourceState.page=Math.max(0,sourceState.page-1);renderTable()});
-byId('next-page').addEventListener('click',()=>{if((sourceState.page+1)*PAGE_SIZE<sourceState.filtered.length){sourceState.page++;renderTable()}});
-byId('cluster-close').addEventListener('click',()=>byId('cluster-dialog').close());
-renderLeads();renderSources();const firstSource=sourceData.datasets.find(d=>d.category==='production'&&d.title==='Manufacture of primary aluminum')||sourceData.datasets[0];
-const sourceReady=selectDataset(firstSource.id).catch(showError);
+function changeView(view){state.view=view;state.page=0;el('row-search').value='';el('column-search').value='';return render()}
+function changeMode(mode){state.mode=mode;state.page=0;el('row-search').value='';el('column-search').value='';return render()}
+for(const s of [...data.sectors].sort((a,b)=>a.name.localeCompare(b.name))){const o=node('option',s.name+' · '+s.id);o.value=s.id;el('sector-select').append(o)}el('sector-select').value=state.sector;
+for(const [id,name] of Object.entries(data.regions).sort((a,b)=>a[1].localeCompare(b[1])))for(const control of ['region-select','origin-select','destination-select']){const o=node('option',name+' · '+id);o.value=id;el(control).append(o)}el('region-select').value=state.region;
+for(const view of ['production','costs','trades'])el('tab-'+view).addEventListener('click',()=>changeView(view).catch(showError));
+for(const mode of ['sector','region'])el('mode-'+mode).addEventListener('click',()=>changeMode(mode).catch(showError));
+el('sector-select').addEventListener('change',()=>{state.sector=el('sector-select').value;state.page=0;render().catch(showError)});el('region-select').addEventListener('change',()=>{state.region=el('region-select').value;state.page=0;render().catch(showError)});
+for(const id of ['origin-select','destination-select','all-inputs'])el(id).addEventListener('change',()=>{state.page=0;render().catch(showError)});
+let timer;for(const id of ['row-search','column-search'])el(id).addEventListener('input',()=>{clearTimeout(timer);timer=setTimeout(()=>{state.page=0;render().catch(showError)},150)});
+el('previous-columns').addEventListener('click',()=>{state.page=Math.max(0,state.page-1);render().catch(showError)});el('next-columns').addEventListener('click',()=>{state.page++;render().catch(showError)});
+el('definition-close').addEventListener('click',()=>el('definition-dialog').close());
+el('collection-summary').textContent=data.sectors.length+' active sectors · '+Object.keys(data.regions).length+' regions';
+const collectionReady=render().catch(showError);

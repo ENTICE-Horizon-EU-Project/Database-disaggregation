@@ -1,78 +1,105 @@
-# Source data explorer
+# Data collection dashboard
 
-`write_source_dashboard` makes one local English HTML page with three views:
-**Total production**, **Trades** and **Cost structure**.
+The dashboard has one economic data model and three views. Its controls select
+activities and regions, never source files or worksheets. Every active activity
+remains in the same sector selector, including activities whose current source
+is missing or reported only at product-group level.
 
 ```python
-from pathlib import Path
-from entice_inventory.reporting import write_source_dashboard
+from entice_inventory.reporting import SourceCollection, write_source_dashboard
 
-write_source_dashboard(
-    Path("/your/local/Data split/Data collection/Final"),
-    "results/ENTICE_data_sources.html",
-)
+collection = SourceCollection.from_pipeline()
+write_source_dashboard(collection, "results/ENTICE_data_sources.html")
 ```
 
-Open the HTML in a current browser. The collection-lead overview filters the
-sources by partner. Partner attribution follows `General info → Lead`; joint
-leads remain joint rather than being counted twice. The counts refer to source
-partner templates, not to completed datasets or coverage. Purdue is also
-credited for its shared tables.
+Use the repository's configured shared-data paths and the `analysis` dependency
+extra. No MARIO run, coefficient insertion or split optimisation is needed.
+Optional `inventory_dir`, `baseline_path`, `source_paths`, `policy` and `registry`
+arguments select another explicitly configured set of pipeline inputs.
 
-The three views expose:
+## Data boundary and source rules
 
-- **Total production:** `Total production` from partner `Inventory_*.xlsx`
-  templates, and `splttargs.xlsx → REPOUT` from Purdue.
-- **Trades:** Purdue `trade.xlsx → NTSCIF` (CIF values) and
-  `splttargs.xlsx → BLTTRD` (bilateral targets), kept separate.
-- **Cost structure:** intermediate inputs and primary factors from partner
-  `Unit process` sheets; Purdue `EXIOIOT.csv`, `COPCOSTS.csv` and
-  `costsup.xlsx → NFCOSTSHR / PFCOSTSHR / KFCOSTSHR`.
+`SourceCollection` builds the complete activity universe from the adopted
+reconciliation policy: the current selection has **67 active activities**.
+Archived agricultural drafts and inactive catalogue records are outside that
+selection. The canonical activity name comes from the policy rather than a
+possibly copied template label.
 
-Select a producing region and data type for a partner cost structure. Its input
-values, units, source and notes are shown together. Energy/emissions extension
-rows are omitted. Purdue tables have sector/region/input filters as applicable;
-trade tables have sector/origin/destination filters. Search and pagination apply
-to the selected data. Production rows without a region identifier are omitted
-as unfilled template rows. Other supporting sheets, tariff tables, VA.xlsx,
-GDX files and duplicate supporting CSV deliveries are not browsing entries.
+The adapter reuses the repository's readers and rules:
 
-Underlined cluster names open a definition dialog:
+- `read_sector_templates` identifies the standardised source inventories and
+  their collection metadata. This is the common input boundary before database
+  coefficient construction, including activities supplied in shared data tables.
+  Conflicting duplicate inventories fail; identical normalised duplicates are
+  collapsed.
+- `Sources.observations` selects production columns, validates their headers,
+  applies adopted monetary conversions and share rules, and preserves sparse
+  parameter zero semantics. `observation_geographies`, also used by
+  `prepare_outputs`, applies inclusive/residual scopes and explicit exclusions.
+  There is no extra geographic fitting or imputation in the dashboard adapter.
+- `rows`, `clusters` and `expand` read the common inventory schema and resolve
+  exact input/factor/group identities. Coefficients are divided by the declared
+  functional output amount (blank means one, as in the inventory contract).
+  Input origins are summed for an input recipe. Monetary sectors and factors
+  are retained; satellite extensions are outside this view. Existing estimated
+  profiles are labelled. No new balancing or cluster allocation takes place.
+- `selected_trade_observations`, also used by `prepare_trade`, owns paired/direct
+  source precedence and parent-pattern exclusions. The dashboard additionally
+  exposes a policy-defined product-group observation where there is no individual
+  series. It retains that observation as a group: it does not allocate the same
+  group total to its children or generate a new parent-based estimate.
 
-- Partner sector, region and factor memberships come from that exact workbook's
-  `Sector`, `Region` and `Primary input` sheets. Standard groupings and custom
-  definitions (including carried-forward labels) retain original member names
-  and available GTAP codes. Sector and factor namespaces stay separate;
-  direct `Capital` must not be mistaken for the custom `CAPITAL` cluster.
-- `GLOBAL` explains the catch-all convention. It is not assigned an invented
-  fixed list of countries or interpreted as an unconditional world total.
-- Purdue aggregate input codes use the repository's existing GTAPCE-to-GTAP12
-  classification. The dialog labels that mapping as such. An optional
-  `matching="/path/to/GTAP12_matching.xlsx"` selects a different workbook;
-  without an available matching file these codes remain plain text.
+Input groups have a common identity based on item type and exact member codes.
+The same group is shared across activities even when its original labels differ;
+matching names with different memberships remain distinct. Sector and factor
+namespaces stay separate. All processing uses the selected pipeline identities,
+without inferring sector codes from filenames.
 
-Source values are read literally: no currency, year or unit conversion,
-normalisation or formula recalculation. In particular, raw EXIOIOT values are
-not presented as already-normalised shares. Cached formula values remain the
-values saved by the source workbook; absent caches are marked `ƒx`, and zeros
-remain distinct from blanks (`—`). “Show formulas” exposes expressions.
-Headers preserve years and units; hover reveals full cell content and source
-coordinates. Excel number formats and date styles are not applied.
+Collection attribution is separate for production, costs and trade. Shared
+Purdue inputs are credited to Purdue; an individual partner's production/cost
+lead is not inherited by its trade series. Accompanying collection references
+are retained in the secondary source panel. `collection.evidence` records input
+hashes, classification/registry fingerprints and the exact policy digest.
 
-All data are embedded in the HTML, compressed and decoded on selection. No web
-service or model database is required and only the requested HTML is written.
-The page is a snapshot: regenerate it after editing source files, and share it
-under the same conditions as the input data. Original-file links refer to the
-creator's local paths and may differ on another machine.
+## Views
 
-Verification:
+- **Total Production:** choose a sector for its regional observations, or choose
+  a region to compare all active sectors. Bars and values share a common unit
+  (million USD) and the adopted production reference year. Group totals are
+  labelled and are never copied into their member-country values. No missing
+  observation becomes zero. Share-derived estimates are labelled.
+- **Cost Structure:** choose a sector to compare recipes across producing
+  regions/groups, or choose a region to compare sector recipes. Rows are input
+  sectors/factors/groups and columns are comparisons. Values are **input cost
+  per 100 output units**, not a new normalisation to 100. Existing totals can
+  differ from 100. The initial view ranks the largest 25 input categories;
+  search or “Show all inputs” exposes the remainder. Group names open exact
+  membership definitions. For a country, its direct recipe takes precedence;
+  otherwise a single collected group recipe or single estimated group recipe
+  can be shown. Conflicting overlapping group recipes remain unresolved and
+  refer the user to the sector view, where all group observations are visible.
+- **Trades:** choose a product, origins and destinations to inspect a bilateral
+  matrix. Both region axes can be searched and matrix columns are paginated.
+  International source-parameter zeros remain zero; the domestic diagonal is
+  outside scope. A group-only product series has an explicit coverage label
+  and lists its member activities. Unavailable series have an empty state.
+
+All three views show collection attribution for the current selection. The
+interface is English and uses ENTICE branding. All data are embedded in one
+local HTML and loaded by activity; no external scripts or web server are needed.
+The file is a snapshot and must be regenerated after source changes. Share it
+under the same conditions as its underlying data.
+
+## Verification
 
 ```bash
-PYTHONPATH=src python -m pytest -q tests/test_source_dashboard.py tests/test_analysis_api.py
+PYTHONPATH=src python -m pytest -q tests/test_source_dashboard.py tests/test_reconciliation.py
 node tests/source_dashboard_smoke.cjs /path/to/ENTICE_data_sources.html
 ```
 
-The JavaScript smoke check exercises loading every dataset, category and lead
-filters, cost-region selection, trade-sector filtering, cluster dialogs, search,
-pagination and stale asynchronous loads using a minimal DOM. It does not verify
-rendered browser layout.
+The Python tests cover the common schema, role-specific attribution, source
+precedence, composite coverage, missing versus zero, functional amounts,
+conflicting duplicates and shared geographic rules. The JavaScript check opens
+every activity in all three views and exercises both comparison directions,
+cluster dialogs, exact trade values, coverage labels, search and pagination.
+It uses a minimal DOM and does not verify rendered browser layout.
