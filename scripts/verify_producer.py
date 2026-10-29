@@ -28,7 +28,7 @@ import pyarrow.parquet as pq
 from openpyxl import load_workbook
 from mario.ops.add_sector_specs import ADD_SECTOR_SPLIT_EXCLUSION_COLUMNS
 
-from entice_inventory.export.build_d24_inventories import (
+from database_disaggregation.export.build_d24_inventories import (
     aggregate_sector_coefficients,
     create_output_workbook,
     read_sector_templates,

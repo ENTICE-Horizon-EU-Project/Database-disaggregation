@@ -4,7 +4,7 @@ from types import SimpleNamespace
 
 import pytest
 
-from entice_inventory.core import reference_mapping as M
+from database_disaggregation.core import reference_mapping as M
 
 
 @pytest.fixture

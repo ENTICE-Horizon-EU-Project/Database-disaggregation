@@ -1,6 +1,6 @@
 import pytest
 from openpyxl import Workbook
-from entice_inventory import SplitPlan
+from database_disaggregation import SplitPlan
 
 
 def workbook(path,steps):

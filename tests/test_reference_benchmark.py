@@ -8,7 +8,7 @@ import io
 import numpy as np
 import pytest
 
-from entice_inventory.core import reference_benchmark as R
+from database_disaggregation.core import reference_benchmark as R
 
 
 def test_geography_aggregation_precedes_import_and_export_ratios():

@@ -8,8 +8,8 @@ from types import SimpleNamespace
 import pandas as pd
 import pytest
 
-from entice_inventory.core.geography import Geography
-from entice_inventory.core.parent_budgets import (
+from database_disaggregation.core.geography import Geography
+from database_disaggregation.core.parent_budgets import (
     ChildTargets, ParentBudgets, ParentBudgetError, evaluate_parent_budgets, require_parent_budgets,
 )
 
@@ -148,7 +148,7 @@ def _baseline(tmp_path):
 def test_preparation_blocks_before_profiles_or_solver(tmp_path, monkeypatch):
     from test_geography import inventory
     from openpyxl import load_workbook
-    from entice_inventory.core import disaggregation
+    from database_disaggregation.core import disaggregation
     baseline = _baseline(tmp_path)
     source = tmp_path/'inputs'
     source.mkdir()
@@ -173,7 +173,7 @@ def test_edited_prepared_workbook_is_rechecked_before_solve(tmp_path, monkeypatc
     from test_geography import inventory
     import mario
     from openpyxl import load_workbook
-    from entice_inventory.core.disaggregation import prepare_inputs
+    from database_disaggregation.core.disaggregation import prepare_inputs
     baseline = _baseline(tmp_path)
     source = tmp_path/'inputs'
     source.mkdir()

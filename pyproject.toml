@@ -3,7 +3,7 @@ requires = ["setuptools>=61"]
 build-backend = "setuptools.build_meta"
 
 [project]
-name = "entice-inventory"
+name = "database-disaggregation"
 version = "0.1.0"
 description = "Data preparation and GTAP database disaggregation workflows for ENTICE with MARIO/CVXLab"
 requires-python = ">=3.10"
@@ -13,10 +13,10 @@ dependencies = [
 
 [project.optional-dependencies]
 export = ["pandas", "pyarrow"]
-# Needed only for the QA plotting module (entice_inventory.export.plot_d24_split).
+# Needed only for the QA plotting module (database_disaggregation.export.plot_d24_split).
 plots = ["pandas", "numpy", "matplotlib"]
 reconcile = ["pandas>=2.3.3", "numpy", "pyarrow", "scipy", "cvxpy"]
-benchmark = ["pandas", "numpy", "pyarrow", "scipy"]
+benchmark = ["pandas", "numpy", "pyarrow", "scipy", "plotly"]
 analysis = ["pandas>=2.1", "numpy", "pyarrow", "scipy", "plotly"]
 mappings = ["h5py"]
 
@@ -27,13 +27,13 @@ mappings = ["h5py"]
 where = ["src"]
 
 [tool.setuptools.package-data]
-"entice_inventory.core" = ["benchmark_dashboard.html"]
-"entice_inventory.reporting" = ["templates/*.html", "templates/*.js", "assets/*.svg", "assets/*.png"]
+"database_disaggregation.core" = ["benchmark_dashboard.html"]
+"database_disaggregation.reporting" = ["templates/*.html", "templates/*.js", "assets/*.svg", "assets/*.png"]
 
 [tool.setuptools.data-files]
-"share/entice-inventory/registry" = [
+"share/database-disaggregation/registry" = [
     "data/registry/sectors.json",
     "data/registry/regions.json",
     "data/registry/gtap12.json",
 ]
-"share/entice-inventory/config" = ["config/cleaning-policy.json"]
+"share/database-disaggregation/config" = ["config/cleaning-policy.json"]

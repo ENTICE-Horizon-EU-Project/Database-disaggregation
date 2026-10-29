@@ -188,7 +188,7 @@ trade violations plus 12 incomplete output groups. No real-data split solver was
 ## Implemented inventory reconciliation: 20 October 2026
 
 The owner approved a cleaning stage using existing data and explicit assumptions.
-The implementation lives in `entice_inventory.reconciliation`, selected through
+The implementation lives in `database_disaggregation.reconciliation`, selected through
 `disaggregation.cleaning_policy` or `--cleaning-policy`. The
 [technical guide](../reconciliation.md) specifies source recipes, equations,
 weights, donor hierarchies, failure conditions, configuration, commands and replay
@@ -907,7 +907,7 @@ The registry has three files with separate responsibilities:
 | [gtap12.json](../../data/registry/gtap12.json) | Versioned target adapter. NACE rules determine parents. Published parents, matching rows, declared concordances and file hashes are retained as historical evidence. Rebuild dependencies are explicit. |
 | [regions.json](../../data/registry/regions.json) | 163 GTAP region codes/names and 32 explicit groups from the common region reference. These are GTAP geographic units, including aggregates, not an ISO country list. `GLOBAL` must contain all target regions exactly once. |
 
-The [Python API](../../src/entice_inventory/core/registry.py) and [CLI](../../scripts/registry.py) read these files directly. Identity resolution requires a namespace for source aliases. Shared source labels such as `XCH_BPH` cannot silently select one sector. Both MUN filenames resolve to MUN; NMC/NCM and PLS/PLSR remain separate related records. Catalogue absence does not establish withdrawal and querying an entry does not activate it.
+The [Python API](../../src/database_disaggregation/core/registry.py) and [CLI](../../scripts/registry.py) read these files directly. Identity resolution requires a namespace for source aliases. Shared source labels such as `XCH_BPH` cannot silently select one sector. Both MUN filenames resolve to MUN; NMC/NCM and PLS/PLSR remain separate related records. Catalogue absence does not establish withdrawal and querying an entry does not activate it.
 
 The registry carries the previous 24 targeted definitions plus HYE: hydrogen is PRODCOM 20.11.11.50, under NACE Rev. 2 20.11 and ISIC Rev. 4 2011, hence CHM in the reviewed GTAP bridge. This follows the [official product classification](https://eur-lex.europa.eu/legal-content/EN/TXT/PDF/?uri=CELEX%3A32022R2552) and [NACE notes, printed page 140](https://sfc.ec.europa.eu/system/files/documents/sfc2007/2022-10/nace-rev-2.pdf). The electrolysis/steam-reforming distinction remains important for source profiles even though both activities belong to the same class.
 
@@ -983,7 +983,7 @@ These are screening flags for review, not 2,575 confirmed data errors. The audit
 | Parent label comparison | `plot_d24_split.check_parent_consistency` | Diagnostic function exists; not invoked by the end-to-end runner. |
 | X/VA split charts | `plot_d24_split` | Uses selected/mixed sources, can substitute zero for missing VA, and clips plotted residuals with `max(parent - children, 0)`. Charts do not certify non-negative regional residuals or solver feasibility. |
 
-Relevant production files are under [inventory](../../src/entice_inventory/inventory/), [export](../../src/entice_inventory/export/), [core](../../src/entice_inventory/core/), and [the runner](../../scripts/run_d24_pipeline.py). Dependency code inspected is preserved in the local source snapshot, with Git revisions in the candidate manifest.
+Relevant production files are under [inventory](../../src/database_disaggregation/inventory/), [export](../../src/database_disaggregation/export/), [core](../../src/database_disaggregation/core/), and [the runner](../../scripts/run_d24_pipeline.py). Dependency code inspected is preserved in the local source snapshot, with Git revisions in the candidate manifest.
 
 ## Independent consistency results
 

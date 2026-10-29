@@ -9,8 +9,8 @@ from pathlib import Path
 for variable in ('OMP_NUM_THREADS', 'OPENBLAS_NUM_THREADS', 'VECLIB_MAXIMUM_THREADS'):
     os.environ.setdefault(variable, '2')
 
-from entice_inventory.core.paths import project_data_root
-from entice_inventory.core.benchmark import build_report, write_report
+from database_disaggregation.core.paths import project_data_root
+from database_disaggregation.core.benchmark import build_report, write_report
 
 
 def main():

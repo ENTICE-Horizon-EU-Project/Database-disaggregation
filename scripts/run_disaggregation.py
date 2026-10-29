@@ -7,11 +7,11 @@ import argparse
 import json
 from pathlib import Path
 
-from entice_inventory.core.paths import local_config, project_data_root, data_path
-from entice_inventory.core.geography import Geography, configured_geography
-from entice_inventory.core.disaggregation import prepare_inputs
-from entice_inventory.core.parent_budgets import ChildTargets, ParentBudgets, require_parent_budgets
-from entice_inventory.core.shared_runs import remaining_workbook
+from database_disaggregation.core.paths import local_config, project_data_root, data_path
+from database_disaggregation.core.geography import Geography, configured_geography
+from database_disaggregation.core.disaggregation import prepare_inputs
+from database_disaggregation.core.parent_budgets import ChildTargets, ParentBudgets, require_parent_budgets
+from database_disaggregation.core.shared_runs import remaining_workbook
 
 
 def main():
@@ -89,6 +89,9 @@ def main():
         print(f'Prepared inputs: {destination}')
     if args.solve:
         import mario
+        if not (destination / 'baseline' / 'flows').is_dir():
+            parser.error('This preparation has no stored baseline. Read add_sectors.xlsx into '
+                         'the MARIO Database used for preparation and call add_sectors directly.')
         db = mario.parse_from_parquet(str(destination / 'baseline' / 'flows'), table='IOT', mode='flows')
         workbook = args.workbook or destination / 'add_sectors.xlsx'
         db.read_add_sectors_excel(workbook, read_inventories=True, split=True)

@@ -23,4 +23,4 @@ external-data/
 GTAP12_X.xlsx
 
 # Versioned report assets are source files, not generated figures.
-!src/entice_inventory/reporting/assets/*.png
+!src/database_disaggregation/reporting/assets/*.png

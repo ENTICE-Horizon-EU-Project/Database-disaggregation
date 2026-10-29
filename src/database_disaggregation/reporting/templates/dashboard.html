@@ -1,0 +1,130 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1"><title>ENTICE · MARIO dashboard</title>
+<style>
+*{box-sizing:border-box}body{margin:0;background:#f5f8f8;color:#193c50;font:16px Arial,sans-serif}
+header{position:relative;padding:28px 5vw 20px;background:white}header:before{content:'';position:absolute;top:0;left:0;right:0;height:8px;background:linear-gradient(90deg,#00B1A8,#EADA23)}h1{font-size:30px;margin:6px 0}
+.masthead{max-width:1406px;margin:auto;display:flex;align-items:center;justify-content:space-between;gap:28px}.brand-logos{display:flex;align-items:center;flex-shrink:0}.brand-logos img{display:block;object-fit:contain}.entice-logo{width:128px;height:90px}.dashboard-footer{background:white;border-top:1px solid #dce7e7;padding:24px 5vw}.footer-inner{max-width:1406px;margin:auto;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:18px 28px}.footer-inner p{margin:0;color:#536b76;font-size:14px;line-height:1.6}.mario-brand{display:flex;align-items:center;gap:12px;flex-shrink:0}.mario-brand img{display:block;width:52px;height:52px;object-fit:contain}.mario-brand span{font-size:13px;font-weight:bold;letter-spacing:2px}
+.eyebrow{color:#008c85;font-size:13px;font-weight:bold;letter-spacing:2px}main{max-width:1450px;margin:auto;padding:22px}
+.controls,.panel{background:white;border:1px solid #dce7e7;border-radius:10px;padding:22px;margin-bottom:20px}
+select{font:inherit;padding:10px;width:min(780px,100%);border:1px solid #aac5c5;border-bottom:3px solid #EADA23;border-radius:5px;background:white}select:focus-visible,button:focus-visible{outline:3px solid #193c50;outline-offset:3px}
+.muted{color:#536b76;font-size:14px;line-height:1.6}.checks{margin-top:14px;padding:12px;background:#edf6f4}
+.sector-status{display:flex;align-items:center;flex-wrap:wrap;gap:8px 12px;margin:14px 0 0}.sector-status[hidden]{display:none}.sector-badge{display:inline-flex;align-items:center;padding:5px 10px;border:1px solid #abd7d2;border-radius:20px;background:#edf8f6;color:#006e68;font-size:13px;font-weight:bold}.sector-badge[data-kind="residual_parent"]{background:#eef2f6;border-color:#c3ced8;color:#193c50}.sector-badge[data-kind="original"]{background:#f4f6f6;border-color:#dce7e7;color:#536b76}
+#export-reference-comparisons{font:inherit;font-size:14px;padding:10px 16px;border:1px solid #00B1A8;border-radius:5px;background:white;color:#193c50;cursor:pointer}#export-reference-comparisons:hover{background:#edf8f6}
+.view-switch{display:flex;gap:10px;margin-bottom:20px}.view-switch button{font:inherit;padding:10px 18px;border:1px solid #00B1A8;border-bottom:4px solid transparent;border-radius:5px;background:white;color:#193c50;cursor:pointer}.view-switch button.active{background:#00B1A8;color:#193c50;border-bottom-color:#EADA23;font-weight:bold}.reference-controls{display:grid;grid-template-columns:1fr 2fr;gap:16px}.reference-controls label{font-size:14px}.reference-controls select{display:block;width:100%;margin-top:8px}
+h2{font-size:21px;margin-top:0}.scroll{overflow-x:auto}.heatmap-scroll{max-height:760px;overflow:auto}table{border-collapse:collapse;font-size:13px;width:100%}
+th,td{padding:10px;text-align:left;border-bottom:1px solid #e3eaea;vertical-align:top}
+th{background:#eef3f5}.plot{min-height:420px}.legend{border-left:4px solid #EADA23;padding-left:12px}h2:after{content:'';display:block;width:44px;height:4px;background:#EADA23;margin-top:9px}
+.reference-legend{display:flex;flex-wrap:wrap;gap:12px 24px;list-style:none;padding:0;margin:24px 0}.reference-legend li{display:flex;align-items:center;gap:8px;font-size:14px}.reference-legend span{width:13px;height:13px;border-radius:2px;flex-shrink:0}.reference-charts{display:grid;grid-template-columns:minmax(0,1fr);gap:36px;margin-bottom:28px}.reference-chart{display:grid;grid-template-columns:minmax(0,1fr);gap:12px;min-width:0}.reference-chart h3,.reference-chart .muted{margin:0}.reference-chart .plot{min-height:0}.plot{position:relative;width:100%;isolation:isolate}
+@media(max-width:850px){.masthead{align-items:flex-start;flex-direction:column-reverse;gap:16px}.reference-controls{grid-template-columns:1fr}.entice-logo{width:106px;height:74px}h1{font-size:26px}main{padding:14px}.view-switch{flex-wrap:wrap}}
+.region-filters{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px;margin-top:18px}.region-picker{position:relative;min-width:0}.region-picker summary{cursor:pointer;padding:11px 14px;border:1px solid #aac5c5;border-bottom:3px solid #EADA23;border-radius:5px;background:white;font-size:14px}.region-menu{position:absolute;top:calc(100% + 5px);left:0;right:0;z-index:1000;background:white;border:1px solid #aac5c5;border-radius:6px;padding:12px;max-height:340px;overflow:auto;box-shadow:0 10px 24px #193c5026}.region-menu input[type=search]{width:100%;font:inherit;font-size:14px;padding:8px;border:1px solid #aac5c5;border-radius:4px}.region-actions{display:flex;gap:8px;margin:10px 0}.region-actions button{font:inherit;font-size:13px;padding:6px 12px;border:1px solid #00B1A8;border-radius:4px;color:#193c50;background:white;cursor:pointer}.region-choice{display:flex;align-items:center;gap:9px;padding:7px 2px;font-size:14px;cursor:pointer}.region-choice input{accent-color:#00B1A8}.region-choice[hidden]{display:none}.trade-empty{padding:70px 15px;text-align:center;color:#536b76}
+@media(max-width:850px){.region-filters{grid-template-columns:minmax(0,1fr)}}
+</style><script>__PLOTLY__</script></head><body>
+<header><div class="masthead"><div><div class="eyebrow">ENTICE · DATABASE DISAGGREGATION</div>
+<h1>__TITLE__</h1><p class="muted">__SUBTITLE__</p></div>
+<div class="brand-logos"><img class="entice-logo" src="__ENTICE_LOGO__" alt="ENTICE" width="128" height="90"></div></div></header>
+<main><div class="view-switch" role="tablist"><button id="show-results" role="tab" aria-selected="true" class="active">Results</button><button id="show-references" role="tab" aria-selected="false">Cross-database comparison</button></div><div id="results-view">__RESULT_NOTICE__<section class="controls"><label for="product"><b>Select a sector</b></label><br><br><select id="product"></select>
+<div id="sector-status" class="sector-status" aria-live="polite" hidden></div>
+<div id="checks" class="checks"></div><p class="muted">Target checks compare the result with prepared observations used by the model. They measure consistency with constraints; they are not independent validation.</p></section>
+<section class="panel"><h2>1. Production</h2><p class="muted">Bars show model output. For split sectors, markers show the prepared production targets used as constraints.</p><div id="output" class="plot"></div></section>
+<section class="panel"><h2>2. Deliveries between regions</h2><p class="muted">All intermediate and final uses, including investment, stock changes, margins and other Y categories, in M USD. This is the same flow scope as the use heatmap below. The Sankey displays positive flows; the matrix retains signed values and includes domestic deliveries on its diagonal.</p><label for="tradeview">View: </label><select id="tradeview" style="width:220px"><option value="sankey">Sankey</option><option value="matrix">Trade matrix</option></select><div class="region-filters">
+<details class="region-picker" id="origin-picker"><summary id="origin-summary">Origins</summary><div class="region-menu"><input id="origin-search" type="search" placeholder="Find an origin region" aria-label="Find an origin region"><div class="region-actions"><button type="button" id="origin-all">Select all</button><button type="button" id="origin-clear">Clear</button></div><div id="origin-options"></div></div></details>
+<details class="region-picker" id="destination-picker"><summary id="destination-summary">Destinations</summary><div class="region-menu"><input id="destination-search" type="search" placeholder="Find a destination region" aria-label="Find a destination region"><div class="region-actions"><button type="button" id="destination-all">Select all</button><button type="button" id="destination-clear">Clear</button></div><div id="destination-options"></div></div></details>
+</div><p id="trade-selection" class="muted" aria-live="polite"></p><div id="trade" class="plot"></div></section>
+<section class="panel"><h2>3. Who uses the sector's output?</h2><p class="muted legend">All origins combined. Each destination column sums to 100% across using sectors and all available final-demand categories, including investment, stock changes and margins. Grey cells indicate unavailable data or an undefined denominator.</p>
+<p id="missing" class="muted"></p><div class="heatmap-scroll"><div id="uses"></div></div>
+<p class="muted">Monetary use shares reflect production recipes and the relative size of using industries. All negative values are shown in red, including small numerical residuals. Signed values remain unchanged in the tooltips.</p></section>
+__BENCHMARK_AUDIT__</div><div id="references-view" hidden>__REFERENCE_PANEL__</div>
+<p class="muted">Monetary IOT results. Target checks measure agreement with supplied observations. Sector-use patterns support a separate review of production recipes. Environmental extensions are outside the scope of this report.</p></main>
+<footer class="dashboard-footer"><div class="footer-inner"><p>Dashboard developed by <strong>POLIMI</strong> and <strong>eNextGen</strong>.</p><div class="mario-brand"><img src="__MARIO_LOGO__" alt="MARIO" width="52" height="52"><span>MARIO</span></div></div></footer>
+<script>
+const D=__DATA__, teal='#00B1A8', navy='#193c50';
+const select=document.getElementById('product');
+D.products.forEach(p=>{const o=document.createElement('option');o.value=p;o.textContent=p+' · '+D.payload[p].name;select.appendChild(o)});
+select.value=D.products.includes('APP')?'APP':D.products[0];
+document.getElementById('missing').textContent=D.missing.length?'Not separately available in this source: '+D.missing.join(', ')+'. No separate value is inferred.':'';
+const common={font:{family:'Arial',color:navy},paper_bgcolor:'white',margin:{l:145,r:50,t:45,b:65}};
+function renderPlot(id,data,layout,options={responsive:true,displaylogo:false}){
+ const element=document.getElementById(id);
+ element.style.height=layout.height+'px';
+ element.style.width=layout.width?layout.width+'px':'100%';
+ return Plotly.react(id,data,layout,options);
+}
+function showSectorStatus(id,sectors){
+ const element=document.getElementById(id);
+ element.replaceChildren();
+ const entries=[...new Set(sectors)].map(code=>({code,type:D.payload[code]?.sector_type})).filter(entry=>entry.type);
+ element.hidden=!entries.length;
+ if(!entries.length)return;
+ if(entries.length===1){
+  const {type}=entries[0],badge=document.createElement('span');
+  badge.className='sector-badge';badge.dataset.kind=type.kind;badge.textContent=type.label;element.appendChild(badge);
+  const detail=document.createElement('span');detail.className='muted';
+  detail.textContent=type.parents.length?'Parent'+(type.parents.length>1?'s':'')+': '+type.parents.map(p=>p.code+' · '+p.name).join('; '):type.kind==='residual_parent'?'Parent remaining after the new sectors have been separated.':type.kind==='new'?'Sector added to the database.':'Sector retained from the original classification.';
+  element.appendChild(detail);
+ }else{
+  for(const kind of ['new','residual_parent','original']){
+   const selected=entries.filter(entry=>entry.type.kind===kind);if(!selected.length)continue;
+   const badge=document.createElement('span');badge.className='sector-badge';badge.dataset.kind=kind;
+   const label={new:'new sector',residual_parent:'residual parent',original:'original sector'}[kind];
+   badge.textContent=selected.length+' '+label+(selected.length===1?'':'s');element.appendChild(badge);
+  }
+ }
+}
+function draw(){const p=select.value,v=D.payload[p];
+showSectorStatus('sector-status',[p]);
+const c=v.checks;document.getElementById('checks').textContent=c.count?
+`${c.passed} / ${c.count} prepared output/trade observations meet the recorded tolerance. Maximum absolute error: ${c.max_error.toExponential(2)} M USD.`:'No prepared output or trade targets are listed for this sector.';
+const production=[{type:'bar',name:'Model output',x:D.regions,y:v.output,marker:{color:teal},hovertemplate:'%{x}<br>%{y:,.2f} M USD<extra>Model output</extra>'}];
+if(v.output_target.some(q=>q!==null))production.push({type:'scatter',mode:'markers',name:'Prepared target',x:D.regions,y:v.output_target,marker:{color:navy,symbol:'diamond',size:9,line:{color:'white',width:1}},hovertemplate:'%{x}<br>%{y:,.2f} M USD<extra>Prepared target</extra>'});
+renderPlot('output',production,{...common,height:560,margin:{l:145,r:50,t:100,b:150},title:{text:p+' · '+v.name,y:.98,yanchor:'top'},yaxis:{title:'Output (M USD)',automargin:true},xaxis:{tickangle:-90,tickmode:'array',tickvals:D.regions,automargin:true},legend:{orientation:'h',y:1.02,yanchor:'bottom'}},{responsive:true,displaylogo:false});
+drawTrade();
+const scale=useScale(v.shares),low=scale.low,colors=scale.colors;
+const transposed=D.uses.map((_,j)=>v.shares.map(row=>row[j]));
+const details=D.uses.map((_,j)=>v.uses.map(row=>[row[j],D.use_names[j],row[j]!==null&&Math.abs(row[j])<.001?' ('+(row[j]*1e6).toPrecision(3)+' USD)':'']));
+renderPlot('uses',[{type:'heatmap',x:D.regions,y:D.uses,z:transposed,zmin:low,zmax:100,colorscale:colors,colorbar:{title:'Use (%)',lenmode:'pixels',len:300,y:1,yanchor:'top'},hoverongaps:false,customdata:details,hovertemplate:'%{x}<br>%{y} · %{customdata[1]}<br>%{z:.6g}% of selected use<br>%{customdata[0]:,.4f} M USD%{customdata[2]}<extra></extra>'}],{...common,width:Math.max(1100,D.regions.length*26+250),height:16*D.uses.length+200,plot_bgcolor:'#dedede',margin:{l:155,r:95,t:160,b:35},xaxis:{side:'top',tickmode:'array',tickvals:D.regions,tickangle:-60,tickfont:{size:11}},yaxis:{autorange:'reversed',title:'Using sector / final consumer',tickmode:'array',tickvals:D.uses,tickfont:{size:10}}},{displaylogo:false});
+}
+const tradeRegions={origin:new Set(D.regions),destination:new Set(D.regions)};
+function useScale(shares){
+ const low=shares.flat().filter(q=>q!==null&&Number.isFinite(q)&&q<0).reduce((a,b)=>Math.min(a,b),0);
+ const zero=low<0?-low/(100-low):0;
+ return {low,colors:low<0?[[0,'#b2182b'],[zero,'#f2f7f7'],[zero+.1*(1-zero),'#a9ded8'],[zero+.4*(1-zero),teal],[1,navy]]:[[0,'#f2f7f7'],[.1,'#a9ded8'],[.4,teal],[1,navy]]};
+}
+function regionSummary(role){
+ const count=tradeRegions[role].size,label=role==='origin'?'Origins':'Destinations';
+ document.getElementById(role+'-summary').textContent=label+' · '+(count===D.regions.length?'All regions ('+count+')':count+' selected');
+}
+for(const role of ['origin','destination']){
+ const options=document.getElementById(role+'-options');
+ for(const region of D.regions){
+  const label=document.createElement('label'),input=document.createElement('input');label.className='region-choice';
+  input.type='checkbox';input.value=region;input.checked=true;input.dataset.regionRole=role;
+  input.addEventListener('change',()=>{if(input.checked)tradeRegions[role].add(region);else tradeRegions[role].delete(region);regionSummary(role);drawTrade()});
+  label.append(input,document.createTextNode(region));options.appendChild(label);
+ }
+ for(const [action,selected] of [['all',true],['clear',false]])document.getElementById(role+'-'+action).addEventListener('click',()=>{
+  tradeRegions[role]=new Set(selected?D.regions:[]);options.querySelectorAll('input').forEach(input=>input.checked=selected);regionSummary(role);drawTrade();
+ });
+ document.getElementById(role+'-search').addEventListener('input',event=>{const query=event.target.value.toLowerCase();options.querySelectorAll('label').forEach(label=>label.hidden=!label.textContent.toLowerCase().includes(query))});
+ regionSummary(role);
+}
+document.addEventListener('click',event=>document.querySelectorAll('.region-picker[open]').forEach(menu=>{if(!menu.contains(event.target))menu.open=false}));
+document.addEventListener('keydown',event=>{if(event.key==='Escape')document.querySelectorAll('.region-picker[open]').forEach(menu=>menu.open=false)});
+function drawTrade(){
+ const v=D.payload[select.value],origins=D.regions.map((r,i)=>[r,i]).filter(([r])=>tradeRegions.origin.has(r)),destinations=D.regions.map((r,i)=>[r,i]).filter(([r])=>tradeRegions.destination.has(r));
+ const chart=document.getElementById('trade'),caption=document.getElementById('trade-selection');
+ caption.textContent=origins.length+' origin'+(origins.length===1?'':'s')+' × '+destinations.length+' destination'+(destinations.length===1?'':'s')+' selected. Filters apply to this chart.';
+ function empty(message){if(chart.data)Plotly.purge(chart);chart.style.height='220px';chart.replaceChildren();const text=document.createElement('p');text.className='trade-empty';text.textContent=message;chart.appendChild(text)}
+ if(!origins.length||!destinations.length){empty('Select at least one origin and one destination.');return}
+ if(chart.querySelector('.trade-empty'))chart.replaceChildren();
+ if(document.getElementById('tradeview').value==='matrix'){
+  renderPlot('trade',[{type:'heatmap',x:destinations.map(([r])=>r),y:origins.map(([r])=>r),z:origins.map(([,i])=>destinations.map(([,j])=>v.trade[i][j])),colorscale:'Teal',colorbar:{title:'M USD'},hovertemplate:'Origin: %{y}<br>Destination: %{x}<br>%{z:,.3f} M USD<extra></extra>'}],{...common,height:Math.max(480,20*origins.length+180),xaxis:{title:'Destination',tickangle:destinations.length>20?-90:-25,automargin:true},yaxis:{title:'Origin',autorange:'reversed',automargin:true}},{responsive:true,displaylogo:false});
+ }else{
+  const source=[],target=[],value=[],n=origins.length;
+  origins.forEach(([,i],oi)=>destinations.forEach(([,j],dj)=>{const q=v.trade[i][j];if(q>0){source.push(oi);target.push(n+dj);value.push(q)}}));
+  if(!value.length){empty('No positive deliveries in this selection. The trade matrix retains signed values.');return}
+  renderPlot('trade',[{type:'sankey',arrangement:'snap',node:{label:origins.map(([r])=>'Origin · '+r).concat(destinations.map(([r])=>'Use · '+r)),color:Array(n).fill(teal).concat(Array(destinations.length).fill(navy)),pad:12,thickness:16,line:{color:'white',width:.5}},link:{source,target,value,color:'rgba(0,177,168,0.18)'},valueformat:'.2f',valuesuffix:' M USD'}],{...common,height:Math.max(480,22*Math.max(origins.length,destinations.length)),margin:{l:30,r:30,t:25,b:25}},{responsive:true,displaylogo:false});
+ }
+}
+select.addEventListener('change',draw);document.getElementById('tradeview').addEventListener('change',drawTrade);draw();
+__REFERENCE_SCRIPT__
+</script></body></html>

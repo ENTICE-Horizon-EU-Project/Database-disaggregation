@@ -11,9 +11,11 @@ ongoing development also supports the D2.8 monetary MRIO split. Other databases
 require an appropriate parser, classification adapter and validation of their
 input conventions.
 
-The repository was renamed from `ENTICE_inventory`. The Python distribution
-remains `entice-inventory`, with import namespace `entice_inventory`, so existing
-imports continue to work. Data and results live in the project SharePoint
+The Python distribution is `database-disaggregation`, with import namespace
+`database_disaggregation`. Import the package with `import database_disaggregation`
+and access its APIs as `database_disaggregation.Geography`,
+`database_disaggregation.prepare_model_inputs`, or `database_disaggregation.reporting`.
+Data and results live in the project SharePoint
 **Data split** folder; this repository holds code, mappings, configuration and
 provenance records.
 
@@ -37,6 +39,13 @@ plausibility of a balanced MRIO. Environmental E is still provisional in the
 current accepted 13-region monetary split.
 
 ## Benchmark saved MRIO results
+
+Database dashboards now use the **MARIO workshop format**: sector selection,
+production, regional deliveries, use shares and available cross-database
+comparisons. The same template serves notebook and saved-result reporting.
+Refresh all existing reports with `python scripts/refresh_dashboards.py --all
+--overwrite`; this reads saved results and needs no external SSD or model run.
+
 
 The experimental branch includes a first dashboard for the accepted **13-region,
 67-new-sector** split (143 total sectors), compared with its exact 76-sector
@@ -107,7 +116,7 @@ geography. For example, the main path settings have this form:
 }
 ```
 
-Omitted dataset roles use the defaults in `entice_inventory.core.paths`.
+Omitted dataset roles use the defaults in `database_disaggregation.core.paths`.
 Absolute paths are also accepted as explicit overrides; no user's OneDrive
 location is embedded in the Python path resolver.
 
@@ -290,8 +299,8 @@ files does not automatically replace the selected Purdue delivery.
 
 | Task | Entry point |
 |---|---|
-| Build an inventory from a partner template | `entice_inventory.inventory.template_to_inventory` |
-| Build inventories from Purdue cost data | `entice_inventory.inventory.exioiot_to_inventory`, `copcosts_to_inventory` where present |
+| Build an inventory from a partner template | `database_disaggregation.inventory.template_to_inventory` |
+| Build inventories from Purdue cost data | `database_disaggregation.inventory.exioiot_to_inventory`, `copcosts_to_inventory` where present |
 | Historical D2.4 insertion and export | `scripts/run_d24_pipeline.py` (`#%%` cells; `split=False`) |
 | Re-export one sector from saved coefficients | `scripts/export_d24_sector.py --help` |
 | Inspect sector and region definitions | `scripts/registry.py --help` |
@@ -312,7 +321,7 @@ config/                       portable examples and workflow policies
 paths.local.json              user-editable path configuration
 data/                         bundled mappings, registry and geography definitions
 scripts/                      workflow, export and diagnostic commands
-src/entice_inventory/
+src/database_disaggregation/
   core/                       paths, baseline access and shared utilities
   inventory/                  source-to-inventory conversion
   export/                     inventory export and plots

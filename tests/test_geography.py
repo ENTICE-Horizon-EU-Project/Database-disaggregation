@@ -8,8 +8,8 @@ import pandas as pd
 import pytest
 from openpyxl import Workbook, load_workbook
 
-from entice_inventory.core.geography import Geography, aggregate_frame, aggregate_parquet
-from entice_inventory.inventory.regionalize import aggregate_inventory
+from database_disaggregation.core.geography import Geography, aggregate_frame, aggregate_parquet
+from database_disaggregation.inventory.regionalize import aggregate_inventory
 
 
 def inventory(path, *, sector='Child', outputs=(2., 6., 0.), profiles=None):
@@ -56,7 +56,7 @@ def test_mapping_requires_a_partition(tmp_path):
 
 
 def test_camilla_partition_covers_the_canonical_gtap_universe():
-    from entice_inventory.core.registry import Registry
+    from database_disaggregation.core.registry import Registry
     path = Path(__file__).resolve().parents[1] / 'data/geographies/gtap13.json'
     geo = Geography.read(path)
     geo.validate(Registry.load().members('GLOBAL', geography='GTAP12'))
@@ -65,7 +65,7 @@ def test_camilla_partition_covers_the_canonical_gtap_universe():
 
 @pytest.mark.parametrize('mapping_base,expected', [(None, 'DATA'), ('data_root', 'DATA'), ('repository', 'REPO')])
 def test_configured_mapping_distinguishes_data_from_repository(tmp_path, monkeypatch, mapping_base, expected):
-    from entice_inventory.core import geography
+    from database_disaggregation.core import geography
     repository, shared = tmp_path / 'relocated repository', tmp_path / 'Data split'
     for base, target in [(repository, 'REPO'), (shared, 'DATA')]:
         base.mkdir()
@@ -80,7 +80,7 @@ def test_configured_mapping_distinguishes_data_from_repository(tmp_path, monkeyp
 
 
 def test_configured_mapping_rejects_an_unknown_base(monkeypatch):
-    from entice_inventory.core import geography
+    from database_disaggregation.core import geography
     monkeypatch.setattr(geography, 'local_config', lambda: {
         'geography': {'mapping': 'mapping.json', 'mapping_base': 'automatic'}})
     with pytest.raises(ValueError, match='mapping_base'):
@@ -151,7 +151,7 @@ def test_partial_origin_cluster_is_not_expanded_silently(tmp_path):
 
 def test_preparation_uses_same_geography_for_baseline_and_workbook(tmp_path):
     import mario
-    from entice_inventory.core.disaggregation import prepare_inputs
+    from database_disaggregation.core.disaggregation import prepare_inputs
     axis = pd.MultiIndex.from_product([['R1', 'R2', 'R3'], ['Sector'], ['Parent']], names=['Region', 'Level', 'Item'])
     demand = pd.MultiIndex.from_product([['R1', 'R2', 'R3'], ['Consumption category'], ['HH']], names=axis.names)
     z = pd.DataFrame(2., index=axis, columns=axis)

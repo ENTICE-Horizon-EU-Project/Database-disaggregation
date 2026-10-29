@@ -4,8 +4,9 @@ import json
 import numpy as np
 import pandas as pd
 import pytest
-from entice_inventory.analysis import use_profile, trade_matrix, plot_use_profile, ReferenceSet, check_targets
-from entice_inventory.reporting import write_dashboard
+from database_disaggregation.analysis import use_profile, trade_matrix, plot_use_profile, ReferenceSet, check_targets
+from database_disaggregation.reporting import write_dashboard
+from database_disaggregation.analysis.flows import FD_GROUPS
 
 
 def database():
@@ -20,7 +21,7 @@ def database():
 
 def test_use_profile_sums_origins_excludes_investment_and_leaves_npish_missing():
     db=database();before=db.Z.copy(deep=True)
-    p=use_profile(db,'p')
+    p=use_profile(db,'p',final_demand=FD_GROUPS)
     assert list(p.shares.columns)==['A','B']
     assert list(p.shares.index)==['p','q','FD · Households','FD · Government','FD · NPISH']
     assert p.totals.to_dict()=={'A':75.,'B':116.}
@@ -35,11 +36,11 @@ def test_use_profile_sums_origins_excludes_investment_and_leaves_npish_missing()
 
 
 def test_zero_denominators_and_signed_residuals_are_not_replaced():
-    db=database();db.Z.iloc[[0,2],2:]=0;db.Y.iloc[[0,2],4:6]=0
+    db=database();db.Z.iloc[[0,2],2:]=0;db.Y.iloc[[0,2],4:]=0
     assert use_profile(db,'p').shares['B'].isna().all()
     db=database();db.Z.iloc[2,1]=-3.0000000001
     p=use_profile(db,'p');assert p.amounts.loc['q','A']<0
-    f=plot_use_profile(p);assert f.data[0].zmin==0
+    f=plot_use_profile(p);assert f.data[0].zmin<0
     assert np.nanmin(np.asarray(f.data[0].z,dtype=float))<0
     db.Z.iloc[2,1]=-3.1
     assert plot_use_profile(use_profile(db,'p')).data[0].zmin<0

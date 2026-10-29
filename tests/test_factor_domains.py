@@ -4,7 +4,7 @@ from zipfile import ZipFile
 import numpy as np
 import pytest
 from openpyxl import Workbook, load_workbook
-from entice_inventory.reconciliation.factor_domains import project_factors, reconcile_prepared_factors
+from database_disaggregation.reconciliation.factor_domains import project_factors, reconcile_prepared_factors
 
 
 def test_projection_preserves_net_and_has_kkt_optimum():

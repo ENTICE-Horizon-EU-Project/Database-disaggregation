@@ -6,7 +6,7 @@ import tempfile
 import unittest
 from unittest.mock import patch
 
-from entice_inventory.core import paths
+from database_disaggregation.core import paths
 
 
 class SharedPathsTests(unittest.TestCase):
