@@ -1,7 +1,7 @@
 """Prepare a shared geography and one editable MARIO split/step workbook."""
 from __future__ import annotations
 
-from dataclasses import replace
+from dataclasses import dataclass, replace
 import hashlib
 import json
 from io import BytesIO
@@ -14,11 +14,28 @@ from database_disaggregation.core.parent_budgets import ChildTargets, ParentBudg
 from database_disaggregation.inventory.regionalize import aggregate_inventory
 
 
-def prepare_inputs(source_dir, output_dir, *, database=None, geography=None, steps=None,
+@dataclass(frozen=True)
+class PreprocessedData:
+    """Matching regional database, MARIO input workbook and preparation audit."""
+
+    database: object
+    workbook: Path
+    audit: Path
+
+
+def prepare_inputs(source_dir=None, output_dir=None, *, database=None, data_root=None, geography=None, steps=None,
                    intermediate_steps=False, baseline_path=None, baseline_format=None,
-                   output_reference_dir=None, cleaning_policy=None, source_paths=None):
+                   output_reference_dir=None, cleaning_policy=None, source_paths=None,
+                   missing_output="parent_share", missing_cost_structure="same_sector_then_parent",
+                   inconsistent_targets="reconcile"):
     """Prepare without solving or altering the canonical native source files.
 
+    Supply ``database`` and ``data_root`` for the full collected-data workflow.
+    This returns :class:`PreprocessedData`: an aggregated database, the prepared
+    workbook and its audit directory. The three missing/inconsistent-data
+    options each accept the documented reconstruction strategy or ``"raise"``.
+
+    The legacy ``source_dir`` workflow returns its output directory as before.
     ``source_dir`` contains resolved MARIO/D2.4 inventories (the same boundary
     used by Camilla's regional aggregation). The original generation pipeline
     can pass its freshly exported native inventory directory here.
@@ -32,6 +49,25 @@ def prepare_inputs(source_dir, output_dir, *, database=None, geography=None, ste
     """
     if database is not None and (baseline_path is not None or baseline_format is not None):
         raise ValueError('Supply database or baseline_path/baseline_format, not both.')
+    if output_dir is None:
+        raise ValueError('Supply output_dir for the preparation results.')
+    if data_root is not None:
+        if database is None:
+            raise ValueError('Supply the parsed MARIO database with data_root.')
+        if cleaning_policy is not None or output_reference_dir is not None or intermediate_steps:
+            raise ValueError('With data_root, use the explicit missing-data options and steps, '
+                             'rather than legacy cleaning_policy/output_reference_dir/intermediate_steps.')
+        from database_disaggregation.reconciliation.model_inputs import _prepare_model_inputs
+        return _prepare_model_inputs(
+            database, output_dir, data_root=data_root, geography=geography, steps=steps,
+            source_dir=source_dir, source_paths=source_paths, missing_output=missing_output,
+            missing_cost_structure=missing_cost_structure, inconsistent_targets=inconsistent_targets,
+        )
+    if source_dir is None:
+        raise ValueError('Supply data_root for collected data, or source_dir for existing inventories.')
+    if (missing_output, missing_cost_structure, inconsistent_targets) != (
+            'parent_share', 'same_sector_then_parent', 'reconcile'):
+        raise ValueError('Explicit missing-data options require the data_root workflow.')
     native_database = database
     from mario.ops.add_sector_steps import validate_plan, write_workbook_payload
     if steps is not None and (not isinstance(steps, dict) or any(

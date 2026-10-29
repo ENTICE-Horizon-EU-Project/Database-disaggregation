@@ -51,7 +51,7 @@ def local_config() -> dict:
     return config
 
 
-def data_path(key: str, *, required: bool = False) -> Path:
+def data_path(key: str, *, required: bool = False, data_root: str | Path | None = None) -> Path:
     """Resolve an explicit dataset role, without guessing from filenames."""
     if key not in DATA_PATHS:
         raise KeyError(f'Unknown data path: {key}')
@@ -63,7 +63,8 @@ def data_path(key: str, *, required: bool = False) -> Path:
         raise ValueError(f'Invalid path for {key}')
     result = Path(value).expanduser()
     if not result.is_absolute():
-        result = project_data_root()/result
+        base = Path(data_root).expanduser() if data_root is not None else project_data_root()
+        result = base/result
     result = result.resolve()
     if required and not result.exists():
         raise FileNotFoundError(f'{key} is unavailable: {result}')

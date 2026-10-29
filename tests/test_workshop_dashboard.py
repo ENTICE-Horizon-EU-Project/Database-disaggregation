@@ -116,3 +116,24 @@ def test_partial_target_checks_require_an_explicit_sector_selection(tmp_path):
     assert len(selected)==1 and selected.passed.all()
     with pytest.raises(ValueError,match='absent from the database'):
         check_targets(db,path,sectors=['pending'])
+
+
+def test_dashboard_reads_saved_checkpoint_and_preserves_independent_production(tmp_path):
+    import hashlib
+    from pathlib import Path
+    from test_shared_runs import trial_fixture
+    trial = trial_fixture(tmp_path/'source')
+    checkpoint = Path(json.loads((trial/'trial.json').read_text())['accepted_checkpoints'][-1])
+    output_path = checkpoint/'database/flows/X.parquet'
+    expected = pd.read_parquet(output_path)*1.1
+    expected.to_parquet(output_path)
+    state_path = checkpoint/'state.json'
+    state = json.loads(state_path.read_text())
+    state['split_model_options'] = {'accounting': 'inherit'}
+    state['files']['database/flows/X.parquet'] = hashlib.sha256(output_path.read_bytes()).hexdigest()
+    state_path.write_text(json.dumps(state))
+    output = write_dashboard(checkpoint, tmp_path/'dashboard.html')
+    data, _ = json.JSONDecoder().raw_decode(output.read_text().split('const D=', 1)[1])
+    for region, value in expected.xs('Parent', level='Item').iloc[:, 0].items():
+        position = data['regions'].index(region[0])
+        assert data['payload']['Parent']['output'][position] == pytest.approx(value)

@@ -11,9 +11,11 @@ ongoing development also supports the D2.8 monetary MRIO split. Other databases
 require an appropriate parser, classification adapter and validation of their
 input conventions.
 
-The repository was renamed from `ENTICE_inventory`. The Python distribution
-remains `database-disaggregation`, with import namespace `database_disaggregation`, so existing
-imports continue to work. Data and results live in the project SharePoint
+The Python distribution is `database-disaggregation`, with import namespace
+`database_disaggregation`. Import the package with `import database_disaggregation`
+and access its APIs as `database_disaggregation.Geography`,
+`database_disaggregation.prepare_model_inputs`, or `database_disaggregation.reporting`.
+Data and results live in the project SharePoint
 **Data split** folder; this repository holds code, mappings, configuration and
 provenance records.
 
@@ -343,7 +345,3 @@ reference comparisons and standalone reports. See [the notebook API guide](docs/
 
 For unified production, cost-structure and bilateral-trade views by activity
 and region, built from the selected pipeline inputs, see [the data collection dashboard](docs/source-data-explorer.md).
-
-## Explicit workflow experiment
-
-On branch `codex/explicit-workflow`, see [the stage API](docs/explicit-workflow.md) and [the small executable notebook](examples/explicit_workflow.ipynb). Both repositories need the experimental branch; the workshop notebook remains unchanged.

@@ -37,6 +37,48 @@ Licensed datasets and personal paths belong in local configuration, not Git.
 
 ## Input metadata and preparation
 
+For the complete collected-data pipeline, pass the parsed MARIO database and
+the shared data root explicitly:
+
+```python
+geography = database_disaggregation.Geography.read(DATA_ROOT / settings['geography'])
+preprocessed_data = database_disaggregation.prepare_inputs(
+    database=db,
+    data_root=DATA_ROOT,
+    geography=geography,
+    output_dir=Path('prepared_inputs'),
+    missing_output='parent_share',
+    missing_cost_structure='same_sector_then_parent',
+    inconsistent_targets='reconcile',
+)
+```
+
+This API uses the existing complete collection recipe, including the additional
+activities. It returns a `PreprocessedData` object:
+
+- `.database`: a MARIO database aggregated to the requested geography, with the
+  prepared workbook read in and ready for the subsequent modelling steps;
+- `.workbook`: the path to `add_sectors.xlsx`;
+- `.audit`: the directory with source fingerprints, assumptions and adjustments.
+
+The original database and collected files are preserved. No baseline Parquet is
+written and no MRIO disaggregation is solved. Output/trade reconciliation can
+use its existing optimisation solver. `output_dir` must be a new directory.
+
+Conversions, mappings and accounting checks are always applied. Missing-data
+choices are explicit: `missing_output='parent_share'` estimates missing native
+country outputs using child/parent shares; `missing_cost_structure=
+'same_sector_then_parent'` borrows child profiles within the selected region,
+then globally, then uses the parent. `inconsistent_targets='reconcile'` adjusts
+incompatible output observations and parent/output trade budgets. Each accepts
+`'raise'` instead to stop when that estimation/adjustment is needed. The strict
+target option still permits geographic allocation consistent with the supplied
+observations, within the existing numerical tolerances. The selected options
+are recorded in `policy.json`, `preparation.json` and the audit summary.
+
+The legacy `prepare_inputs(source_dir, output_dir, ...)` and
+`prepare_model_inputs(...)` calls retain their directory return values.
+
 ```python
 geography = Geography.read('regions.json')
 plan = SplitPlan.read('add_sectors.xlsx')
@@ -185,6 +227,25 @@ with stable colours, an HTML legend and explicit layout heights.
 reporting.write_dashboard(result, 'results/dashboard.html',
                           benchmark=run_directory / 'benchmarking.json')
 ```
+
+For a workshop that skips the solve, pass the saved checkpoint directory
+instead of an in-memory database:
+
+```python
+run_directory = DATA_ROOT / settings['result_database']
+dashboard_file = database_disaggregation.reporting.write_dashboard(
+    database=run_directory,
+    output=Path('results/MARIO_workshop_dashboard.html'),
+    benchmark=run_directory / 'benchmarking.json',
+)
+```
+
+The existing checkpoint loader verifies saved matrix hashes, preserves the
+independent X targets and restores computational sector codes. This path
+requires a completed checkpoint; a bare Parquet export has no checkpoint state.
+No preprocessing, optimisation or external-database parsing is run. A fresh
+in-memory result remains supported and needs checks/references for that result,
+instead of the archived report of another run.
 
 The saved report supplies published sector names/status, parent identities,
 recorded target checks, compatible reference cases and numerical audit findings.

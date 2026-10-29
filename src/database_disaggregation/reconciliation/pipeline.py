@@ -2,7 +2,7 @@
 from collections import Counter
 import csv
 import hashlib
-from importlib.metadata import version
+from importlib.metadata import PackageNotFoundError, version
 import json
 import logging
 from pathlib import Path
@@ -148,14 +148,18 @@ def reconcile_inventories(source_dir,output_dir,*,geography=None,policy=True,bas
              ['sector','name','old_parent','parent','scope','output_source','output_assumption',
               'total_output','total_trade_prior','total_trade_reconciled'])
         (reports/'solvers.json').write_text(json.dumps(solver_records,indent=2))
+        try:
+            package_version = version('database-disaggregation')
+        except PackageNotFoundError:
+            package_version = 'uninstalled source checkout'
         summary={'status':'complete','policy_id':policy['id'],'policy_sha256':policy_sha,
                  'baseline_kind':'mario_database' if native_database is not None else 'files',
                  'geography':{'name':geography.name,'mapping':geography.mapping},
                  'registry_fingerprints':registry.fingerprints,'sectors':len(parents),
                  'code_fingerprints':code_fingerprints,
                  'integration_fingerprints':integration_fingerprints,
-                 'runtime':{'python':platform.python_version(),**{p:version(p) for p in
-                     ('database-disaggregation','mariopy','cvxlab','cvxpy','scipy','pandas','numpy')}},
+                 'runtime':{'python':platform.python_version(),'database-disaggregation':package_version,
+                            **{p:version(p) for p in ('mariopy','cvxlab','cvxpy','scipy','pandas','numpy')}},
                  'inventory_sources':inventory_sources,
                  'regions':len(geography.regions),'profile_count':len(parents)*len(geography.regions),
                  'checks_before':before['summary'],'checks_after':after['summary'],

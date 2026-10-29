@@ -33,7 +33,8 @@ def resolve_parents(policy, targets, registry, native, audit):
     return parents, old
 
 
-def prepare_outputs(policy, sources, native, geography, targets, parents, old_parents, audit, *, selected_parent_budgets=None):
+def prepare_outputs(policy, sources, native, geography, targets, parents, old_parents, audit, *,
+                    selected_parent_budgets=None, missing_output='parent_share', inconsistent_targets='reconcile'):
     legacy = {(r.Sector,r.Region):float(r.Quantity) for r in targets.output.itertuples()}
     values, confidence = {}, {}
     for sector,parent in parents.items():
@@ -43,21 +44,28 @@ def prepare_outputs(policy, sources, native, geography, targets, parents, old_pa
             raise ValueError(f'{sector}: repeated direct country observation under different identifiers.')
         parent_x = {r:max(0.,float(native.budgets.output.loc[(r,parent)])) for r in native.regions}
         reference = [o for o in observations if len(o['members'])==1]
+        def bounded_share(quantity, capacity):
+            if inconsistent_targets == 'raise' and quantity > capacity+ATOL+RTOL*abs(capacity):
+                audit.record('parent_share_capacity_rejected',kind='output',sector=sector,parent=parent,
+                             child_total=quantity,parent_capacity=capacity)
+                raise ValueError(f'{sector}: child outputs exceed the parent budget '
+                                 'when estimating shares (inconsistent_targets="raise").')
+            return min(1., quantity/capacity) if capacity > 0 else 0.
         def share(members):
             known = [o for o in reference if o['members'][0] in members]
             denom = sum(parent_x[o['members'][0]] for o in known)
             if denom>0:
-                return min(1.,sum(o['value'] for o in known)/denom)
+                return bounded_share(sum(o['value'] for o in known),denom)
             return None
         global_share = share(native.regions)
         if global_share is None and observations:
             broad = max(observations,key=lambda o:len(o['members']))
             denominator = sum(parent_x[r] for r in broad['members'])
-            global_share = min(1.,broad['value']/denominator) if denominator>0 else 0.
+            global_share = bounded_share(broad['value'],denominator)
         if global_share is None:
             known = [r for r in native.regions if (sector,r) in legacy]
             denominator = sum(max(0.,float(native.budgets.output.loc[(r,old_parents[sector])])) for r in known)
-            global_share = min(1.,sum(legacy[(sector,r)] for r in known)/denominator) if denominator>0 else 0.
+            global_share = bounded_share(sum(legacy[(sector,r)] for r in known),denominator)
         seed = {}
         for group in geography.regions:
             members = [r for r in native.regions if geography.mapping[r]==group]
@@ -68,6 +76,9 @@ def prepare_outputs(policy, sources, native, geography, targets, parents, old_pa
                     seed[region] = direct[region]['value']
                     confidence[(sector,region)] = direct[region]['confidence']
                 else:
+                    if missing_output == 'raise' and parent_x[region] > 0:
+                        audit.record('missing_output_rejected',kind='output',sector=sector,region=region)
+                        raise ValueError(f'{sector}/{region}: missing native output (missing_output="raise").')
                     seed[region] = ratio*parent_x[region]
                     confidence[(sector,region)] = 0.1
                     audit.record('missing_output_parent_share',kind='output',sector=sector,region=region,
@@ -89,7 +100,7 @@ def prepare_outputs(policy, sources, native, geography, targets, parents, old_pa
                 a.append([math.sqrt(weight)*scales[i]/denominator if r in o['members'] else 0.
                           for i,r in enumerate(available)])
                 b.append(math.sqrt(weight)*o['value']/denominator)
-            prior_weight = math.sqrt(policy['geography']['prior_weight'])
+            prior_weight = 0. if inconsistent_targets == 'raise' else math.sqrt(policy['geography']['prior_weight'])
             for i,r in enumerate(available):
                 denominator=max(seed[r],0.01*parent_x[r],1e-6)
                 row=np.zeros(len(available));row[i]=prior_weight*scales[i]/denominator
@@ -101,11 +112,21 @@ def prepare_outputs(policy, sources, native, geography, targets, parents, old_pa
                 seed[r] = max(0.,float(fit.x[i]*scales[i]))
             for o in prepared:
                 achieved=sum(seed[r] if parent_x[r]>0 else 0. for r in o['members'])
+                if inconsistent_targets == 'raise' and abs(achieved-o['value']) > ATOL+RTOL*abs(o['value']):
+                    audit.record('inconsistent_output_observation_rejected',kind='output_observation',sector=sector,
+                                 identifier=o['identifier'],before=o['value'],after=achieved)
+                    raise ValueError(f"{sector}/{o['identifier']}: inconsistent output observations "
+                                     '(inconsistent_targets="raise").')
                 audit.record('joint_geographic_fit',kind='output_observation',sector=sector,
                     identifier=o['identifier'],members=o['members'],source=o['source'],before=o['value'],after=achieved,
                     residual=achieved-o['value'],semantics=o['override'].get('mode','inclusive'),
                     assumption='Weighted soft totals; contradictory observations remain visible as residuals')
         for region in native.regions:
+            if inconsistent_targets == 'raise' and parent_x[region] == 0 and seed[region] > ATOL:
+                audit.record('structural_output_capacity_rejected',kind='output',sector=sector,region=region,
+                             before=seed[region],parent_capacity=0.)
+                raise ValueError(f'{sector}/{region}: output exceeds a zero parent budget '
+                                 '(inconsistent_targets="raise").')
             value = seed[region] if parent_x[region]>0 else 0.
             if not np.isfinite(value) or value<0:
                 raise ValueError(f'Invalid estimated output {sector}/{region}')
@@ -134,6 +155,11 @@ def prepare_outputs(policy, sources, native, geography, targets, parents, old_pa
         for group in geography.regions:
             total=sum(final[(c,group)] for c in codes)
             cap=max(0.,float(budgets.output.loc[(group,parent)]))
+            if inconsistent_targets == 'raise' and total > cap+ATOL+RTOL*abs(cap):
+                audit.record('parent_output_capacity_rejected',kind='output',parent=parent,region=group,
+                             child_total=total,parent_capacity=cap)
+                raise ValueError(f'{parent}/{group}: child outputs exceed the parent budget '
+                                 '(inconsistent_targets="raise").')
             factor=min(1.,cap/total) if total>0 else 1.
             for code in codes:
                 before=final[(code,group)]
@@ -205,7 +231,7 @@ def prepare_trade(policy,sources,native,geography,parents,native_output,final_ou
     return dict(priors),kinds
 
 
-def reconcile_trade(priors,kinds,parents,outputs,budgets,policy,audit):
+def reconcile_trade(priors,kinds,parents,outputs,budgets,policy,audit, *, inconsistent_targets='reconcile'):
     """Independent parent/origin QPs, with all children and destinations together."""
     import cvxpy as cp
     from scipy.sparse import coo_matrix
@@ -220,6 +246,11 @@ def reconcile_trade(priors,kinds,parents,outputs,budgets,policy,audit):
         for key,value in rows:
             cap=float(budgets.trade.loc[(origin,parent),key[2]])
             if cap<=0 or outputs[(key[0],origin)]<=0:
+                if inconsistent_targets == 'raise' and value > ATOL:
+                    audit.record('structural_trade_capacity_rejected',kind='trade',sector=key[0],origin=origin,
+                                 destination=key[2],before=value,parent_capacity=cap)
+                    raise ValueError(f'{key}: positive trade has no parent/output capacity '
+                                     '(inconsistent_targets="raise").')
                 result[key]=0.
                 audit.record('structural_trade_capacity',kind='trade',sector=key[0],origin=origin,destination=key[2],
                              before=value,after=0.,source_kind=kinds[key])
@@ -235,6 +266,11 @@ def reconcile_trade(priors,kinds,parents,outputs,budgets,policy,audit):
         sums=np.asarray(matrix@np.ones(n)).ravel()
         fractions=np.ones(n);status='already_feasible'
         if (sums>caps+ATOL+RTOL*np.abs(caps)).any():
+            if inconsistent_targets == 'raise':
+                audit.record('trade_capacity_rejected',kind='trade',parent=parent,origin=origin,
+                             max_excess=float((sums-caps).max()))
+                raise ValueError(f'{parent}/{origin}: trade targets exceed parent/output budgets '
+                                 '(inconsistent_targets="raise").')
             scales=np.maximum(np.maximum(sums,caps),1e-6)
             z=cp.Variable(n)
             weights=np.array([policy['trade']['weights'][kinds[k]] for k,v in positive])*q

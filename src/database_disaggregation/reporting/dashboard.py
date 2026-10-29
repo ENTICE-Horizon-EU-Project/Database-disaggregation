@@ -89,7 +89,16 @@ def dashboard_payload(database, *, checks=None, references=None, labels=None, wo
 
 def write_dashboard(database, output, *, checks=None, references=None, labels=None, workbook=None,
                     title="Sector disaggregation results", subtitle=None, benchmark=None):
-    """Write the common offline workshop layout from a MARIO database."""
+    """Write the offline dashboard from a MARIO database or saved checkpoint.
+
+    A checkpoint path uses the existing validated loader, preserving saved
+    independent production and restoring computational sector identifiers.
+    ``benchmark`` must describe the same run; its checks and comparisons are
+    reused without rerunning preparation, disaggregation or external parsers.
+    """
+    if isinstance(database, (str, Path)):
+        from database_disaggregation.core.residual_labels import load_checkpoint_with_codes
+        database = load_checkpoint_with_codes(database)
     from .render import render_dashboard
     audit_stem="benchmarking"
     if benchmark is not None:

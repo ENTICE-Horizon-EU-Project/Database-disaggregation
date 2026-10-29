@@ -75,8 +75,10 @@ def balance_profile(profile,policy,audit,*,sector,region):
 
 
 class ProfileBuilder:
-    def __init__(self,native,geography,parents,native_output,policy,audit):
+    def __init__(self,native,geography,parents,native_output,policy,audit, *,
+                 missing_cost_structure='same_sector_then_parent'):
         self.native,self.geo,self.parents,self.output,self.policy,self.audit=native,geography,parents,native_output,policy,audit
+        self.missing_cost_structure = missing_cost_structure
         self.origin_clusters={'GLOBAL':geography.regions}
 
     def canonical(self,profile,producing_region,parent,item_clusters,factor_clusters,region_clusters):
@@ -176,6 +178,11 @@ class ProfileBuilder:
                     if region in raw_profiles:
                         donors=[region];mode='own'
                     else:
+                        if self.missing_cost_structure == 'raise':
+                            self.audit.record('missing_cost_structure_rejected',kind='profile',sector=sector,
+                                              region=region,invalid_source_reason=invalid.get(region))
+                            raise ValueError(f'{sector}/{region}: missing cost structure '
+                                             '(missing_cost_structure="raise").')
                         donors=[r for r in members if r in raw_profiles and self.output[(sector,r)]>0]
                         mode='same_child_macroregion'
                         if not donors:
