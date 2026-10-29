@@ -24,5 +24,3 @@ GTAP12_X.xlsx
 
 # Versioned report assets are source files, not generated figures.
 !src/database_disaggregation/reporting/assets/*.png
-
-!src/database_disaggregation/reporting/assets/*.png

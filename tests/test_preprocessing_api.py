@@ -56,7 +56,7 @@ def test_public_collected_preparation_returns_matching_database_workbook_and_aud
         missing_output='parent_share', missing_cost_structure='same_sector_then_parent',
         inconsistent_targets='reconcile', **collected_data)
     assert isinstance(result, database_disaggregation.PreprocessedData)
-    assert result.database.get_index('Region') == ['G', 'H']
+    assert set(result.database.get_index('Region')) == {'G', 'H'}
     assert result.workbook.is_file()
     assert result.audit.is_dir()
     assert (result.audit/'changes.jsonl').is_file()

@@ -86,8 +86,8 @@ the final database in Data split. Keep them internal.
 
 | Branch or reference | Purpose |
 |---|---|
-| `main` | Core inventory tooling, historical reconstruction, configuration and shared-data access. |
-| `codex/configurable-regions` | Configurable geography, reconciliation, sequential MRIO trial execution and publication. Use this branch for the current D2.8 experiments. |
+| `main` | Consolidated inventory/preprocessing APIs, model trials, source-data and result dashboards, cross-database mappings and explicit workflow APIs. |
+| `codex/configurable-regions` | Historical development branch; its regional workflow and reference tools are integrated into `main`. |
 | `codex/split-diagnostics-2026-10-14` | Source, target and model-readiness diagnostics. |
 | `cleanup/pipeline-tidy` | Pipeline organisation and maintenance. |
 | `reference/d2.4` | Dedicated D2.4 reconstruction reference, with current shared-data paths. |
@@ -101,10 +101,10 @@ recreates the published package from raw sources, nor that a historical byte-for
 execution environment has been recovered. See the D2.4 branch README and the
 [maintained project report](docs/baseline/README.md).
 
-MARIO model changes remain in its own repository. The current MRIO experiments
-use MARIO `codex/mrio-model-improvements`; its options are separate from this
-repository's path configuration. Features listed for the experimental branch
-are not automatically available on `main` or the D2.4 reference.
+MARIO model changes remain in its own repository. Current MRIO execution uses
+MARIO `codex/mrio-memory`; its options are separate from this repository's path
+configuration. The separately callable build/solve/assembly prototype requires
+MARIO `codex/explicit-workflow`. The D2.4 reference preserves its historical scope.
 
 ## Installation
 
@@ -194,14 +194,14 @@ The fallback-policy runner is not combined with continuation automatically.
 
 ## Run the MRIO pipeline with another regional aggregation
 
-Use **this branch (`codex/configurable-regions`)** and MARIO
-`codex/mrio-model-improvements`, with its dependencies installed. Run the commands
+Use **`main`** and MARIO
+`codex/mrio-memory`, with its dependencies installed. Run the commands
 from the repository root. Select the intended MARIO checkout explicitly if your
 environment already has another editable MARIO installation:
 
 ```bash
 conda activate mario
-export MARIO_SOURCE="/path/to/MARIO/checkout-on-codex-mrio-model-improvements"
+export MARIO_SOURCE="/path/to/MARIO/checkout-on-codex-mrio-memory"
 export PYTHONPATH="$MARIO_SOURCE:$PWD/src"
 ```
 
@@ -413,3 +413,13 @@ an offline reference tab with five KPIs and explicit sector/geography scopes.
 See [the numerical reference workflow](docs/benchmarking.md#numerical-2023-references-in-the-internal-dashboard)
 for configuration, the full command and limitations. No model is rerun; numerical
 outputs and caches stay beside the database in shared storage, outside Git.
+
+## Explicit model stages
+
+The [minimal notebook](examples/disaggregation.ipynb) has at most two code lines
+per cell and uses configured real inputs. The default workshop flow loads the
+saved checkpoint; preparation, model execution and export are commented.
+The [stage API guide](docs/explicit-workflow.md) explains build, solve, assembly,
+export and dashboard calls. These APIs are on this repository's `main`; separate
+MARIO model stages currently require its `codex/explicit-workflow` checkout.
+Small synthetic solves remain in the tests.

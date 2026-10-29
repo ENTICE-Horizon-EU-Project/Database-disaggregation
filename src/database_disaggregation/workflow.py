@@ -131,7 +131,7 @@ def load_database(directory):
 
 
 def build_dashboard(database_or_run, path, *, inputs=None, checks=None, **options):
-    """Render the existing standalone dashboard from a database or exported run.
+    """Render the shared dashboard from a database, exported run or MARIO checkpoint.
 
     If a run has an archived workbook, use it for sector identities and target
     checks. External comparisons require an explicitly matching reference set
@@ -140,7 +140,11 @@ def build_dashboard(database_or_run, path, *, inputs=None, checks=None, **option
     from database_disaggregation import analysis, reporting
     if isinstance(database_or_run, (str, Path)):
         root = Path(database_or_run)
-        database = load_database(root)
+        if (root/'state.json').is_file():
+            from database_disaggregation.core.residual_labels import load_checkpoint_with_codes
+            database = load_checkpoint_with_codes(root)
+        else:
+            database = load_database(root)
         if inputs is None and (root/'add_sectors.xlsx').is_file():
             inputs = root/'add_sectors.xlsx'
     else:

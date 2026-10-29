@@ -2,7 +2,7 @@
 
 The notebook imports MARIO and `database_disaggregation` directly. Configuration contains
 paths and solver options; importing the package does not load an IO database or
-start a run. There is no notebook-specific setup or orchestration module.
+start a run. The example keeps at most two code lines per cell. Numerical preparation and reporting are repository APIs; synthetic data construction stays in tests.
 
 Start with [the example notebook](../examples/disaggregation.ipynb). Copy
 [the example configuration](../config/notebook.example.json) to
@@ -125,7 +125,7 @@ blank templates and solver checkpoints outside the presentation folder.
 ## Extended collection and the current saved example
 
 Use MARIO branch `codex/mrio-memory` for the current 61-region example.
-The notebook API checkout remains `codex/notebook-api`. The example settings
+The repository APIs are integrated into `main`. The example settings
 select the 61-region published run with 128 total sectors: 52 of the 69 planned
 additions succeeded, and 17 remain in their parents. Preparation and optimization
 cells are commented out for the demonstration.

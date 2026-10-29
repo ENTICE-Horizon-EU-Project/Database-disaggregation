@@ -100,3 +100,16 @@ def test_export_failure_does_not_publish_a_partial_run(tmp_path, monkeypatch):
     with pytest.raises(RuntimeError, match='Synthetic export failure'):
         workflow.export_database(database, tmp_path/'exported')
     assert list(tmp_path.iterdir()) == []
+
+
+def test_workflow_dashboard_accepts_a_validated_mario_checkpoint(tmp_path):
+    from pathlib import Path
+    from test_shared_runs import trial_fixture
+    trial = trial_fixture(tmp_path/'source')
+    checkpoint = Path(json.loads((trial/'trial.json').read_text())['accepted_checkpoints'][-1])
+    expected = pd.read_parquet(checkpoint/'database/flows/X.parquet')
+    page = workflow.build_dashboard(checkpoint, tmp_path/'checkpoint.html')
+    data, _ = json.JSONDecoder().raw_decode(page.read_text().split('const D=', 1)[1])
+    for coordinate, row in expected.iterrows():
+        region, _, sector = coordinate
+        assert data['payload'][sector]['output'][data['regions'].index(region)] == pytest.approx(row.iloc[0])
