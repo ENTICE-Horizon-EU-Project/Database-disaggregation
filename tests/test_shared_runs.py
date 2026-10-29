@@ -6,7 +6,7 @@ import shutil
 
 import pandas as pd
 import pytest
-from entice_inventory.core.shared_runs import publish_trial, remaining_workbook, run_name
+from database_disaggregation.core.shared_runs import publish_trial, remaining_workbook, run_name
 
 
 def trial_fixture(tmp_path,status='accepted'):
@@ -60,3 +60,34 @@ def test_publication_pairs_names_and_preserves_inputs_and_matrices(tmp_path,stat
 def test_run_name_keeps_original_project_time_and_rejects_ambiguous_times():
     assert run_name('2026-10-20T20:09:02+00:00',13,17)=='20261020 2209 - 13 regions and 17 sectors'
     with pytest.raises(ValueError):run_name(datetime(2026,10,21),13,67)
+
+
+@pytest.mark.parametrize('report_only', [False, True])
+def test_publication_keeps_raw_and_cleaned_points_and_approximate_label(tmp_path, report_only):
+    trial = trial_fixture(tmp_path)
+    manifest = json.loads((trial/'trial.json').read_text())
+    checkpoint = Path(manifest['accepted_checkpoints'][-1])
+    state_path = checkpoint/'state.json'
+    state = json.loads(state_path.read_text())
+    validation = dict(status='postprocessed_pending_review' if report_only else 'approximate_after_cleanup',
+                      absolute_tolerance_original_units=1e-6 if report_only else .01,
+                      relative_tolerance=1e-8, residuals_enforced=not report_only)
+    state['preservation'] = {'numerical_validation': validation}
+    state_path.write_text(json.dumps(state))
+    model = checkpoint/'cvxlab/model'
+    model.mkdir(parents=True)
+    artifacts = {'solution_cleanup.json': b'{"status":"accepted_with_cleanup"}',
+                 'raw_model_solution.json': b'[{"objective_finite":false}]',
+                 'returned_solution_scaled.npz': b'raw point',
+                 'cleaned_solution_scaled.npz': b'cleaned point'}
+    for name, contents in artifacts.items():
+        (model/name).write_bytes(contents)
+    published = publish_trial(trial, inventory_root=tmp_path/'Inventories', database_root=tmp_path/'Database')
+    database = Path(published['database'])
+    assert json.loads((database/'run.json').read_text())['numerical_validation'] == validation
+    for name, contents in artifacts.items():
+        assert (database/'diagnostics'/name).read_bytes() == contents
+    assert validation['status'] in (database/'README.md').read_text()
+    assert validation['status'] in (Path(published['inventory'])/'README.md').read_text()
+    if report_only:
+        assert 'diagnostic only' in (database/'README.md').read_text()

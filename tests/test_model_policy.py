@@ -4,7 +4,7 @@ import json
 from pathlib import Path
 import unittest
 
-from entice_inventory.core.model_policy import (
+from database_disaggregation.core.model_policy import (
     INITIAL, SUBSEQUENT, QUADRATIC, attempt_order, try_stage, validate_policy,
 )
 

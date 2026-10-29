@@ -7,7 +7,7 @@ import shutil
 from xml.etree import ElementTree as ET
 from zipfile import ZipFile
 
-from entice_inventory.reconciliation.factor_domains import _sheet_paths
+from database_disaggregation.reconciliation.factor_domains import _sheet_paths
 
 
 def sha(path):

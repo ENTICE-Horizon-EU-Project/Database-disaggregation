@@ -15,9 +15,9 @@ import traceback
 
 import mario
 import cvxlab
-import entice_inventory
+import database_disaggregation
 from mario.ops import cvxlab_bridge as bridge
-from entice_inventory.core.parent_budgets import ParentBudgets, ChildTargets, require_parent_budgets
+from database_disaggregation.core.parent_budgets import ParentBudgets, ChildTargets, require_parent_budgets
 from run_model_trial import fingerprints, code_identity
 
 
@@ -44,7 +44,7 @@ def main():
         source_preparation=str(source), source_workbook_sha256=workbook_hash,
         source_baseline_sha256=baseline_hashes, split_model_options=options,
         code={name: code_identity(module) for name, module in
-              [('mario', mario), ('cvxlab', cvxlab), ('entice_inventory', entice_inventory)]},
+              [('mario', mario), ('cvxlab', cvxlab), ('database_disaggregation', database_disaggregation)]},
         solver_called=False, database_accepted=False)
     path = output / 'preparation_profile.json'
     def save():

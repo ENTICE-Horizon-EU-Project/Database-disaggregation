@@ -20,18 +20,18 @@ from datetime import datetime
 
 import mario
 
-from entice_inventory.export.build_d24_inventories import (
+from database_disaggregation.export.build_d24_inventories import (
     export_d24_inventories,
     update_trades_in_exported_inventories,
 )
-from entice_inventory.export import plot_d24_split
-from entice_inventory.core.paths import project_data_root, data_path, PROJECT_ROOT
-from entice_inventory.core.baseline import load_baseline
-from entice_inventory.core.geography import configured_geography
-from entice_inventory.core.disaggregation import prepare_inputs, read_output_references
-from entice_inventory.core.parent_budgets import ParentBudgets, read_child_targets, require_parent_budgets, evaluate_parent_budgets
+from database_disaggregation.export import plot_d24_split
+from database_disaggregation.core.paths import project_data_root, data_path, PROJECT_ROOT
+from database_disaggregation.core.baseline import load_baseline
+from database_disaggregation.core.geography import configured_geography
+from database_disaggregation.core.disaggregation import prepare_inputs, read_output_references
+from database_disaggregation.core.parent_budgets import ParentBudgets, read_child_targets, require_parent_budgets, evaluate_parent_budgets
 import json
-from entice_inventory.core.paths import local_config
+from database_disaggregation.core.paths import local_config
 
 # --- Paths (all derived from BASE) ----------------------------------------- #
 BASE = project_data_root(required=True)

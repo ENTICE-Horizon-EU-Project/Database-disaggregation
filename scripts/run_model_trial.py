@@ -5,6 +5,7 @@ source selection, baseline closure or modification of the source run occurs.
 Use a fresh output directory for every experiment.
 """
 import argparse
+from contextlib import nullcontext
 from datetime import datetime, timezone
 import hashlib
 from importlib.metadata import version, PackageNotFoundError
@@ -53,6 +54,8 @@ def main():
     selection.add_argument('--policy', type=Path, help='Model/solver policy JSON; default: config/model-trials/entropy-first.json.')
     selection.add_argument('--options', type=Path, help='One fixed MARIO split_model_options JSON, bypassing the model policy.')
     selection.add_argument('--historical-model', action='store_true', help='Use the historical formulation without the entropy-first policy.')
+    parser.add_argument('--saved-solution', type=Path, help='Restore one saved optimal CVXLab raw point; rebuild and post-process without calling a solver.')
+    parser.add_argument('--on-step-failure', choices=['raise','continue'], default='raise')
     parser.add_argument('--solver-options', type=Path)
     parser.add_argument('--solver', help='Solver for a fixed --options / --historical-model run.')
     parser.add_argument('--stop-after-step', help='Defaults to Mining for a fresh preparation; resume runs all pending groups.')
@@ -60,6 +63,8 @@ def main():
     started_at=datetime.now(timezone.utc)
     policy_path = args.policy or (Path(__file__).resolve().parents[1]/'config/model-trials/entropy-first.json' if not args.options and not args.historical_model else None)
     policy = json.loads(policy_path.read_text()) if policy_path else None
+    if policy is not None and args.on_step_failure == 'continue':
+        parser.error('Continuation currently requires explicit --options and a fixed solver.')
     if policy is not None and (args.solver or args.solver_options):
         parser.error('A model policy contains its solver order/options; use --options for a fixed solver run.')
     if policy is None and args.solver is None:
@@ -68,6 +73,12 @@ def main():
     solver_options = json.loads(args.solver_options.read_text()) if args.solver_options else None
     if args.workbook and not args.resume:
         parser.error('--workbook requires --resume.')
+    if args.saved_solution and (policy is not None or args.resume or options is None):
+        parser.error('--saved-solution requires --prepared and explicit --options, without model-policy fallback.')
+    if args.saved_solution:
+        from mario.ops.split_model import normalize_options
+        if normalize_options(options)['solution_cleanup'] != {'validation': 'report_only'}:
+            parser.error('--saved-solution requires solution_cleanup=postprocess.')
     source = (args.resume or args.prepared).resolve()
     stop_after_step = args.stop_after_step if args.resume else args.stop_after_step or 'Mining'
     output = (args.output or Path(__file__).resolve().parents[1]/'build/model_trials'/started_at.strftime('%Y%m%d-%H%M%S')).resolve()
@@ -78,7 +89,7 @@ def main():
             parser.error('Expected state.json in --resume.')
         if args.options is None and policy is None and not args.historical_model:
             options = json.loads((source/'state.json').read_text()).get('split_model_options')
-        from entice_inventory.core.shared_runs import remaining_workbook
+        from database_disaggregation.core.shared_runs import remaining_workbook
         workbook = (args.workbook or remaining_workbook(source)).resolve()
     else:
         workbook = source/'add_sectors.xlsx'
@@ -92,17 +103,17 @@ def main():
     shutil.copy2(workbook, output/'add_sectors.xlsx')
     import mario
     import cvxlab
-    import entice_inventory
-    from entice_inventory.core.parent_budgets import ParentBudgets, ChildTargets, require_parent_budgets
+    import database_disaggregation
+    from database_disaggregation.core.parent_budgets import ParentBudgets, ChildTargets, diagnose_trial_parent_budgets
     manifest = {'status': 'running', 'started_at':started_at.isoformat(),
                 'source_checkpoint' if args.resume else 'source_preparation': str(source),
                 'runner_sha256': hashlib.sha256(Path(__file__).read_bytes()).hexdigest(),
                 'source_baseline_sha256': baseline_hashes, 'source_workbook_sha256': workbook_hash,
                 'split_model_options': options, 'solver': args.solver, 'solver_options': solver_options,
-                'source_workbook': str(workbook), 'stop_after_step': stop_after_step,
+                'source_workbook': str(workbook), 'stop_after_step': stop_after_step, 'on_step_failure':args.on_step_failure,
                 'runtime': {p: version(p) for p in ('mariopy','cvxlab','cvxpy','numpy','pandas','clarabel')},
                 'code': {name: code_identity(module) for name,module in
-                         [('mario',mario),('cvxlab',cvxlab),('entice_inventory',entice_inventory)]}}
+                         [('mario',mario),('cvxlab',cvxlab),('database_disaggregation',database_disaggregation)]}}
     for package in ('Mosek', 'gurobipy', 'scs', 'osqp', 'highspy'):
         try:
             manifest['runtime'][package] = version(package)
@@ -113,6 +124,11 @@ def main():
         manifest['model_policy'] = policy
         manifest['model_policy_source'] = str(policy_path.resolve())
         manifest['model_policy_sha256'] = hashlib.sha256(policy_path.read_bytes()).hexdigest()
+    saved_hashes = fingerprints(args.saved_solution.resolve()) if args.saved_solution else None
+    if args.saved_solution:
+        manifest.update(execution='postprocess_saved_solution', optimization_rerun=False,
+                        saved_solution_directory=str(args.saved_solution.resolve()),
+                        saved_solution_sha256=saved_hashes)
     path = output/'trial.json'
     path.write_text(json.dumps(manifest, indent=2))
     started = time.monotonic()
@@ -123,35 +139,56 @@ def main():
         if options is not None and 'split_model_options' not in inspect.signature(mario.Database.add_sectors).parameters:
             raise RuntimeError('The selected MARIO checkout does not support split_model_options.')
         if args.resume:
-            from mario.ops.add_sector_steps import load_checkpoint
-            db = load_checkpoint(source)
+            from database_disaggregation.core.residual_labels import load_checkpoint_with_codes
+            db = load_checkpoint_with_codes(source)
         else:
             db = mario.parse_from_parquet(str(output/'baseline'/'flows'), table='IOT', mode='flows')
         db.read_add_sectors_excel(output/'add_sectors.xlsx', read_inventories=True, split=True)
         targets = ChildTargets.from_workbook(db.add_sectors_workbook)
         if args.resume:
             targets = targets.pending(db)
-        require_parent_budgets(ParentBudgets.from_database(db), targets,
+        if stop_after_step:
+            from mario.ops.add_sector_steps import validate_plan
+            plan, _ = validate_plan(db.add_sectors_workbook, db.get_index('Sector'),
+                                    completed=getattr(db, '_intermediate_steps_state', {}).get('completed_sectors', []))
+            selected = []
+            for name, sectors in plan:
+                selected.extend(sectors)
+                if name == stop_after_step:
+                    break
+            else:
+                raise ValueError('stop_after_step must name a pending group in Intermediate steps.')
+            targets = targets.select(selected)
+            manifest['parent_budget_sectors'] = selected
+        diagnose_trial_parent_budgets(ParentBudgets.from_database(db), targets,
                                report_path=output/'parent_budgets.json')
         if not db.add_sectors_workbook.intermediate_steps:
             raise ValueError('A model trial requires an explicit Intermediate steps plan.')
         kwargs = dict(split=True, intermediate_steps=True, save_intermediates=output/'checkpoints',
-                      stop_after_step=stop_after_step, solver=args.solver, solver_parameters=solver_options)
+                      stop_after_step=stop_after_step, solver=args.solver, solver_parameters=solver_options,
+                      on_step_failure=args.on_step_failure)
         if options is not None:
             kwargs['split_model_options'] = options
         if policy is None:
-            db.add_sectors('inventories', **kwargs)
+            from mario.ops.split_solution_replay import replay_split_solution
+            replay = replay_split_solution(args.saved_solution) if args.saved_solution else nullcontext()
+            with replay:
+                db.add_sectors('inventories', **kwargs)
         else:
-            from entice_inventory.core.model_policy import run_model_policy
+            from database_disaggregation.core.model_policy import run_model_policy
             db = run_model_policy(db, output/'add_sectors.xlsx', output, policy, stop_after_step=stop_after_step)
             manifest['split_model_options'] = db._intermediate_steps_state['split_model_options']
             manifest['model_history'] = db._intermediate_steps_state.get('model_history', [])
             accepted_attempts = [a for a in json.loads((output/'model_attempts.json').read_text()) if a['status'] == 'accepted']
             manifest['solver'] = accepted_attempts[-1]['solver']
             manifest['solver_options'] = accepted_attempts[-1]['solver_options']
-        manifest.update(status='accepted', completed_sectors=db._intermediate_steps_state['completed_sectors'],
-                        pending_recalculations=db._intermediate_steps_state.get('pending_recalculations',[]))
-        exit_code = 0
+        state=getattr(db,'_intermediate_steps_state',{})
+        report=getattr(db,'_intermediate_steps_report',{})
+        manifest.update(status='accepted' if state.get('completed_sectors') else 'failed',
+                        completed_sectors=state.get('completed_sectors',[]),
+                        execution_report=report, full_plan_completed=not report.get('pending_sectors',[]),
+                        pending_recalculations=state.get('pending_recalculations',[]))
+        exit_code = 0 if manifest['status']=='accepted' else 1
     except Exception as exc:
         manifest.update(status='failed', error=str(exc), traceback=traceback.format_exc())
         traceback.print_exc()
@@ -164,13 +201,18 @@ def main():
         manifest['working_baseline_unchanged'] = (True if args.resume else fingerprints(output/'baseline') == baseline_hashes)
         manifest['accepted_checkpoints'] = [str(p.parent) for p in sorted((output/'checkpoints').glob('*/state.json'))
                                             if not p.parent.name.startswith('.')]
+        if args.saved_solution:
+            manifest['saved_solution_unchanged'] = fingerprints(args.saved_solution.resolve()) == saved_hashes
+            if not manifest['saved_solution_unchanged']:
+                manifest.update(status='failed', integrity_error='The original solver result changed during restoration.')
+                exit_code = 1
         if not all(manifest[k] for k in ('source_baseline_unchanged','source_workbook_unchanged','working_baseline_unchanged')):
             manifest.update(status='failed', integrity_error='Input hashes changed during the trial.')
             exit_code = 1
         path.write_text(json.dumps(manifest, indent=2, allow_nan=False))
         if not args.no_publish:
             try:
-                from entice_inventory.core.shared_runs import publish_trial
+                from database_disaggregation.core.shared_runs import publish_trial
                 manifest['publication']=publish_trial(output)
                 print('Shared results: '+(manifest['publication']['database'] or manifest['publication']['inventory']))
             except Exception as exc:

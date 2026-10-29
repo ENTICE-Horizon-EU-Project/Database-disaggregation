@@ -12,7 +12,7 @@ require an appropriate parser, classification adapter and validation of their
 input conventions.
 
 The repository was renamed from `ENTICE_inventory`. The Python distribution
-remains `entice-inventory`, with import namespace `entice_inventory`, so existing
+remains `database-disaggregation`, with import namespace `database_disaggregation`, so existing
 imports continue to work. Data and results live in the project SharePoint
 **Data split** folder; this repository holds code, mappings, configuration and
 provenance records.
@@ -36,7 +36,34 @@ steps. Reproducing an inventory is distinct from validating the economic
 plausibility of a balanced MRIO. Environmental E is still provisional in the
 current accepted 13-region monetary split.
 
+## Extend the saved 13-region result
+
+The scoped continuation on `codex/mrio-memory` contains **69 ENTICE activities
+(145 total sectors)**: new BAR and SGI, plus PCP rebuilt from the collected
+coal-products data. AMM, HYS and additional silicon extraction are excluded.
+Residual parents have readable, reversible names. See the
+[case report, source assumptions and results](docs/additional-sectors-13.md).
+
+To prepare this extension from the saved 67-activity database, using your
+configured `paths.local.json` / `ENTICE_DATA_ROOT` and a fresh output directory:
+
+```bash
+python scripts/prepare_additional_sectors.py --output build/additional13-new
+```
+
+This command **prepares inputs only**; it does not run a solver. The explicit
+source columns, active sectors and exclusions are in
+[`config/additional-sectors-13.json`](config/additional-sectors-13.json).
+The original 67-activity database and source files remain intact.
+
 ## Benchmark saved MRIO results
+
+Database dashboards now use the **MARIO workshop format**: sector selection,
+production, regional deliveries, use shares and available cross-database
+comparisons. The same template serves notebook and saved-result reporting.
+Refresh all existing reports with `python scripts/refresh_dashboards.py --all
+--overwrite`; this reads saved results and needs no external SSD or model run.
+
 
 The experimental branch includes a first dashboard for the accepted **13-region,
 67-new-sector** split (143 total sectors), compared with its exact 76-sector
@@ -107,7 +134,7 @@ geography. For example, the main path settings have this form:
 }
 ```
 
-Omitted dataset roles use the defaults in `entice_inventory.core.paths`.
+Omitted dataset roles use the defaults in `database_disaggregation.core.paths`.
 Absolute paths are also accepted as explicit overrides; no user's OneDrive
 location is embedded in the Python path resolver.
 
@@ -135,6 +162,25 @@ Absolute mapping paths also work. The map is a complete source-to-target
 partition; duplicate or missing source assignments are rejected.
 `geography: null` retains the native geography. The disaggregation inventory
 directory is configured separately and is relative to `data_root`.
+
+## Geography shared with the GTAP models
+
+`data/geographies/gtap-models-compatible.json` maps all **163 native GTAP
+regions to 61 executable groups**, using aggregation only. It reconciles the
+64 desired model groups by merging groups connected through indivisible GTAP
+regions and retaining native XTW. The source workbook, country/region tables
+and audit are on WSP under `Classifications/GTAP model regions`.
+See [territorial changes and commands](docs/gtap-model-regions.md).
+
+MARIO `codex/mrio-memory` supports `Database.add_sectors(...,
+on_step_failure="continue")` for sequential IOT splits; the default is `"raise"`.
+Preparation happens before this call, and MARIO projects the unchanged source
+inventories to the actual classification after each attempt. See
+[sequence behaviour and responsibilities](docs/sequential-failures-design.md).
+The geographic mapping does not activate this option. For a fixed model and
+solver, the trial runner exposes `--on-step-failure continue`; its default is
+`raise`. It must be selected together with explicit `--options` and `--solver`.
+The fallback-policy runner is not combined with continuation automatically.
 
 ## Run the MRIO pipeline with another regional aggregation
 
@@ -208,9 +254,10 @@ try the named **quadratic** model, with **Gurobi → MOSEK → Clarabel → OSQP
 The feasibility preflight uses **Gurobi → HiGHS → Clarabel** for installation,
 licence or numerical failures; a mathematical infeasibility stops that preflight.
 
-Every attempt starts from the same preceding accepted database. The policy
-requires a finite evaluated objective and retains all independent acceptance checks and records unsuccessful attempts and
-model changes in `model_attempts.json` and checkpoint `model_history`. Schema,
+Every attempt starts from the same preceding accepted database. For named MRIO models, optimal points are exported after audited sign/zero
+projection; monetary residuals remain diagnostic without a dollar cutoff.
+Nonfinite returned data and schema errors remain technical failures. The policy
+records unsuccessful solver attempts and model changes in `model_attempts.json` and checkpoint `model_history`. Schema,
 input-integrity and programming errors stop the run instead of triggering an
 objective change. Solver settings and order are editable in the policy JSON.
 MOSEK and Gurobi need their Python packages and valid licences. Open solvers remain
@@ -290,8 +337,8 @@ files does not automatically replace the selected Purdue delivery.
 
 | Task | Entry point |
 |---|---|
-| Build an inventory from a partner template | `entice_inventory.inventory.template_to_inventory` |
-| Build inventories from Purdue cost data | `entice_inventory.inventory.exioiot_to_inventory`, `copcosts_to_inventory` where present |
+| Build an inventory from a partner template | `database_disaggregation.inventory.template_to_inventory` |
+| Build inventories from Purdue cost data | `database_disaggregation.inventory.exioiot_to_inventory`, `copcosts_to_inventory` where present |
 | Historical D2.4 insertion and export | `scripts/run_d24_pipeline.py` (`#%%` cells; `split=False`) |
 | Re-export one sector from saved coefficients | `scripts/export_d24_sector.py --help` |
 | Inspect sector and region definitions | `scripts/registry.py --help` |
@@ -312,7 +359,7 @@ config/                       portable examples and workflow policies
 paths.local.json              user-editable path configuration
 data/                         bundled mappings, registry and geography definitions
 scripts/                      workflow, export and diagnostic commands
-src/entice_inventory/
+src/database_disaggregation/
   core/                       paths, baseline access and shared utilities
   inventory/                  source-to-inventory conversion
   export/                     inventory export and plots
@@ -328,3 +375,51 @@ are not rewritten to claim that an old run used today's configuration.
 Structural checks and successful optimisation do not by themselves validate
 economic assumptions. The first offline benchmark is available; economic review
 thresholds and sensitivity experiments still need agreement with the project team.
+
+
+## Controlled KL prior-filter experiment
+
+The local `codex/mrio-memory` work uses an opt-in `prior_zero_tolerance=1e-6`
+inside `split_model_options` for `Split_sectors_MRIO_KL`. The corresponding
+configuration is `config/model-trials/kl-prior-floor.json`; its entropy support is
+`tol * 1e-2` and references use `max` rather than additive offsets. Baseline,
+targets and signed domains are preserved. See [the CHR13 trial report](docs/kl-prior-floor.md)
+for exact scope, reproduction and the rejected numerical result. CVXLab is not
+modified by this experiment.
+
+## Numerical result handling: KL and quadratic
+
+Named MRIO models automatically post-process an `optimal` solver point, including
+KL, quadratic and mixed objectives. No new `add_sectors` argument is required.
+`config/model-trials/kl-postprocess.json` remains a full-KL experiment configuration. After solver status `optimal`, MARIO projects forbidden signs
+and structural zeros, preserves allowed signed Y/V, and saves both raw and cleaned
+points. Accounting/reaggregation residuals are diagnostic; there is no dollar
+cutoff for accepting the export. Economic review remains pending.
+
+The 49-region CHR database has been recovered from the existing MOSEK point,
+without another optimization. See [results and reproduction](docs/kl-postprocessing.md).
+The explicit `--saved-solution` trial option requires identical original inputs
+and is separate from a normal solve. The earlier bounded configuration remains
+only as a historical experiment.
+
+
+### 49-region quadratic continuation and sector order
+
+COB then MCU are completed with Gurobi, one sector at a time: 49 regions and
+78 total sectors. The existing optimal final point was recovered without
+changing any cell or calling an optimizer again. An approximately USD 9
+constraint residual remains diagnostic. The standard export and checkpoint
+paths now use that rule consistently for named MRIO models. Trial parent-budget
+excesses are diagnostic too; incomplete coverage, nonfinite data and bad
+coordinates remain errors. Strict preparation checks remain separate.
+
+See [results, implementation changes and order comparison](docs/qp49-order-and-numerical-acceptance.md).
+The paired WSP output is `20261028 1230 - 49 regions and 2 sectors`. E is pending.
+The reverse order failed natively in Gurobi, so the economic order comparison
+is explicitly limited to MCU decisions at a common classification.
+
+
+The subsequent CHR continuation did not complete a third sector: barrier returned
+suboptimal, and one method-only simplex alternative returned an ambiguous
+infeasible/unbounded status on identical inputs. No optimal point was rejected,
+and the COB+MCU result remains intact. See [the bounded continuation report](docs/qp49-chr-continuation.md).

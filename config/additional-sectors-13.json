@@ -1,0 +1,175 @@
+{
+  "schema_version": 1,
+  "country_components": {
+    "BAR": {
+      "Buthan": {
+        "target": "XSA",
+        "country": "Bhutan",
+        "all_members": [
+          "Bhutan",
+          "Maldives"
+        ],
+        "source": "https://www.gtap.agecon.purdue.edu/databases/regions.aspx?Version=12.211"
+      },
+      "Iceland": {
+        "target": "XEF",
+        "country": "Iceland",
+        "all_members": [
+          "Iceland",
+          "Liechtenstein"
+        ],
+        "source": "https://www.gtap.agecon.purdue.edu/databases/regions.aspx?Version=12.211"
+      },
+      "Republic of Moldova": {
+        "target": "XEE",
+        "country": "Republic of Moldova",
+        "all_members": [
+          "Republic of Moldova"
+        ],
+        "source": "https://www.gtap.agecon.purdue.edu/databases/regions.aspx?Version=12.211"
+      },
+      "Bosnia and Herzegovina": {
+        "target": "XER",
+        "country": "Bosnia and Herzegovina",
+        "all_members": [
+          "Andorra",
+          "Bosnia and Herzegovina",
+          "Faroe Islands",
+          "Gibraltar",
+          "Guernsey",
+          "Holy See",
+          "Isle of Man",
+          "Jersey",
+          "Kosovo",
+          "Monaco",
+          "Montenegro",
+          "North Macedonia",
+          "San Marino",
+          "Sark"
+        ],
+        "source": "https://www.gtap.agecon.purdue.edu/databases/regions.aspx?Version=12.211"
+      },
+      "North Macedonia": {
+        "target": "XER",
+        "country": "North Macedonia",
+        "all_members": [
+          "Andorra",
+          "Bosnia and Herzegovina",
+          "Faroe Islands",
+          "Gibraltar",
+          "Guernsey",
+          "Holy See",
+          "Isle of Man",
+          "Jersey",
+          "Kosovo",
+          "Monaco",
+          "Montenegro",
+          "North Macedonia",
+          "San Marino",
+          "Sark"
+        ],
+        "source": "https://www.gtap.agecon.purdue.edu/databases/regions.aspx?Version=12.211"
+      },
+      "Turkmenistan": {
+        "target": "XSU",
+        "country": "Turkmenistan",
+        "all_members": [
+          "Turkmenistan"
+        ],
+        "source": "https://www.gtap.agecon.purdue.edu/databases/regions.aspx?Version=12.211"
+      },
+      "Yemen": {
+        "target": "XWS",
+        "country": "Yemen",
+        "all_members": [
+          "Yemen"
+        ],
+        "source": "https://www.gtap.agecon.purdue.edu/databases/regions.aspx?Version=12.211"
+      },
+      "Eritrea": {
+        "target": "XEC",
+        "country": "Eritrea",
+        "all_members": [
+          "Djibouti",
+          "Eritrea",
+          "Mayotte",
+          "Seychelles",
+          "Somalia",
+          "South Sudan"
+        ],
+        "source": "https://www.gtap.agecon.purdue.edu/databases/regions.aspx?Version=12.211"
+      }
+    }
+  },
+  "scope": {
+    "new": [
+      "BAR",
+      "SGI"
+    ],
+    "rebuild": [
+      "PCP"
+    ],
+    "excluded_by_owner": [
+      "AMM",
+      "HYS",
+      "new_silicon_extraction"
+    ],
+    "existing_MSI": "unchanged"
+  },
+  "source_metadata_sha256": "b2a1b939f049b213fad6e22bff2bdc1ce277082841290c568665d63edd8e357e",
+  "baseline_run": "Database/D2.8/20261021 0655 - 13 regions and 67 sectors",
+  "labels": {
+    "PCP": "Coal products",
+    "P_C": "Petroleum products"
+  },
+  "sectors": {
+    "PCP": {
+      "name": "Manufacture of coal products",
+      "declared_parent": "P_C",
+      "output_source": {
+        "kind": "template",
+        "file": "Inventory_Manufacture of coal products_ordecys.xlsx",
+        "column": "G",
+        "unit_column": "H",
+        "factor": 1.0,
+        "expected_headers": [
+          "2023 Value",
+          "(free to fill)"
+        ],
+        "assumption": "Explicit 2023 monetary column in the collected template; missing geography follows the existing parent-share policy."
+      }
+    },
+    "BAR": {
+      "name": "Cultivation of barley",
+      "declared_parent": "GRO",
+      "output_source": {
+        "kind": "template",
+        "file": "Inventory_Cultivation of barley.xlsx",
+        "column": "G",
+        "unit_column": "H",
+        "factor": 1.0,
+        "expected_headers": [
+          "2023 Value",
+          "(free to fill)"
+        ],
+        "assumption": "Explicit 2023 monetary column in the collected template; missing geography follows the existing parent-share policy."
+      }
+    },
+    "SGI": {
+      "name": "Manufacture of steel via BF-BOF with natural gas injection",
+      "declared_parent": "I_S",
+      "output_source": {
+        "kind": "template",
+        "file": "Inventory_Manufacture of steel via BF-BOF with natural gas injection.xlsx",
+        "column": "E",
+        "unit_column": "F",
+        "factor": 1.0,
+        "expected_headers": [
+          "2023 Value",
+          "(free to fill)"
+        ],
+        "assumption": "Explicit 2023 monetary column in the collected template; missing geography follows the existing parent-share policy."
+      }
+    }
+  }
+}

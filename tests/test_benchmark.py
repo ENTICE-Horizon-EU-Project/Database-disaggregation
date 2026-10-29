@@ -8,7 +8,7 @@ import numpy as np
 import pandas as pd
 import pytest
 
-from entice_inventory.core.benchmark import (
+from database_disaggregation.core.benchmark import (
     ATOL, Flows, accounting, aggregate_to_baseline, build_report, compare_systems,
     fingerprints, mapping_to_baseline, profiles, sha256, write_report,
 )
@@ -139,7 +139,7 @@ def test_baseline_provenance_is_verified_not_just_recorded(pair):
 
 
 def test_listed_zero_trade_target_is_checked_and_missing_route_is_not_zero(pair):
-    from entice_inventory.core.benchmark import prepared_targets
+    from database_disaggregation.core.benchmark import prepared_targets
     bp, fp = pair
     inv = fp.parent / 'inventories'
     inv.mkdir()
@@ -183,7 +183,13 @@ def test_export_is_self_contained_and_protects_sources(pair, tmp_path):
     assert all(p.is_file() for p in files)
     html = target.read_text()
     assert '__BENCHMARK_DATA__' not in html
-    assert 'script src=' not in html and 'fetch(' not in html
+    assert 'href="benchmarking.json"' in html
+    assert 'MARIO workshop' == report['provenance']['dashboard_style']
+    custom=tmp_path/'custom dashboard.html'
+    write_report(report,custom)
+    assert 'href="custom dashboard.json"' in custom.read_text()
+    assert 'href="custom dashboard-sectors.csv"' in custom.read_text()
+    assert 'script src=' not in html and '<link rel="stylesheet" href="http' not in html
     assert json.loads(files[1].read_text())['provenance']['sources_unchanged']
     assert [fingerprints(p) for p in pair] == before
     with pytest.raises(FileExistsError):
@@ -192,7 +198,7 @@ def test_export_is_self_contained_and_protects_sources(pair, tmp_path):
         write_report(report, pair[1] / 'flows/report.html')
 
 
-@pytest.mark.skipif(os.environ.get('ENTICE_BENCHMARK_DOM_TEST') != '1', reason='Optional Node/jsdom DOM smoke test')
+@pytest.mark.skipif(os.environ.get('ENTICE_BENCHMARK_BROWSER_TEST') != '1', reason='Optional offline browser check')
 def test_dashboard_dom_interactions(pair, tmp_path):
     report = build_report(*pair)
     report['issues'] = [dict(region='R1', sector='C', parent='P', metric='Negative Labor', value=-1,
@@ -201,7 +207,7 @@ def test_dashboard_dom_interactions(pair, tmp_path):
                                     reconciled=2, final=2, adjustment=1, source_kind='direct', previously_observed=True)]
     target = tmp_path / 'fixture.html'
     write_report(report, target)
-    result = subprocess.run(['node', str(Path(__file__).with_name('benchmark_dashboard_smoke.cjs')), str(target)],
+    result = subprocess.run(['node', str(Path(__file__).with_name('workshop_dashboard_browser.cjs')), str(target)],
                             text=True, capture_output=True)
     assert result.returncode == 0, result.stdout + result.stderr
 
@@ -215,3 +221,19 @@ def test_partial_checkpoint_benchmarks_completed_children_only(pair):
     assert report['summary']['hard_checks_passed']
     assert report['summary']['new_sectors'] == 1
     assert all(not row['is_residual'] for row in report['sectors'] if row['sector'] == 'Q')
+
+
+def test_named_export_normalises_sector_codes_for_comparison(pair):
+    from database_disaggregation.core.residual_labels import restore_frame_codes
+    _, root = pair
+    expected = Flows.read(root)
+    # Invert the utility here to simulate the named published parquet files.
+    for name, frame in expected.frames.items():
+        original = pd.read_parquet(root/'flows'/f'{name}.parquet')
+        restore_frame_codes(original, {'Rest of P':'P'}).to_parquet(root/'flows'/f'{name}.parquet')
+    state = json.loads((root/'state.json').read_text())
+    state['residual_index_renames'] = {'P':'Rest of P'}
+    (root/'state.json').write_text(json.dumps(state))
+    actual = Flows.read(root)
+    for name, frame in expected.frames.items():
+        pd.testing.assert_frame_equal(actual[name], frame, check_exact=True)

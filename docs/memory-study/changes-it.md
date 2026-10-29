@@ -82,7 +82,7 @@ Il ramo con separazione inter-problema conserva il comportamento precedente. Non
 
 La policy non clona più il database prima di ogni tentativo, perché MARIO crea già il proprio candidato transazionale e lo conferma soltanto dopo i controlli. Riutilizza inoltre il workbook già caricato. L'ordine ordinario dei fallback della policy rimane invariato; queste prove lo escludono esplicitamente mediante un file di opzioni con un unico modello KL.
 
-File: `src/entice_inventory/core/model_policy.py`.
+File: `src/database_disaggregation/core/model_policy.py`.
 
 Questo risparmio riguarda l'esecuzione tramite policy. I profili KL a modello fisso di questo studio la bypassano: i loro miglioramenti misurati non vanno attribuiti alla rimozione di quel clone.
 

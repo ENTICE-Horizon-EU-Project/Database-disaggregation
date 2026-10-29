@@ -1,0 +1,20 @@
+{
+  "model": "Split_sectors_MRIO_KL",
+  "accounting": "inherit",
+  "final_demand_weight": 0.1,
+  "supply_weight": 1.0,
+  "check_feasibility": true,
+  "feasibility_solver": [
+    "GUROBI"
+  ],
+  "compact_constraints": true,
+  "defer_satellite_recalculation": true,
+  "scale": 1000.0,
+  "require_finite_objective": true,
+  "prior_zero_tolerance": 1e-06,
+  "solution_cleanup": {
+    "max_cell_adjustment": 0.001,
+    "absolute_tolerance": 0.01,
+    "relative_tolerance": 1e-08
+  }
+}

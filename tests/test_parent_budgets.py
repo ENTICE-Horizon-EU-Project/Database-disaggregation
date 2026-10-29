@@ -8,8 +8,8 @@ from types import SimpleNamespace
 import pandas as pd
 import pytest
 
-from entice_inventory.core.geography import Geography
-from entice_inventory.core.parent_budgets import (
+from database_disaggregation.core.geography import Geography
+from database_disaggregation.core.parent_budgets import (
     ChildTargets, ParentBudgets, ParentBudgetError, evaluate_parent_budgets, require_parent_budgets,
 )
 
@@ -148,7 +148,7 @@ def _baseline(tmp_path):
 def test_preparation_blocks_before_profiles_or_solver(tmp_path, monkeypatch):
     from test_geography import inventory
     from openpyxl import load_workbook
-    from entice_inventory.core import disaggregation
+    from database_disaggregation.core import disaggregation
     baseline = _baseline(tmp_path)
     source = tmp_path/'inputs'
     source.mkdir()
@@ -173,7 +173,7 @@ def test_edited_prepared_workbook_is_rechecked_before_solve(tmp_path, monkeypatc
     from test_geography import inventory
     import mario
     from openpyxl import load_workbook
-    from entice_inventory.core.disaggregation import prepare_inputs
+    from database_disaggregation.core.disaggregation import prepare_inputs
     baseline = _baseline(tmp_path)
     source = tmp_path/'inputs'
     source.mkdir()
@@ -191,3 +191,23 @@ def test_edited_prepared_workbook_is_rechecked_before_solve(tmp_path, monkeypatc
         runpy.run_path(str(script), run_name='__main__')
     assert not (prepared/'checkpoints').exists()
     assert (prepared/'parent_budgets_solve.json').exists()
+
+
+def test_trial_budget_excess_is_diagnostic_with_no_monetary_cutoff(budgets, targets, tmp_path):
+    from database_disaggregation.core.parent_budgets import diagnose_trial_parent_budgets
+    targets.trade.loc[0, 'Quantity'] = 1000.
+    report = diagnose_trial_parent_budgets(budgets, targets, report_path=tmp_path/'trial.json')
+    assert report['status'] == 'failed'  # preserve the actual comparison result
+    assert report['summary']['trade_violations'] == 1
+    assert not report['monetary_residuals_enforced']
+    assert json.loads((tmp_path/'trial.json').read_text()) == report
+
+
+def test_trial_budget_diagnostics_still_require_complete_finite_inputs(budgets, targets):
+    from database_disaggregation.core.parent_budgets import diagnose_trial_parent_budgets
+    partial = ChildTargets(targets.master, targets.output.iloc[1:], targets.trade)
+    with pytest.raises(ParentBudgetError):
+        diagnose_trial_parent_budgets(budgets, partial)
+    targets.output.loc[0, 'Quantity'] = float('nan')
+    with pytest.raises(ValueError, match='finite'):
+        diagnose_trial_parent_budgets(budgets, targets)

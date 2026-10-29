@@ -58,3 +58,28 @@ before scaling the solver.
 Raw workspaces and profiles are ignored under `build/memory-study/`. The reports
 identify the shared diagnostic package with exact inputs, baseline snapshots,
 hashes, patches and commands. Existing successful databases were not replaced.
+
+
+## Subsequent controlled KL trial — 23 October 2026
+
+The separately authorised [prior-filter and reference-floor experiment](../kl-prior-floor.md)
+uses the same CHR13 preparation, one KL/MOSEK attempt and unchanged CVXLab sources.
+It adds an opt-in prior-only threshold and maximum-based support, preserving
+baseline and targets. The native solver again reports optimal, but independent
+checks reject the point. See that report for the numerical comparison and exact
+input/diagnostic package. The historical memory-study results above are unchanged.
+
+## Update: bounded KL result cleanup (23 October)
+
+CHR13 now has an accepted approximate result using explicit numerical cleanup.
+The same budget rejected the CHR49 result (8.70 GiB footprint, one new sector).
+See [the complete report](../kl-solution-cleanup.md); this does not replace the
+historical strict failures or certify the full 163-region/67-sector case.
+
+## Update: saved-point post-processing (23 October)
+
+The existing optimal CHR49 point now produces a database after sign cleanup,
+with monetary residuals recorded for economic review and no dollar cutoff.
+No optimizer was rerun. See [the current report](../kl-postprocessing.md).
+The original 8.70 GiB remains the observed footprint for the one-sector solve;
+the reconstruction footprint is a separate measurement.
