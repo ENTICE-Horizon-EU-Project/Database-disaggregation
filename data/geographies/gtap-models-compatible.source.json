@@ -1,0 +1,55 @@
+{
+  "name": "GTAP model regions compatible with native GTAP Power 2023",
+  "source": "Classifications/GTAP model regions/Region clusters for models.xlsx",
+  "source_path_base": "data_root",
+  "source_sha256": "4424cc2d6dc3183c4fc582dd006154f30a93b22e7369ddd55d952dfd8759e48a",
+  "native_scope": "Classifications/GTAP model regions/GTAP12 region scope.json",
+  "native_scope_sha256": "b2a1b939f049b213fad6e22bff2bdc1ce277082841290c568665d63edd8e357e",
+  "source_regions": 163,
+  "desired_regions": 64,
+  "target_regions": 61,
+  "geographic_disaggregation": false,
+  "monetary_data_used": false,
+  "method": "Finest common coarsening of desired model groups and native GTAP regions; merge connected groups transitively. No geographic disaggregation or GDP allocation.",
+  "merged_groups": [
+    [
+      "AFP",
+      "ASO",
+      "TWM"
+    ],
+    [
+      "AGS",
+      "LAC"
+    ],
+    [
+      "NAI",
+      "NEU"
+    ]
+  ],
+  "corrections": [
+    {
+      "after": "NAI",
+      "basis": "Explicit correction agrees with the existing Common code.",
+      "before": null,
+      "country": "FRO",
+      "field": "Common 3 GTAP models",
+      "row": 206
+    },
+    {
+      "after": "NAI",
+      "basis": "Explicit correction agrees with the existing Common code.",
+      "before": null,
+      "country": "IMN",
+      "field": "Common 3 GTAP models",
+      "row": 207
+    }
+  ],
+  "retained_native_residual": {
+    "XTW": "Rest of the World"
+  },
+  "mapping_sha256": "9e37d1d470f8bfaa539a0d113a030679b000e04b373cf18b198a5bc5f2ffd150",
+  "baseline_region_axis_verified": true,
+  "model_aggregation_limit": "Where a final region contains several codes of one model, the original model partition cannot be recovered exactly by further aggregation.",
+  "original_source_sha256": "f7c222919961d74af90f550f0f615b11e557099cf8e8bfebc0ebb72c3310d84e",
+  "source_copy_verification": "Classifications/GTAP model regions/source-copy-verification.json"
+}

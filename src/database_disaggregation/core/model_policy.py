@@ -113,14 +113,16 @@ def run_model_policy(db, workbook, output, policy, *, stop_after_step=None):
             journal.write_text(json.dumps(attempts, indent=2, allow_nan=False))
 
         def solve(spec):
-            candidate = db.copy()
+            # MARIO intermediate steps already isolate and commit their candidate.
+            # Reuse that transaction instead of cloning the database a second time.
+            candidate = db
             work = output/'attempts'/f"{active['attempt']:03d}_{spec['solver']}"
             work.mkdir(parents=True, exist_ok=False)
             active['work_directory'] = str(work)
             journal.write_text(json.dumps(attempts, indent=2, allow_nan=False))
             print(f"Step {step!r}: {spec['model']} with {spec['solver']}", flush=True)
             candidate.add_sectors(
-                workbook, split=True, intermediate_steps=True,
+                "inventories", split=True, intermediate_steps=True,
                 save_intermediates=output/'checkpoints', stop_after_step=step,
                 cvxlab_path=work, solver=spec['solver'], solver_parameters=spec['solver_options'],
                 split_model_options=dict(policy['split_model_options'], model=spec['model']),

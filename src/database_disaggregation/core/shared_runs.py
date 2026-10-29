@@ -11,6 +11,16 @@ from zoneinfo import ZoneInfo
 from database_disaggregation.core.paths import data_path
 
 
+MODEL_DIAGNOSTICS = (
+    'feasibility.json', 'model_solution.json', 'split_model_options.json',
+    'entropy_support.json', 'model_definition.json', 'constraint_diagnostics.json',
+    'raw_model_solution.json', 'raw_constraint_diagnostics.json',
+    'solution_cleanup.json', 'solution_cleanup.csv',
+    'returned_solution_scaled.npz', 'returned_solution_index.json',
+    'cleaned_solution_scaled.npz', 'cleaned_solution_index.json', 'solver_replay.json',
+)
+
+
 def run_name(started_at, regions, sectors):
     """Use the original start, in project time, once for both output folders."""
     if isinstance(started_at,str):
@@ -96,6 +106,9 @@ def publish_trial(trial, *, inventory_root=None, database_root=None):
                 source_trial=str(trial),original_checkpoint=str(step) if state else None,
                 source_checkpoint=str(source) if previous else None,
                 source_run_manifest=manifest)
+    validation = (state or {}).get('preservation', {}).get('numerical_validation')
+    if validation:
+        record['numerical_validation'] = validation
     try:
         if state:
             from database_disaggregation.core.inventory_history import checkpoint_history, assemble_inventory_history
@@ -128,19 +141,19 @@ def publish_trial(trial, *, inventory_root=None, database_root=None):
                 if path.is_file() and path.suffix in ('.json','.csv','.py','.log'):
                     _copy(path,diagnostics/'trade_reconciliation'/path.name)
         if step:
-            for name_in in ('feasibility.json','model_solution.json','split_model_options.json','entropy_support.json'):
+            for name_in in MODEL_DIAGNOSTICS:
                 for path in step.rglob(name_in):_copy(path,diagnostics/name_in)
         # Keep attempt diagnostics apart: a solver or objective fallback must
         # remain auditable after publication, without copying computational caches.
         if (trial/'attempts').is_dir():
             for path in (trial/'attempts').rglob('*'):
-                if path.is_file() and (path.name in {'feasibility.json','model_solution.json','split_model_options.json','entropy_support.json','model_definition.json'} or path.suffix == '.log'):
+                if path.is_file() and (path.name in MODEL_DIAGNOSTICS or path.suffix == '.log'):
                     _copy(path,diagnostics/'attempts'/path.relative_to(trial/'attempts'))
         accepted_attempts = [a for a in manifest.get('model_attempts', [])
                              if a.get('status') == 'accepted' and state and a.get('step_index') == state['step_index']]
         if accepted_attempts:
             accepted_work = Path(accepted_attempts[-1]['work_directory'])
-            for name_in in ('feasibility.json','model_solution.json','split_model_options.json','entropy_support.json','model_definition.json'):
+            for name_in in MODEL_DIAGNOSTICS:
                 matches = list(accepted_work.rglob(name_in))
                 if len(matches) > 1:
                     raise ValueError(f'Ambiguous accepted attempt diagnostic: {name_in}')
@@ -165,6 +178,17 @@ def publish_trial(trial, *, inventory_root=None, database_root=None):
             f'# {name}\n\nStatus: **{manifest["status"]}**. '
             +('MARIO matrices are in `flows/`; `state.json` supports checkpoint reload.\n' if state else 'No database was accepted for this attempt.\n')
             +'\nThe paired input folder is recorded in `run.json`. E recalculation status is recorded there and in the checkpoint.\n')
+        if validation:
+            note = (f'\nNumerical validation: **{validation["status"]}**. '
+                    + ('Monetary residuals are diagnostic only; economic review is pending. Reference absolute tolerance: '
+                     if validation.get('residuals_enforced') is False else 'Absolute accounting/reaggregation tolerance: ')
+                    + f'{validation["absolute_tolerance_original_units"]} in original monetary units; '
+                    f'relative tolerance: {validation["relative_tolerance"]}. '
+                    'This result uses deterministic numerical cleanup; raw and cleaned points '
+                    'and residuals are retained in diagnostics. E remains pending where recorded.\n')
+            for folder in (invstage, dbstage):
+                readme = folder / 'README.md'
+                readme.write_text((readme.read_text() if readme.exists() else '') + note)
         if state:
             invstage.rename(inventory)
             try:dbstage.rename(database)

@@ -7,7 +7,7 @@ subsequent MARIO solve. It is deliberately separate from default ingestion.
 import numpy as np
 
 
-def fit_row_trade(positive, negative, row_targets, outputs, priors, weights, origin, *, observed=None, scale=1000.):
+def fit_row_trade(positive, negative, row_targets, outputs, priors, weights, origin, *, observed=None, scale=1000., solver=None):
     """Fit one parent/origin family, including its residual parent row.
 
     Arrays positive/negative have one entry per destination. The first row of
@@ -54,16 +54,28 @@ def fit_row_trade(positive, negative, row_targets, outputs, priors, weights, ori
                 continue
             eq[k, i*nr+j], eq[k, count+i*nr+j] = 1,-1
             rhs.append(priors[i-1,j]/scale); k += 1
-    probe = linprog(np.zeros(2*count), A_eq=eq.tocsr(), b_eq=rhs, bounds=(0,None),
-                    method='highs', options={'primal_feasibility_tolerance':1e-9})
+    if solver not in (None, 'GUROBI'):
+        raise ValueError('Explicit row-trade solver must be GUROBI; None retains the legacy open solver policy.')
+    gurobi_options = dict(Threads=2, TimeLimit=120., FeasibilityTol=1e-9,
+                          OptimalityTol=1e-9, BarConvTol=1e-12, NumericFocus=3)
+    if solver == 'GUROBI':
+        point = cp.Variable(2*count, nonneg=True)
+        probe_problem = cp.Problem(cp.Minimize(0.), [eq.tocsr() @ point == np.asarray(rhs)])
+        probe_problem.solve(solver='GUROBI', reoptimize=True, **gurobi_options)
+        probe_success = probe_problem.status == 'optimal'
+        if not probe_success and probe_problem.status != 'infeasible':
+            raise RuntimeError(f'Row feasibility probe failed: {probe_problem.status}')
+    else:
+        probe = linprog(np.zeros(2*count), A_eq=eq.tocsr(), b_eq=rhs, bounds=(0,None),
+                        method='highs', options={'primal_feasibility_tolerance':1e-9})
+        probe_success = probe.success
+        if not probe.success and probe.status != 2:
+            raise RuntimeError(f'Row feasibility probe failed: {probe.message}')
     capacity_original = np.maximum(positive[foreign]-negative[foreign],0.)
     prior_capacities_pass = ((priors[:,foreign].sum(axis=0)<=capacity_original+1e-6).all()
                             and (priors[:,foreign].sum(axis=1)<=outputs[1:]+1e-6).all())
-    if probe.success and prior_capacities_pass:
+    if probe_success and prior_capacities_pass:
         return priors.copy(), {'status':'already_row_feasible', 'changed_routes':0}
-    if not probe.success and probe.status != 2:
-        raise RuntimeError(f'Row feasibility probe failed: {probe.message}')
-
     # Destination fractions keep sub-cent negative budgets and large positive
     # deliveries on comparable variable scales without dropping either budget.
     p, n = cp.Variable((ns,nr), nonneg=True), cp.Variable((ns,nr), nonneg=True)
@@ -84,10 +96,11 @@ def fit_row_trade(positive, negative, row_targets, outputs, priors, weights, ori
                    cp.sum(t,axis=0)<=capacity, cp.sum(t,axis=1)<=outputs[1:]/scale]
     problem = cp.Problem(cp.Minimize(cp.sum(cp.multiply(coefficients,cp.square(t-prior)))),constraints)
     attempts = []
-    for solver,options in [
+    solver_policy = [('GUROBI', gurobi_options)] if solver == 'GUROBI' else [
             ('CLARABEL',dict(tol_gap_abs=1e-11,tol_gap_rel=1e-11,tol_feas=1e-12,max_iter=600,
                              static_regularization_constant=1e-11,iterative_refinement_max_iter=20)),
-            ('OSQP',dict(eps_abs=1e-12,eps_rel=1e-12,max_iter=200000,polishing=True,time_limit=20.))]:
+            ('OSQP',dict(eps_abs=1e-12,eps_rel=1e-12,max_iter=200000,polishing=True,time_limit=20.))]
+    for solver,options in solver_policy:
         try:
             problem.solve(solver=solver,**options)
         except cp.error.SolverError as exc:

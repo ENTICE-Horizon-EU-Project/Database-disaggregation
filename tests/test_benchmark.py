@@ -221,3 +221,19 @@ def test_partial_checkpoint_benchmarks_completed_children_only(pair):
     assert report['summary']['hard_checks_passed']
     assert report['summary']['new_sectors'] == 1
     assert all(not row['is_residual'] for row in report['sectors'] if row['sector'] == 'Q')
+
+
+def test_named_export_normalises_sector_codes_for_comparison(pair):
+    from database_disaggregation.core.residual_labels import restore_frame_codes
+    _, root = pair
+    expected = Flows.read(root)
+    # Invert the utility here to simulate the named published parquet files.
+    for name, frame in expected.frames.items():
+        original = pd.read_parquet(root/'flows'/f'{name}.parquet')
+        restore_frame_codes(original, {'Rest of P':'P'}).to_parquet(root/'flows'/f'{name}.parquet')
+    state = json.loads((root/'state.json').read_text())
+    state['residual_index_renames'] = {'P':'Rest of P'}
+    (root/'state.json').write_text(json.dumps(state))
+    actual = Flows.read(root)
+    for name, frame in expected.frames.items():
+        pd.testing.assert_frame_equal(actual[name], frame, check_exact=True)

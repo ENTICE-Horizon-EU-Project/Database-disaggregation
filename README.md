@@ -38,6 +38,26 @@ steps. Reproducing an inventory is distinct from validating the economic
 plausibility of a balanced MRIO. Environmental E is still provisional in the
 current accepted 13-region monetary split.
 
+## Extend the saved 13-region result
+
+The scoped continuation on `codex/mrio-memory` contains **69 ENTICE activities
+(145 total sectors)**: new BAR and SGI, plus PCP rebuilt from the collected
+coal-products data. AMM, HYS and additional silicon extraction are excluded.
+Residual parents have readable, reversible names. See the
+[case report, source assumptions and results](docs/additional-sectors-13.md).
+
+To prepare this extension from the saved 67-activity database, using your
+configured `paths.local.json` / `ENTICE_DATA_ROOT` and a fresh output directory:
+
+```bash
+python scripts/prepare_additional_sectors.py --output build/additional13-new
+```
+
+This command **prepares inputs only**; it does not run a solver. The explicit
+source columns, active sectors and exclusions are in
+[`config/additional-sectors-13.json`](config/additional-sectors-13.json).
+The original 67-activity database and source files remain intact.
+
 ## Benchmark saved MRIO results
 
 Database dashboards now use the **MARIO workshop format**: sector selection,
@@ -145,6 +165,25 @@ partition; duplicate or missing source assignments are rejected.
 `geography: null` retains the native geography. The disaggregation inventory
 directory is configured separately and is relative to `data_root`.
 
+## Geography shared with the GTAP models
+
+`data/geographies/gtap-models-compatible.json` maps all **163 native GTAP
+regions to 61 executable groups**, using aggregation only. It reconciles the
+64 desired model groups by merging groups connected through indivisible GTAP
+regions and retaining native XTW. The source workbook, country/region tables
+and audit are on WSP under `Classifications/GTAP model regions`.
+See [territorial changes and commands](docs/gtap-model-regions.md).
+
+MARIO `codex/mrio-memory` supports `Database.add_sectors(...,
+on_step_failure="continue")` for sequential IOT splits; the default is `"raise"`.
+Preparation happens before this call, and MARIO projects the unchanged source
+inventories to the actual classification after each attempt. See
+[sequence behaviour and responsibilities](docs/sequential-failures-design.md).
+The geographic mapping does not activate this option. For a fixed model and
+solver, the trial runner exposes `--on-step-failure continue`; its default is
+`raise`. It must be selected together with explicit `--options` and `--solver`.
+The fallback-policy runner is not combined with continuation automatically.
+
 ## Run the MRIO pipeline with another regional aggregation
 
 Use **this branch (`codex/configurable-regions`)** and MARIO
@@ -217,9 +256,10 @@ try the named **quadratic** model, with **Gurobi → MOSEK → Clarabel → OSQP
 The feasibility preflight uses **Gurobi → HiGHS → Clarabel** for installation,
 licence or numerical failures; a mathematical infeasibility stops that preflight.
 
-Every attempt starts from the same preceding accepted database. The policy
-requires a finite evaluated objective and retains all independent acceptance checks and records unsuccessful attempts and
-model changes in `model_attempts.json` and checkpoint `model_history`. Schema,
+Every attempt starts from the same preceding accepted database. For named MRIO models, optimal points are exported after audited sign/zero
+projection; monetary residuals remain diagnostic without a dollar cutoff.
+Nonfinite returned data and schema errors remain technical failures. The policy
+records unsuccessful solver attempts and model changes in `model_attempts.json` and checkpoint `model_history`. Schema,
 input-integrity and programming errors stop the run instead of triggering an
 objective change. Solver settings and order are editable in the policy JSON.
 MOSEK and Gurobi need their Python packages and valid licences. Open solvers remain

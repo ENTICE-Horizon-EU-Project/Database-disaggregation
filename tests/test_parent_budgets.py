@@ -191,3 +191,23 @@ def test_edited_prepared_workbook_is_rechecked_before_solve(tmp_path, monkeypatc
         runpy.run_path(str(script), run_name='__main__')
     assert not (prepared/'checkpoints').exists()
     assert (prepared/'parent_budgets_solve.json').exists()
+
+
+def test_trial_budget_excess_is_diagnostic_with_no_monetary_cutoff(budgets, targets, tmp_path):
+    from database_disaggregation.core.parent_budgets import diagnose_trial_parent_budgets
+    targets.trade.loc[0, 'Quantity'] = 1000.
+    report = diagnose_trial_parent_budgets(budgets, targets, report_path=tmp_path/'trial.json')
+    assert report['status'] == 'failed'  # preserve the actual comparison result
+    assert report['summary']['trade_violations'] == 1
+    assert not report['monetary_residuals_enforced']
+    assert json.loads((tmp_path/'trial.json').read_text()) == report
+
+
+def test_trial_budget_diagnostics_still_require_complete_finite_inputs(budgets, targets):
+    from database_disaggregation.core.parent_budgets import diagnose_trial_parent_budgets
+    partial = ChildTargets(targets.master, targets.output.iloc[1:], targets.trade)
+    with pytest.raises(ParentBudgetError):
+        diagnose_trial_parent_budgets(budgets, partial)
+    targets.output.loc[0, 'Quantity'] = float('nan')
+    with pytest.raises(ValueError, match='finite'):
+        diagnose_trial_parent_budgets(budgets, targets)

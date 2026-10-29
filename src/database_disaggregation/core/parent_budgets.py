@@ -79,6 +79,17 @@ class ChildTargets:
                             self.trade.loc[self.trade['Sector_from'].isin(sectors)], self.sources,
                             {k: v for k, v in (self.incomplete_output or {}).items() if k[0] in sectors})
 
+    def select(self, sectors):
+        """Limit budget checks to explicitly selected pending children."""
+        sectors = set(sectors)
+        unknown = sectors - set(self.master['Sector'])
+        if unknown:
+            raise ValueError(f'Unknown child sectors selected: {sorted(unknown)}')
+        return ChildTargets(self.master.loc[self.master['Sector'].isin(sectors)],
+                            self.output.loc[self.output['Sector'].isin(sectors)],
+                            self.trade.loc[self.trade['Sector_from'].isin(sectors)], self.sources,
+                            {k: v for k, v in (self.incomplete_output or {}).items() if k[0] in sectors})
+
     def aggregate(self, geography):
         output, trade = self.output.copy(), self.trade.copy()
         incomplete = defaultdict(set)
@@ -282,5 +293,25 @@ def require_parent_budgets(budgets, targets, *, report_path=None):
         report_path.parent.mkdir(parents=True, exist_ok=True)
         report_path.write_text(json.dumps(report, indent=2, allow_nan=False))
     if report['status'] != 'passed':
+        raise ParentBudgetError(report, report_path)
+    return report
+
+
+def diagnose_trial_parent_budgets(budgets, targets, *, report_path=None):
+    """Report monetary budget excesses without rejecting a model trial.
+
+    The strict preparation/curation check remains ``require_parent_budgets``.
+    During a model trial, numerical checkpoint residuals are diagnostic; the
+    optimization retains its original constraints and solver status handling.
+    Missing output coverage, invalid units/axes and nonfinite data still raise.
+    """
+    report = evaluate_parent_budgets(budgets, targets)
+    report['monetary_residuals_enforced'] = False
+    report['economic_review'] = 'pending'
+    if report_path is not None:
+        report_path = Path(report_path)
+        report_path.parent.mkdir(parents=True, exist_ok=True)
+        report_path.write_text(json.dumps(report, indent=2, allow_nan=False))
+    if report['summary']['incomplete_output_groups']:
         raise ParentBudgetError(report, report_path)
     return report
