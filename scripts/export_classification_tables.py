@@ -9,8 +9,8 @@ from pathlib import Path
 from openpyxl import load_workbook
 ROOT=Path(__file__).resolve().parents[1]
 sys.path.insert(0,str(ROOT/'src'))
-from entice_inventory.core.registry import Registry
-from entice_inventory.core.paths import project_data_root, data_path
+from database_disaggregation.core.registry import Registry
+from database_disaggregation.core.paths import project_data_root, data_path
 parser=argparse.ArgumentParser(description=__doc__)
 parser.add_argument('--output-dir',type=Path,default=ROOT/'build/classifications')
 args=parser.parse_args()

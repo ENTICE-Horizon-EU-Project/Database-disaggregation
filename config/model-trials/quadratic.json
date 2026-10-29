@@ -1,0 +1,12 @@
+{
+  "accounting": "inherit",
+  "value_added_loss": "quadratic",
+  "flow_loss": "quadratic",
+  "final_demand_weight": 0.1,
+  "complete_intermediate_priors": true,
+  "supply_weight": 1.0,
+  "check_feasibility": true,
+  "compact_constraints": true,
+  "defer_satellite_recalculation": true,
+  "scale": 1000.0
+}

@@ -1,0 +1,12 @@
+{
+  "source": "Classifications/_sources/Purdue/GTAP_EXIOBASE_maps.xlsx",
+  "sheet": "Regions_map",
+  "sha256": "f99574227ce0d917643de2a7067ee57ab68e5efbcdc71d8a8a0f2769fd955d9f",
+  "source_regions": 163,
+  "target_regions": 49,
+  "source_path_base": "data_root",
+  "target": "EXIOBASE 3 legacy 49-region axis (44 countries + 5 RoW)",
+  "code_conversion": "GTAP source codes uppercased; EXIOBASE target codes preserved",
+  "interpretation": "Inherited Purdue regional crosswalk; experimental GTAP aggregation, not an EXIOBASE database or independent territorial-scope certification.",
+  "axis_reference": "https://exiobase.eu/about-exiobase/"
+}

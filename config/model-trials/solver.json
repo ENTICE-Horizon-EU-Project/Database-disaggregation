@@ -1,0 +1,6 @@
+{
+  "tol_gap_abs": 1e-10,
+  "tol_gap_rel": 1e-10,
+  "tol_feas": 1e-10,
+  "max_iter": 300
+}

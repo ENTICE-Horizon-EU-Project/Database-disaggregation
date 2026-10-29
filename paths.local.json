@@ -1,15 +1,25 @@
 {
-  "baseline_format": "mario_parquet",
   "data_root": "/Users/lorenzorinaldi/Library/CloudStorage/OneDrive-SharedLibraries-WSPO365/RCD-Entice-EXT - Documents/General/2.Deliverables and Milestones/WP2. Improved data and empirics on trade and climate/Data split",
+  "baseline_format": "mario_parquet",
+  "geography": {
+    "name": "ENTICE13",
+    "mapping": "data/geographies/gtap13.json",
+    "mapping_base": "repository"
+  },
+  "disaggregation": {
+    "inventories": "Inventories/D2.4 inventories/Regenerated 20261001",
+    "steps": null,
+    "cleaning_policy": true
+  },
   "paths": {
     "baseline": "Database/_GTAP Power 2023/Cache",
     "gtap_totals": "Database/_GTAP Power 2023/Cache/GTAP12_X.xlsx",
     "classifications": "Classifications/ENTICE classifications.xlsx",
     "mario_inventories": "Inventories/D2.4 inventories/MARIO inventories/20260630",
+    "partner_templates": "Data collection/Final",
     "inventory_runs": "Inventories/D2.4 inventories",
     "purdue_trade": "Data collection/Final/PURDUE/Shared material/Trades/trade.xlsx",
     "purdue_split_targets": "Data collection/Final/PURDUE/Shared material/Output and trade targets/splttargs.xlsx",
-    "partner_templates": "Data collection/Final",
     "reference_inventories": "Inventories/D2.4 inventories",
     "resolved_inventories": "Inventories/D2.4 inventories/Regenerated 20261001",
     "split_inventory_runs": "Inventories/D2.8 inventories",

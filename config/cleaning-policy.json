@@ -1,0 +1,928 @@
+{
+  "schema_version": 1,
+  "id": "entice-reconciliation-v1",
+  "status": "Project assumptions for reproducible reconciliation; not source certification",
+  "target_year": 2023,
+  "currency_unit": "M USD",
+  "require_all_sectors": true,
+  "parent_policy": "reviewed_or_scoped_else_declared",
+  "assumptions": [
+    "Unreviewed sector scopes retain their declared working parent and are reported as conditional.",
+    "Selected scopes define project conventions; related activities are not automatically merged.",
+    "Cached formula values are input snapshots; external Excel links are not recalculated.",
+    "MSI and TVP USD labels are interpreted literally and divided by one million before allocation.",
+    "LMO monetary row labels are interpreted as 2023 despite the older header.",
+    "SDG monetary row units take precedence over the physical unit in its header; CEM formulas are interpreted dimensionally as MUSD.",
+    "Raw trade is a prior on model deliveries; CIF/customs observations are not exact basic-price or domestic-origin observations.",
+    "All coefficients and imputed targets remain estimates; baseline matrices and signed accounts are not cleaned away."
+  ],
+  "sectors": {
+    "AGT": {
+      "name": "Manufacture of artificial graphite",
+      "declared_parent": "NMM",
+      "output_source": {
+        "kind": "purdue",
+        "assumption": "June1 REPOUT and BLTTRD treated as paired 2023 MUSD priors"
+      }
+    },
+    "APP": {
+      "name": "Manufacture of primary aluminum",
+      "declared_parent": "NFM",
+      "output_source": {
+        "kind": "template",
+        "file": "Inventory_Manufacture of primary aluminum.xlsx",
+        "column": "G",
+        "unit_column": "H",
+        "factor": 1.0,
+        "assumption": "explicit_monetary_candidate",
+        "expected_headers": [
+          "2023 Value",
+          "(free to fill)"
+        ]
+      }
+    },
+    "APS": {
+      "name": "Manufacture of secondary aluminum",
+      "declared_parent": "NFM",
+      "output_source": {
+        "kind": "template",
+        "file": "Inventory_Manufacture of secondary aluminum.xlsx",
+        "column": "G",
+        "unit_column": "H",
+        "factor": 1.0,
+        "assumption": "explicit_monetary_candidate",
+        "expected_headers": [
+          "2023 Value",
+          "(free to fill)"
+        ]
+      }
+    },
+    "BVH": {
+      "name": "Manufacture of heavy duty BEV",
+      "declared_parent": "MVH",
+      "output_source": {
+        "kind": "template",
+        "file": "Inventory_Manufacture of heavy duty BEV.xlsx",
+        "column": "E",
+        "unit_column": "F",
+        "factor": 1.0,
+        "assumption": "explicit_monetary_candidate",
+        "expected_headers": [
+          "2023 Value",
+          "(free to fill)"
+        ]
+      }
+    },
+    "BVL": {
+      "name": "Manufacture of light duty BEV",
+      "declared_parent": "MVH",
+      "output_source": {
+        "kind": "template",
+        "file": "Inventory_Manufacture of light duty BEV.xlsx",
+        "column": "E",
+        "unit_column": "F",
+        "factor": 1.0,
+        "assumption": "explicit_monetary_candidate",
+        "expected_headers": [
+          "2023 Value",
+          "(free to fill)"
+        ]
+      }
+    },
+    "CEM": {
+      "name": "Manufacture of traditional cement",
+      "declared_parent": "NMM",
+      "output_source": {
+        "kind": "template",
+        "file": "Inventory_Manufacture of traditional cement.xlsx",
+        "column": "E",
+        "unit_column": "F",
+        "factor": 1.0,
+        "assumption": "formula_derived_monetary_candidate",
+        "expected_headers": [
+          "2023 Value",
+          "(free to fill)"
+        ]
+      }
+    },
+    "CHR": {
+      "name": "Mining of chromium",
+      "declared_parent": "OXT",
+      "output_source": {
+        "kind": "purdue",
+        "assumption": "June1 REPOUT and BLTTRD treated as paired 2023 MUSD priors"
+      }
+    },
+    "COB": {
+      "name": "Mining of cobalt ores and concentrates",
+      "declared_parent": "OXT",
+      "output_source": {
+        "kind": "purdue",
+        "assumption": "June1 REPOUT and BLTTRD treated as paired 2023 MUSD priors"
+      }
+    },
+    "COR": {
+      "name": "Manufacture of refined cobalt",
+      "declared_parent": "CHM",
+      "output_source": {
+        "kind": "purdue",
+        "assumption": "June1 REPOUT and BLTTRD treated as paired 2023 MUSD priors"
+      }
+    },
+    "CPP": {
+      "name": "Manufacture of primary copper",
+      "declared_parent": "NFM",
+      "output_source": {
+        "kind": "purdue",
+        "assumption": "June1 REPOUT and BLTTRD treated as paired 2023 MUSD priors"
+      }
+    },
+    "CPS": {
+      "name": "Manufacture of secondary copper",
+      "declared_parent": "NFM",
+      "output_source": {
+        "kind": "purdue",
+        "assumption": "June1 REPOUT and BLTTRD treated as paired 2023 MUSD priors"
+      }
+    },
+    "CRR": {
+      "name": "Manufacture of refined chromium",
+      "declared_parent": "CHM",
+      "output_source": {
+        "kind": "purdue",
+        "assumption": "June1 REPOUT and BLTTRD treated as paired 2023 MUSD priors"
+      }
+    },
+    "GAR": {
+      "name": "Manufacture of refined gallium",
+      "declared_parent": "CHM",
+      "output_source": {
+        "kind": "purdue",
+        "assumption": "June1 REPOUT and BLTTRD treated as paired 2023 MUSD priors"
+      }
+    },
+    "GRA": {
+      "name": "Mining of natural graphite",
+      "declared_parent": "OXT",
+      "output_source": {
+        "kind": "purdue",
+        "assumption": "June1 REPOUT and BLTTRD treated as paired 2023 MUSD priors"
+      }
+    },
+    "HEL": {
+      "name": "Manufacture of light duty HEV",
+      "declared_parent": "MVH",
+      "output_source": {
+        "kind": "template",
+        "file": "Inventory_Manufacture of light duty HEV.xlsx",
+        "column": "E",
+        "unit_column": "F",
+        "factor": 1.0,
+        "assumption": "explicit_monetary_candidate",
+        "expected_headers": [
+          "2023 Value",
+          "(free to fill)"
+        ]
+      }
+    },
+    "HVC": {
+      "name": "Manufacture of high value chemicals",
+      "declared_parent": "CHM",
+      "output_source": {
+        "kind": "template",
+        "file": "Inventory_Manufacture of high value chemicals.xlsx",
+        "column": "K",
+        "unit_column": "L",
+        "factor": 1.0,
+        "assumption": "explicit_monetary_candidate",
+        "expected_headers": [
+          "2023 Value",
+          "(free to fill)"
+        ]
+      }
+    },
+    "HYE": {
+      "name": "Manufacture of hydrogen via electrolysis",
+      "declared_parent": "CHM",
+      "output_source": {
+        "kind": "template",
+        "file": "Inventory_Manufacture of hydrogen via electrolysis.xlsx",
+        "column": "J",
+        "unit_column": "",
+        "factor": 1.0,
+        "assumption": "explicit_monetary_candidate",
+        "expected_headers": [
+          "2023 Value",
+          "MUSD"
+        ]
+      }
+    },
+    "ICH": {
+      "name": "Manufacture of heavy duty ICEV",
+      "declared_parent": "MVH",
+      "output_source": {
+        "kind": "template",
+        "file": "Inventory_Manufacture of heavy duty ICEV.xlsx",
+        "column": "E",
+        "unit_column": "F",
+        "factor": 1.0,
+        "assumption": "explicit_monetary_candidate",
+        "expected_headers": [
+          "2023 Value",
+          "(free to fill)"
+        ]
+      }
+    },
+    "ICL": {
+      "name": "Manufacture of light duty ICEV",
+      "declared_parent": "MVH",
+      "output_source": {
+        "kind": "template",
+        "file": "Inventory_Manufacture of light duty ICEV.xlsx",
+        "column": "E",
+        "unit_column": "F",
+        "factor": 1.0,
+        "assumption": "explicit_monetary_candidate",
+        "expected_headers": [
+          "2023 Value",
+          "(free to fill)"
+        ]
+      }
+    },
+    "ISS": {
+      "name": "Manufacture of secondary iron and steel",
+      "declared_parent": "I_S",
+      "output_source": {
+        "kind": "template",
+        "file": "Inventory_Manufacture of secondary iron and steel.xlsx",
+        "column": "E",
+        "unit_column": "F",
+        "factor": 1.0,
+        "assumption": "explicit_monetary_candidate",
+        "expected_headers": [
+          "2023 Value",
+          "(free to fill)"
+        ]
+      }
+    },
+    "KFR": {
+      "name": "Manufacture of potassium fertilizer",
+      "declared_parent": "CHM",
+      "output_source": {
+        "kind": "purdue",
+        "assumption": "June1 REPOUT and BLTTRD treated as paired 2023 MUSD priors"
+      }
+    },
+    "LCO": {
+      "name": "Manufacture of LCO batteries",
+      "declared_parent": "EEQ",
+      "output_source": {
+        "kind": "template",
+        "file": "Inventory_Manufacture of LCO batteries.xlsx",
+        "column": "E",
+        "unit_column": "F",
+        "factor": 1.0,
+        "assumption": "explicit_monetary_candidate",
+        "expected_headers": [
+          "2023 Value",
+          "(free to fill)"
+        ]
+      }
+    },
+    "LFP": {
+      "name": "Manufacture of LFP batteries",
+      "declared_parent": "EEQ",
+      "output_source": {
+        "kind": "template",
+        "file": "Inventory_Manufacture of LFP batteries.xlsx",
+        "column": "E",
+        "unit_column": "F",
+        "factor": 1.0,
+        "assumption": "explicit_monetary_candidate",
+        "expected_headers": [
+          "2023 Value",
+          "(free to fill)"
+        ]
+      }
+    },
+    "LIR": {
+      "name": "Manufacture of refined lithium",
+      "declared_parent": "CHM",
+      "output_source": {
+        "kind": "purdue",
+        "assumption": "June1 REPOUT and BLTTRD treated as paired 2023 MUSD priors"
+      }
+    },
+    "LIT": {
+      "name": "Mining of lithium",
+      "declared_parent": "OXT",
+      "output_source": {
+        "kind": "purdue",
+        "assumption": "June1 REPOUT and BLTTRD treated as paired 2023 MUSD priors"
+      }
+    },
+    "LMO": {
+      "name": "Manufacture of LMO batteries",
+      "declared_parent": "EEQ",
+      "output_source": {
+        "kind": "template",
+        "file": "Inventory_Manufacture of LMO batteries.xlsx",
+        "column": "E",
+        "unit_column": "F",
+        "factor": 1.0,
+        "assumption": "year_conflict",
+        "expected_headers": [
+          "2017 Value",
+          "(free to fill)"
+        ]
+      }
+    },
+    "MAN": {
+      "name": "Mining of manganese ores and concentrates",
+      "declared_parent": "OXT",
+      "output_source": {
+        "kind": "purdue",
+        "assumption": "June1 REPOUT and BLTTRD treated as paired 2023 MUSD priors"
+      }
+    },
+    "MAO": {
+      "name": "Mining of aluminum ores",
+      "declared_parent": "OXT",
+      "output_source": {
+        "kind": "purdue",
+        "assumption": "June1 REPOUT and BLTTRD treated as paired 2023 MUSD priors"
+      }
+    },
+    "MCU": {
+      "name": "Mining of copper ores",
+      "declared_parent": "OXT",
+      "output_source": {
+        "kind": "purdue",
+        "assumption": "June1 REPOUT and BLTTRD treated as paired 2023 MUSD priors"
+      }
+    },
+    "MGC": {
+      "name": "Mining of natural magnesium carbonate \"magnesite\"+magnesia, fused or dead-burned (sintered)",
+      "declared_parent": "OXT",
+      "output_source": {
+        "kind": "purdue",
+        "assumption": "June1 REPOUT and BLTTRD treated as paired 2023 MUSD priors"
+      }
+    },
+    "MIO": {
+      "name": "Mining of iron ores",
+      "declared_parent": "OXT",
+      "output_source": {
+        "kind": "purdue",
+        "assumption": "June1 REPOUT and BLTTRD treated as paired 2023 MUSD priors"
+      }
+    },
+    "MNR": {
+      "name": "Manufacture of refined manganese",
+      "declared_parent": "CHM",
+      "output_source": {
+        "kind": "purdue",
+        "assumption": "June1 REPOUT and BLTTRD treated as paired 2023 MUSD priors"
+      }
+    },
+    "MSI": {
+      "name": "Manufacture of metallurgical silicon",
+      "declared_parent": "CHM",
+      "output_source": {
+        "kind": "template",
+        "file": "Inventory_Manufacture of metallurgical silicon.xlsx",
+        "column": "G",
+        "unit_column": "H",
+        "factor": 1e-06,
+        "assumption": "declared_USD_scale_sensitivity",
+        "expected_headers": [
+          "2023 Value",
+          "(free to fill)"
+        ]
+      }
+    },
+    "MTH": {
+      "name": "Manufacture of methanol",
+      "declared_parent": "CHM",
+      "output_source": {
+        "kind": "template",
+        "file": "Inventory_Manufacture of methanol.xlsx",
+        "column": "K",
+        "unit_column": "L",
+        "factor": 1.0,
+        "assumption": "explicit_monetary_candidate",
+        "expected_headers": [
+          "2023 Value",
+          "(free to fill)"
+        ]
+      }
+    },
+    "MUN": {
+      "name": "Manufacture of magnesium: unwrought, articles",
+      "declared_parent": "NFM",
+      "output_source": {
+        "kind": "purdue",
+        "assumption": "June1 REPOUT and BLTTRD treated as paired 2023 MUSD priors"
+      }
+    },
+    "MUR": {
+      "name": "Mining of uranium",
+      "declared_parent": "OXT",
+      "output_source": {
+        "kind": "purdue",
+        "assumption": "June1 REPOUT and BLTTRD treated as paired 2023 MUSD priors"
+      }
+    },
+    "NCA": {
+      "name": "Manufacture of NCA batteries",
+      "declared_parent": "EEQ",
+      "output_source": {
+        "kind": "template",
+        "file": "Inventory_Manufacture of NCA batteries.xlsx",
+        "column": "E",
+        "unit_column": "F",
+        "factor": 1.0,
+        "assumption": "explicit_monetary_candidate",
+        "expected_headers": [
+          "2023 Value",
+          "(free to fill)"
+        ]
+      }
+    },
+    "NCM": {
+      "name": "Manufacture of NCM batteries",
+      "declared_parent": "EEQ",
+      "output_source": {
+        "kind": "template",
+        "file": "Inventory_Manufacture of NCM batteries.xlsx",
+        "column": "E",
+        "unit_column": "F",
+        "factor": 1.0,
+        "assumption": "explicit_monetary_candidate",
+        "expected_headers": [
+          "2023 Value",
+          "(free to fill)"
+        ]
+      }
+    },
+    "NFR": {
+      "name": "Manufacture of nitrogen fertilizer",
+      "declared_parent": "CHM",
+      "output_source": {
+        "kind": "purdue",
+        "assumption": "June1 REPOUT and BLTTRD treated as paired 2023 MUSD priors"
+      }
+    },
+    "NIK": {
+      "name": "Mining of nickel ores and concentrates",
+      "declared_parent": "OXT",
+      "output_source": {
+        "kind": "purdue",
+        "assumption": "June1 REPOUT and BLTTRD treated as paired 2023 MUSD priors"
+      }
+    },
+    "NIO": {
+      "name": "Mining of niobium",
+      "declared_parent": "OXT",
+      "output_source": {
+        "kind": "purdue",
+        "assumption": "June1 REPOUT and BLTTRD treated as paired 2023 MUSD priors"
+      }
+    },
+    "NIR": {
+      "name": "Manufacture of refined nickel",
+      "declared_parent": "CHM",
+      "output_source": {
+        "kind": "purdue",
+        "assumption": "June1 REPOUT and BLTTRD treated as paired 2023 MUSD priors"
+      }
+    },
+    "NMC": {
+      "name": "Manufacture of NMC batteries",
+      "declared_parent": "OME",
+      "output_source": {
+        "kind": "legacy_share",
+        "assumption": "Distinct NMC working identity; transfer historical share to reviewed EEQ parent, do not alias to NCM"
+      }
+    },
+    "PCP": {
+      "name": "Manufacture of coke",
+      "declared_parent": "P_C",
+      "output_source": {
+        "kind": "template",
+        "file": "Inventory_Manufacture of coke.xlsx",
+        "column": "E",
+        "unit_column": "",
+        "factor": 1.0,
+        "assumption": "explicit_monetary_candidate",
+        "expected_headers": [
+          "2023 Value",
+          "Mio U$"
+        ]
+      }
+    },
+    "PFR": {
+      "name": "Manufacture of phosphorus fertilizer",
+      "declared_parent": "CHM",
+      "output_source": {
+        "kind": "purdue",
+        "assumption": "June1 REPOUT and BLTTRD treated as paired 2023 MUSD priors"
+      }
+    },
+    "PGM": {
+      "name": "Mining of plantinum group metals",
+      "declared_parent": "OXT",
+      "output_source": {
+        "kind": "purdue",
+        "assumption": "June1 REPOUT and BLTTRD treated as paired 2023 MUSD priors"
+      }
+    },
+    "PGR": {
+      "name": "Manufacture of semi-manufactured platinum group metals",
+      "declared_parent": "NFM",
+      "output_source": {
+        "kind": "purdue",
+        "assumption": "June1 REPOUT and BLTTRD treated as paired 2023 MUSD priors"
+      }
+    },
+    "PLP": {
+      "name": "Manufacture of primary plastic products",
+      "declared_parent": "RPP",
+      "output_source": {
+        "kind": "template",
+        "file": "Inventory_Manufacture of primary plastic products.xlsx",
+        "column": "E",
+        "unit_column": "F",
+        "factor": 1.0,
+        "assumption": "explicit_monetary_candidate",
+        "expected_headers": [
+          "2023 Value",
+          "Primary plastics products"
+        ]
+      },
+      "scope": "finished_plastics"
+    },
+    "PLR": {
+      "name": "Recycling of plastics",
+      "declared_parent": "RPP",
+      "output_source": {
+        "kind": "template",
+        "file": "Inventory_Recycling of plastics.xlsx",
+        "column": "E",
+        "unit_column": "F",
+        "factor": 1.0,
+        "assumption": "explicit_monetary_candidate",
+        "expected_headers": [
+          "2023 Value",
+          "Recycled plastics"
+        ]
+      },
+      "scope": "materials_recovery"
+    },
+    "PLSR": {
+      "name": "Manufacture of secondary plastic products",
+      "declared_parent": "RPP",
+      "output_source": {
+        "kind": "template",
+        "file": "Inventory_Manufacture of secondary plastic products.xlsx",
+        "column": "E",
+        "unit_column": "F",
+        "factor": 1.0,
+        "assumption": "explicit_monetary_candidate",
+        "expected_headers": [
+          "2023 Value",
+          "Secondary plastics products"
+        ]
+      },
+      "scope": "finished_plastics"
+    },
+    "RAL": {
+      "name": "Recycling of aluminum",
+      "declared_parent": "NFM",
+      "output_source": {
+        "kind": "template",
+        "file": "Inventory_Recycling of Aluminum.xlsx",
+        "column": "G",
+        "unit_column": "H",
+        "factor": 1.0,
+        "assumption": "explicit_monetary_candidate",
+        "expected_headers": [
+          "2023 Value",
+          "(free to fill)"
+        ]
+      },
+      "scope": "secondary_aluminium"
+    },
+    "RBR": {
+      "name": "Manufacture of rubber products",
+      "declared_parent": "RPP",
+      "output_source": {
+        "kind": "template_share",
+        "file": "Inventory_Manufacture of rubber products.xlsx",
+        "column": "H",
+        "unit_column": "",
+        "factor": 1.0,
+        "assumption": "Source fraction transferred to operational parent output; not an observed 2023 level",
+        "expected_headers": [
+          "2017 Share",
+          "Raw data"
+        ]
+      }
+    },
+    "RCP": {
+      "name": "Recycling of copper",
+      "declared_parent": "NFM",
+      "output_source": {
+        "kind": "purdue",
+        "assumption": "June1 REPOUT and BLTTRD treated as paired 2023 MUSD priors"
+      },
+      "scope": "secondary_copper"
+    },
+    "REE": {
+      "name": "Mining of rare earth elements",
+      "declared_parent": "OXT",
+      "output_source": {
+        "kind": "purdue",
+        "assumption": "June1 REPOUT and BLTTRD treated as paired 2023 MUSD priors"
+      }
+    },
+    "RER": {
+      "name": "Manufacture of refined rare earths",
+      "declared_parent": "CHM",
+      "output_source": {
+        "kind": "purdue",
+        "assumption": "June1 REPOUT and BLTTRD treated as paired 2023 MUSD priors"
+      },
+      "scope": "chemical_compounds"
+    },
+    "SCI": {
+      "name": "Manufacture of steel via BF-BOF with coke injection",
+      "declared_parent": "I_S",
+      "output_source": {
+        "kind": "template",
+        "file": "Inventory_Manufacture of steel via BF-BOF with coke injection.xlsx",
+        "column": "I",
+        "unit_column": "J",
+        "factor": 1.0,
+        "assumption": "explicit_monetary_candidate",
+        "expected_headers": [
+          "2023 Value",
+          "(free to fill)"
+        ]
+      }
+    },
+    "SDG": {
+      "name": "Manufacture of steel via direct reduction with natural gas",
+      "declared_parent": "I_S",
+      "output_source": {
+        "kind": "template",
+        "file": "Inventory_Manufacture of steel via direct reduction with natural gas.xlsx",
+        "column": "I",
+        "unit_column": "J",
+        "factor": 1.0,
+        "assumption": "row_vs_header_unit_conflict",
+        "expected_headers": [
+          "2023 Value",
+          "(free to fill)"
+        ]
+      }
+    },
+    "SDH": {
+      "name": "Manufacture of steel via direct reduction with hydrogen",
+      "declared_parent": "I_S",
+      "output_source": {
+        "kind": "legacy_share",
+        "assumption": "No positive monetary source; retain historical global child/parent share as an imputed prior"
+      }
+    },
+    "SIL": {
+      "name": "Mining of silver",
+      "declared_parent": "OXT",
+      "output_source": {
+        "kind": "purdue",
+        "assumption": "June1 REPOUT and BLTTRD treated as paired 2023 MUSD priors"
+      }
+    },
+    "SIR": {
+      "name": "Manufacture of refined silver",
+      "declared_parent": "NFM",
+      "output_source": {
+        "kind": "purdue",
+        "assumption": "June1 REPOUT and BLTTRD treated as paired 2023 MUSD priors"
+      }
+    },
+    "SOP": {
+      "name": "Manufacture of solar panels",
+      "declared_parent": "ELE",
+      "output_source": {
+        "kind": "template",
+        "file": "Inventory_Manufacture of solar panels.xlsx",
+        "column": "G",
+        "unit_column": "H",
+        "factor": 1.0,
+        "assumption": "explicit_monetary_candidate",
+        "expected_headers": [
+          "2023 Value",
+          null
+        ]
+      }
+    },
+    "TIR": {
+      "name": "Manufacture of refined titanium",
+      "declared_parent": "CHM",
+      "output_source": {
+        "kind": "purdue",
+        "assumption": "June1 REPOUT and BLTTRD treated as paired 2023 MUSD priors"
+      }
+    },
+    "TIT": {
+      "name": "Mining of titanium",
+      "declared_parent": "OXT",
+      "output_source": {
+        "kind": "purdue",
+        "assumption": "June1 REPOUT and BLTTRD treated as paired 2023 MUSD priors"
+      }
+    },
+    "TVP": {
+      "name": "Transport via pipeline service",
+      "declared_parent": "OTP",
+      "output_source": {
+        "kind": "template",
+        "file": "Inventory_Transport via pipeline service.xlsx",
+        "column": "E",
+        "unit_column": "F",
+        "factor": 1e-06,
+        "assumption": "declared_USD_scale_sensitivity",
+        "expected_headers": [
+          "2023 Value",
+          "(free to fill)"
+        ]
+      }
+    },
+    "WNT": {
+      "name": "Manufacture of wind turbines",
+      "declared_parent": "EEQ",
+      "output_source": {
+        "kind": "template",
+        "file": "Inventory_Manufacture of wind turbines.xlsx",
+        "column": "G",
+        "unit_column": "H",
+        "factor": 1.0,
+        "assumption": "explicit_monetary_candidate",
+        "expected_headers": [
+          "2023 Value",
+          "(free to fill)"
+        ]
+      },
+      "scope": "electrical_generators"
+    },
+    "ZIN": {
+      "name": "Mining of zinc",
+      "declared_parent": "OXT",
+      "output_source": {
+        "kind": "purdue",
+        "assumption": "June1 REPOUT and BLTTRD treated as paired 2023 MUSD priors"
+      }
+    },
+    "ZIR": {
+      "name": "Manufacture of refined zinc",
+      "declared_parent": "CHM",
+      "output_source": {
+        "kind": "purdue",
+        "assumption": "June1 REPOUT and BLTTRD treated as paired 2023 MUSD priors"
+      }
+    }
+  },
+  "geography": {
+    "direct_weight": 100.0,
+    "cluster_weight": 10.0,
+    "world_weight": 1.0,
+    "prior_weight": 0.01,
+    "cluster_modes": {
+      "APS": {
+        "REST OF EUROPE": {
+          "mode": "inclusive",
+          "exclude": [
+            "GBR"
+          ]
+        }
+      },
+      "SDG": {
+        "GLOBAL": {
+          "mode": "residual"
+        },
+        "WORLD": {
+          "mode": "inclusive",
+          "weight": 0.1
+        }
+      },
+      "SOP": {
+        "GLOBAL": {
+          "mode": "residual"
+        }
+      },
+      "PLR": {
+        "GLOBAL": {
+          "mode": "residual"
+        }
+      },
+      "PLSR": {
+        "GLOBAL": {
+          "mode": "residual"
+        }
+      }
+    },
+    "region_proxies": {
+      "RBR": {
+        "Iceland": {
+          "target": "XEF",
+          "confidence": 0.1,
+          "assumption": "Use the supplied country parent-share as a low-confidence proxy for the native residual EFTA region"
+        },
+        "Myanmar": {
+          "target": "XSE",
+          "confidence": 0.1,
+          "assumption": "Use the supplied country parent-share as a low-confidence proxy for the native residual Southeast Asia region"
+        },
+        "Republic of Moldova": {
+          "target": "XSU",
+          "confidence": 0.1,
+          "assumption": "Use the supplied country parent-share as a low-confidence proxy for the native residual former Soviet region"
+        }
+      }
+    }
+  },
+  "output": {
+    "missing": "macroregion_parent_share",
+    "all_missing": "legacy_global_parent_share",
+    "cap": "proportional"
+  },
+  "overlap_groups": [
+    {
+      "id": "recycled_plastics_observation",
+      "members": [
+        "PLR",
+        "PLSR"
+      ],
+      "reference": "PLSR",
+      "weights": [
+        0.5,
+        0.5
+      ],
+      "assumption": "One recycled-product observation apportioned equally between recovery service and finished secondary product; separate values are unavailable"
+    }
+  ],
+  "trade": {
+    "solver": "CLARABEL",
+    "relative_floor": 1e-12,
+    "parent_pattern_only": [
+      "PLR"
+    ],
+    "weights": {
+      "paired": 1.0,
+      "direct": 0.5,
+      "composite": 0.2,
+      "imputed": 0.1
+    },
+    "composites": {
+      "ALM": [
+        "APP",
+        "APS",
+        "RAL"
+      ],
+      "CEMN": [
+        "CEM"
+      ],
+      "HYD": [
+        "HYE"
+      ],
+      "IST": [
+        "ISS",
+        "SCI",
+        "SDG",
+        "SDH"
+      ],
+      "LBT": [
+        "LCO",
+        "LFP",
+        "LMO",
+        "NCA",
+        "NCM",
+        "NMC"
+      ],
+      "PLT": [
+        "PLP",
+        "PLSR"
+      ]
+    }
+  },
+  "profiles": {
+    "small_residual": 0.01,
+    "sector_weight": 4.0,
+    "factor_weight": 1.0,
+    "negative_factors": "preserve",
+    "reparent": "baseline_parent",
+    "missing": "same_child_macro_then_global_then_parent",
+    "origin_cluster_allocation": "baseline_parent_weights"
+  }
+}

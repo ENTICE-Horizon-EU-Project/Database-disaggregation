@@ -1,0 +1,2223 @@
+{
+  "schema_version": 1,
+  "reference": "NACE Rev. 2",
+  "source_methodology": "https://doi.org/10.1111/jiec.13264",
+  "source_methodology_scope": "Original release uses HS 2002 and EBOPS 2010. The 2.2 descriptor inventory is separately checked; no full version-2 publisher concordance was supplied.",
+  "emerging_goods": [
+    {
+      "native_index": 1,
+      "expected_raw_label": "01 live animals",
+      "hs_chapter": "01",
+      "scope_status": "editorial_chapter_identity",
+      "source_hs_edition": "H2",
+      "note": "Descriptor identity reviewed against HS chapters. Native serial is not an HS code."
+    },
+    {
+      "native_index": 2,
+      "expected_raw_label": "02 meat and edible meat offal",
+      "hs_chapter": "02",
+      "scope_status": "editorial_chapter_identity",
+      "source_hs_edition": "H2",
+      "note": "Descriptor identity reviewed against HS chapters. Native serial is not an HS code."
+    },
+    {
+      "native_index": 3,
+      "expected_raw_label": "03 fish, crustaceans, molluscs, aquatic invertebrates ne",
+      "hs_chapter": "03",
+      "scope_status": "editorial_chapter_identity",
+      "source_hs_edition": "H2",
+      "note": "Descriptor identity reviewed against HS chapters. Native serial is not an HS code."
+    },
+    {
+      "native_index": 4,
+      "expected_raw_label": "04 dairy products, eggs, honey, edible animal product ne",
+      "hs_chapter": "04",
+      "scope_status": "editorial_chapter_identity",
+      "source_hs_edition": "H2",
+      "note": "Descriptor identity reviewed against HS chapters. Native serial is not an HS code."
+    },
+    {
+      "native_index": 5,
+      "expected_raw_label": "05 products of animal origin, nes",
+      "hs_chapter": "05",
+      "scope_status": "editorial_chapter_identity",
+      "source_hs_edition": "H2",
+      "note": "Descriptor identity reviewed against HS chapters. Native serial is not an HS code."
+    },
+    {
+      "native_index": 6,
+      "expected_raw_label": "06 live trees, plants, bulbs, roots, cut flowers etc",
+      "hs_chapter": "06",
+      "scope_status": "editorial_chapter_identity",
+      "source_hs_edition": "H2",
+      "note": "Descriptor identity reviewed against HS chapters. Native serial is not an HS code."
+    },
+    {
+      "native_index": 7,
+      "expected_raw_label": "07 edible vegetables and certain roots and tubers",
+      "hs_chapter": "07",
+      "scope_status": "editorial_chapter_identity",
+      "source_hs_edition": "H2",
+      "note": "Descriptor identity reviewed against HS chapters. Native serial is not an HS code."
+    },
+    {
+      "native_index": 8,
+      "expected_raw_label": "08 edible fruit, nuts, peel of citrus fruit, melons",
+      "hs_chapter": "08",
+      "scope_status": "editorial_chapter_identity",
+      "source_hs_edition": "H2",
+      "note": "Descriptor identity reviewed against HS chapters. Native serial is not an HS code."
+    },
+    {
+      "native_index": 9,
+      "expected_raw_label": "09 coffee, tea, mate and spices",
+      "hs_chapter": "09",
+      "scope_status": "editorial_chapter_identity",
+      "source_hs_edition": "H2",
+      "note": "Descriptor identity reviewed against HS chapters. Native serial is not an HS code."
+    },
+    {
+      "native_index": 10,
+      "expected_raw_label": "10 cereals",
+      "hs_chapter": "10",
+      "scope_status": "editorial_chapter_identity",
+      "source_hs_edition": "H2",
+      "note": "Descriptor identity reviewed against HS chapters. Native serial is not an HS code."
+    },
+    {
+      "native_index": 11,
+      "expected_raw_label": "11 milling products, malt, starches, inulin, wheat glute",
+      "hs_chapter": "11",
+      "scope_status": "editorial_chapter_identity",
+      "source_hs_edition": "H2",
+      "note": "Descriptor identity reviewed against HS chapters. Native serial is not an HS code."
+    },
+    {
+      "native_index": 12,
+      "expected_raw_label": "12 oil seed, oleagic fruits, grain, seed, fruit, etc, ne",
+      "hs_chapter": "12",
+      "scope_status": "editorial_chapter_identity",
+      "source_hs_edition": "H2",
+      "note": "Descriptor identity reviewed against HS chapters. Native serial is not an HS code."
+    },
+    {
+      "native_index": 13,
+      "expected_raw_label": "13 lac, gums, resins, vegetable saps and extracts nes",
+      "hs_chapter": "13",
+      "scope_status": "editorial_chapter_identity",
+      "source_hs_edition": "H2",
+      "note": "Descriptor identity reviewed against HS chapters. Native serial is not an HS code."
+    },
+    {
+      "native_index": 14,
+      "expected_raw_label": "14 vegetable plaiting materials, vegetable products nes",
+      "hs_chapter": "14",
+      "scope_status": "editorial_chapter_identity",
+      "source_hs_edition": "H2",
+      "note": "Descriptor identity reviewed against HS chapters. Native serial is not an HS code."
+    },
+    {
+      "native_index": 15,
+      "expected_raw_label": "15 animal,vegetable fats and oils, cleavage products, et",
+      "hs_chapter": "15",
+      "scope_status": "editorial_chapter_identity",
+      "source_hs_edition": "H2",
+      "note": "Descriptor identity reviewed against HS chapters. Native serial is not an HS code."
+    },
+    {
+      "native_index": 16,
+      "expected_raw_label": "16 meat, fish and seafood food preparations nes",
+      "hs_chapter": "16",
+      "scope_status": "editorial_chapter_identity",
+      "source_hs_edition": "H2",
+      "note": "Descriptor identity reviewed against HS chapters. Native serial is not an HS code."
+    },
+    {
+      "native_index": 17,
+      "expected_raw_label": "17 sugars and sugar confectionery",
+      "hs_chapter": "17",
+      "scope_status": "editorial_chapter_identity",
+      "source_hs_edition": "H2",
+      "note": "Descriptor identity reviewed against HS chapters. Native serial is not an HS code."
+    },
+    {
+      "native_index": 18,
+      "expected_raw_label": "18 cocoa and cocoa preparations",
+      "hs_chapter": "18",
+      "scope_status": "editorial_chapter_identity",
+      "source_hs_edition": "H2",
+      "note": "Descriptor identity reviewed against HS chapters. Native serial is not an HS code."
+    },
+    {
+      "native_index": 19,
+      "expected_raw_label": "19 cereal, flour, starch, milk preparations and products",
+      "hs_chapter": "19",
+      "scope_status": "editorial_chapter_identity",
+      "source_hs_edition": "H2",
+      "note": "Descriptor identity reviewed against HS chapters. Native serial is not an HS code."
+    },
+    {
+      "native_index": 20,
+      "expected_raw_label": "20 vegetable, fruit, nut, etc food preparations",
+      "hs_chapter": "20",
+      "scope_status": "editorial_chapter_identity",
+      "source_hs_edition": "H2",
+      "note": "Descriptor identity reviewed against HS chapters. Native serial is not an HS code."
+    },
+    {
+      "native_index": 21,
+      "expected_raw_label": "21 miscellaneous edible preparations",
+      "hs_chapter": "21",
+      "scope_status": "editorial_chapter_identity",
+      "source_hs_edition": "H2",
+      "note": "Descriptor identity reviewed against HS chapters. Native serial is not an HS code."
+    },
+    {
+      "native_index": 22,
+      "expected_raw_label": "22 beverages, spirits and vinegar",
+      "hs_chapter": "22",
+      "scope_status": "editorial_chapter_identity",
+      "source_hs_edition": "H2",
+      "note": "Descriptor identity reviewed against HS chapters. Native serial is not an HS code."
+    },
+    {
+      "native_index": 23,
+      "expected_raw_label": "23 residues, wastes of food industry, animal fodder",
+      "hs_chapter": "23",
+      "scope_status": "editorial_chapter_identity",
+      "source_hs_edition": "H2",
+      "note": "Descriptor identity reviewed against HS chapters. Native serial is not an HS code."
+    },
+    {
+      "native_index": 24,
+      "expected_raw_label": "24 tobacco and manufactured tobacco substitutes",
+      "hs_chapter": "24",
+      "scope_status": "editorial_chapter_identity",
+      "source_hs_edition": "H2",
+      "note": "Descriptor identity reviewed against HS chapters. Native serial is not an HS code."
+    },
+    {
+      "native_index": 25,
+      "expected_raw_label": "25 salt, sulphur, earth, stone, plaster, lime and cement",
+      "hs_chapter": "25",
+      "scope_status": "editorial_chapter_identity",
+      "source_hs_edition": "H2",
+      "note": "Descriptor identity reviewed against HS chapters. Native serial is not an HS code."
+    },
+    {
+      "native_index": 26,
+      "expected_raw_label": "26 ores, slag and ash",
+      "hs_chapter": "26",
+      "scope_status": "editorial_chapter_identity",
+      "source_hs_edition": "H2",
+      "note": "Descriptor identity reviewed against HS chapters. Native serial is not an HS code."
+    },
+    {
+      "native_index": 27,
+      "expected_raw_label": "27 inorganic chemicals, precious metal compound, isotope",
+      "hs_chapter": "28",
+      "scope_status": "editorial_chapter_identity",
+      "source_hs_edition": "H2",
+      "note": "Descriptor identity reviewed against HS chapters. Native serial is not an HS code."
+    },
+    {
+      "native_index": 28,
+      "expected_raw_label": "28 organic chemicals",
+      "hs_chapter": "29",
+      "scope_status": "editorial_chapter_identity",
+      "source_hs_edition": "H2",
+      "note": "Descriptor identity reviewed against HS chapters. Native serial is not an HS code."
+    },
+    {
+      "native_index": 29,
+      "expected_raw_label": "29 pharmaceutical products",
+      "hs_chapter": "30",
+      "scope_status": "editorial_chapter_identity",
+      "source_hs_edition": "H2",
+      "note": "Descriptor identity reviewed against HS chapters. Native serial is not an HS code."
+    },
+    {
+      "native_index": 30,
+      "expected_raw_label": "30 fertilizers",
+      "hs_chapter": "31",
+      "scope_status": "editorial_chapter_identity",
+      "source_hs_edition": "H2",
+      "note": "Descriptor identity reviewed against HS chapters. Native serial is not an HS code."
+    },
+    {
+      "native_index": 31,
+      "expected_raw_label": "31 tanning, dyeing extracts, tannins, derivs,pigments et",
+      "hs_chapter": "32",
+      "scope_status": "editorial_chapter_identity",
+      "source_hs_edition": "H2",
+      "note": "Descriptor identity reviewed against HS chapters. Native serial is not an HS code."
+    },
+    {
+      "native_index": 32,
+      "expected_raw_label": "32 essential oils, perfumes, cosmetics, toileteries",
+      "hs_chapter": "33",
+      "scope_status": "editorial_chapter_identity",
+      "source_hs_edition": "H2",
+      "note": "Descriptor identity reviewed against HS chapters. Native serial is not an HS code."
+    },
+    {
+      "native_index": 33,
+      "expected_raw_label": "33 soaps, lubricants, waxes, candles, modelling pastes",
+      "hs_chapter": "34",
+      "scope_status": "editorial_chapter_identity",
+      "source_hs_edition": "H2",
+      "note": "Descriptor identity reviewed against HS chapters. Native serial is not an HS code."
+    },
+    {
+      "native_index": 34,
+      "expected_raw_label": "34 albuminoids, modified starches, glues, enzymes",
+      "hs_chapter": "35",
+      "scope_status": "editorial_chapter_identity",
+      "source_hs_edition": "H2",
+      "note": "Descriptor identity reviewed against HS chapters. Native serial is not an HS code."
+    },
+    {
+      "native_index": 35,
+      "expected_raw_label": "35 explosives, pyrotechnics, matches, pyrophorics, etc",
+      "hs_chapter": "36",
+      "scope_status": "editorial_chapter_identity",
+      "source_hs_edition": "H2",
+      "note": "Descriptor identity reviewed against HS chapters. Native serial is not an HS code."
+    },
+    {
+      "native_index": 36,
+      "expected_raw_label": "36 photographic or cinematographic goods",
+      "hs_chapter": "37",
+      "scope_status": "editorial_chapter_identity",
+      "source_hs_edition": "H2",
+      "note": "Descriptor identity reviewed against HS chapters. Native serial is not an HS code."
+    },
+    {
+      "native_index": 37,
+      "expected_raw_label": "37 miscellaneous chemical products",
+      "hs_chapter": "38",
+      "scope_status": "editorial_chapter_identity",
+      "source_hs_edition": "H2",
+      "note": "Descriptor identity reviewed against HS chapters. Native serial is not an HS code."
+    },
+    {
+      "native_index": 38,
+      "expected_raw_label": "38 plastics and articles thereof",
+      "hs_chapter": "39",
+      "scope_status": "editorial_chapter_identity",
+      "source_hs_edition": "H2",
+      "note": "Descriptor identity reviewed against HS chapters. Native serial is not an HS code."
+    },
+    {
+      "native_index": 39,
+      "expected_raw_label": "39 rubber and articles thereof",
+      "hs_chapter": "40",
+      "scope_status": "editorial_chapter_identity",
+      "source_hs_edition": "H2",
+      "note": "Descriptor identity reviewed against HS chapters. Native serial is not an HS code."
+    },
+    {
+      "native_index": 40,
+      "expected_raw_label": "40 raw hides and skins (other than furskins) and leather",
+      "hs_chapter": "41",
+      "scope_status": "editorial_chapter_identity",
+      "source_hs_edition": "H2",
+      "note": "Descriptor identity reviewed against HS chapters. Native serial is not an HS code."
+    },
+    {
+      "native_index": 41,
+      "expected_raw_label": "41 articles of leather, animal gut, harness, travel good",
+      "hs_chapter": "42",
+      "scope_status": "editorial_chapter_identity",
+      "source_hs_edition": "H2",
+      "note": "Descriptor identity reviewed against HS chapters. Native serial is not an HS code."
+    },
+    {
+      "native_index": 42,
+      "expected_raw_label": "42 furskins and artificial fur, manufactures thereof",
+      "hs_chapter": "43",
+      "scope_status": "editorial_chapter_identity",
+      "source_hs_edition": "H2",
+      "note": "Descriptor identity reviewed against HS chapters. Native serial is not an HS code."
+    },
+    {
+      "native_index": 43,
+      "expected_raw_label": "43 wood and articles of wood, wood charcoal",
+      "hs_chapter": "44",
+      "scope_status": "editorial_chapter_identity",
+      "source_hs_edition": "H2",
+      "note": "Descriptor identity reviewed against HS chapters. Native serial is not an HS code."
+    },
+    {
+      "native_index": 44,
+      "expected_raw_label": "44 cork and articles of cork",
+      "hs_chapter": "45",
+      "scope_status": "editorial_chapter_identity",
+      "source_hs_edition": "H2",
+      "note": "Descriptor identity reviewed against HS chapters. Native serial is not an HS code."
+    },
+    {
+      "native_index": 45,
+      "expected_raw_label": "45 manufactures of plaiting material, basketwork, etc.",
+      "hs_chapter": "46",
+      "scope_status": "editorial_chapter_identity",
+      "source_hs_edition": "H2",
+      "note": "Descriptor identity reviewed against HS chapters. Native serial is not an HS code."
+    },
+    {
+      "native_index": 46,
+      "expected_raw_label": "46 pulp of wood, fibrous cellulosic material, waste etc",
+      "hs_chapter": "47",
+      "scope_status": "editorial_chapter_identity",
+      "source_hs_edition": "H2",
+      "note": "Descriptor identity reviewed against HS chapters. Native serial is not an HS code."
+    },
+    {
+      "native_index": 47,
+      "expected_raw_label": "47 paper & paperboard, articles of pulp, paper and board",
+      "hs_chapter": "48",
+      "scope_status": "editorial_chapter_identity",
+      "source_hs_edition": "H2",
+      "note": "Descriptor identity reviewed against HS chapters. Native serial is not an HS code."
+    },
+    {
+      "native_index": 48,
+      "expected_raw_label": "48 printed books, newspapers, pictures etc",
+      "hs_chapter": "49",
+      "scope_status": "editorial_chapter_identity",
+      "source_hs_edition": "H2",
+      "note": "Descriptor identity reviewed against HS chapters. Native serial is not an HS code."
+    },
+    {
+      "native_index": 49,
+      "expected_raw_label": "49 silk",
+      "hs_chapter": "50",
+      "scope_status": "editorial_chapter_identity",
+      "source_hs_edition": "H2",
+      "note": "Descriptor identity reviewed against HS chapters. Native serial is not an HS code."
+    },
+    {
+      "native_index": 50,
+      "expected_raw_label": "50 wool, animal hair, horsehair yarn and fabric thereof",
+      "hs_chapter": "51",
+      "scope_status": "editorial_chapter_identity",
+      "source_hs_edition": "H2",
+      "note": "Descriptor identity reviewed against HS chapters. Native serial is not an HS code."
+    },
+    {
+      "native_index": 51,
+      "expected_raw_label": "51 cotton",
+      "hs_chapter": "52",
+      "scope_status": "editorial_chapter_identity",
+      "source_hs_edition": "H2",
+      "note": "Descriptor identity reviewed against HS chapters. Native serial is not an HS code."
+    },
+    {
+      "native_index": 52,
+      "expected_raw_label": "52 vegetable textile fibres nes, paper yarn, woven fabri",
+      "hs_chapter": "53",
+      "scope_status": "editorial_chapter_identity",
+      "source_hs_edition": "H2",
+      "note": "Descriptor identity reviewed against HS chapters. Native serial is not an HS code."
+    },
+    {
+      "native_index": 53,
+      "expected_raw_label": "53 manmade filaments",
+      "hs_chapter": "54",
+      "scope_status": "editorial_chapter_identity",
+      "source_hs_edition": "H2",
+      "note": "Descriptor identity reviewed against HS chapters. Native serial is not an HS code."
+    },
+    {
+      "native_index": 54,
+      "expected_raw_label": "54 manmade staple fibres",
+      "hs_chapter": "55",
+      "scope_status": "editorial_chapter_identity",
+      "source_hs_edition": "H2",
+      "note": "Descriptor identity reviewed against HS chapters. Native serial is not an HS code."
+    },
+    {
+      "native_index": 55,
+      "expected_raw_label": "55 wadding, felt, nonwovens, yarns, twine, cordage, etc",
+      "hs_chapter": "56",
+      "scope_status": "editorial_chapter_identity",
+      "source_hs_edition": "H2",
+      "note": "Descriptor identity reviewed against HS chapters. Native serial is not an HS code."
+    },
+    {
+      "native_index": 56,
+      "expected_raw_label": "56 carpets and other textile floor coverings",
+      "hs_chapter": "57",
+      "scope_status": "editorial_chapter_identity",
+      "source_hs_edition": "H2",
+      "note": "Descriptor identity reviewed against HS chapters. Native serial is not an HS code."
+    },
+    {
+      "native_index": 57,
+      "expected_raw_label": "57 special woven or tufted fabric, lace, tapestry etc",
+      "hs_chapter": "58",
+      "scope_status": "editorial_chapter_identity",
+      "source_hs_edition": "H2",
+      "note": "Descriptor identity reviewed against HS chapters. Native serial is not an HS code."
+    },
+    {
+      "native_index": 58,
+      "expected_raw_label": "58 impregnated, coated or laminated textile fabric",
+      "hs_chapter": "59",
+      "scope_status": "editorial_chapter_identity",
+      "source_hs_edition": "H2",
+      "note": "Descriptor identity reviewed against HS chapters. Native serial is not an HS code."
+    },
+    {
+      "native_index": 59,
+      "expected_raw_label": "59 knitted or crocheted fabric",
+      "hs_chapter": "60",
+      "scope_status": "editorial_chapter_identity",
+      "source_hs_edition": "H2",
+      "note": "Descriptor identity reviewed against HS chapters. Native serial is not an HS code."
+    },
+    {
+      "native_index": 60,
+      "expected_raw_label": "60 articles of apparel, accessories, knit or crochet",
+      "hs_chapter": "61",
+      "scope_status": "editorial_chapter_identity",
+      "source_hs_edition": "H2",
+      "note": "Descriptor identity reviewed against HS chapters. Native serial is not an HS code."
+    },
+    {
+      "native_index": 61,
+      "expected_raw_label": "61 articles of apparel, accessories, not knit or crochet",
+      "hs_chapter": "62",
+      "scope_status": "editorial_chapter_identity",
+      "source_hs_edition": "H2",
+      "note": "Descriptor identity reviewed against HS chapters. Native serial is not an HS code."
+    },
+    {
+      "native_index": 62,
+      "expected_raw_label": "62 other made textile articles, sets, worn clothing etc",
+      "hs_chapter": "63",
+      "scope_status": "editorial_chapter_identity",
+      "source_hs_edition": "H2",
+      "note": "Descriptor identity reviewed against HS chapters. Native serial is not an HS code."
+    },
+    {
+      "native_index": 63,
+      "expected_raw_label": "63 footwear, gaiters and the like, parts thereof",
+      "hs_chapter": "64",
+      "scope_status": "editorial_chapter_identity",
+      "source_hs_edition": "H2",
+      "note": "Descriptor identity reviewed against HS chapters. Native serial is not an HS code."
+    },
+    {
+      "native_index": 64,
+      "expected_raw_label": "64 headgear and parts thereof",
+      "hs_chapter": "65",
+      "scope_status": "editorial_chapter_identity",
+      "source_hs_edition": "H2",
+      "note": "Descriptor identity reviewed against HS chapters. Native serial is not an HS code."
+    },
+    {
+      "native_index": 65,
+      "expected_raw_label": "65 umbrellas, walking-sticks, seat-sticks, whips, etc",
+      "hs_chapter": "66",
+      "scope_status": "editorial_chapter_identity",
+      "source_hs_edition": "H2",
+      "note": "Descriptor identity reviewed against HS chapters. Native serial is not an HS code."
+    },
+    {
+      "native_index": 66,
+      "expected_raw_label": "66 bird skin, feathers, artificial flowers, human hair",
+      "hs_chapter": "67",
+      "scope_status": "editorial_chapter_identity",
+      "source_hs_edition": "H2",
+      "note": "Descriptor identity reviewed against HS chapters. Native serial is not an HS code."
+    },
+    {
+      "native_index": 67,
+      "expected_raw_label": "67 stone, plaster, cement, asbestos, mica, etc articles",
+      "hs_chapter": "68",
+      "scope_status": "editorial_chapter_identity",
+      "source_hs_edition": "H2",
+      "note": "Descriptor identity reviewed against HS chapters. Native serial is not an HS code."
+    },
+    {
+      "native_index": 68,
+      "expected_raw_label": "68 ceramic products undata",
+      "hs_chapter": "69",
+      "scope_status": "editorial_chapter_identity",
+      "source_hs_edition": "H2",
+      "note": "Descriptor identity reviewed against HS chapters. Native serial is not an HS code."
+    },
+    {
+      "native_index": 69,
+      "expected_raw_label": "69 glass and glassware",
+      "hs_chapter": "70",
+      "scope_status": "editorial_chapter_identity",
+      "source_hs_edition": "H2",
+      "note": "Descriptor identity reviewed against HS chapters. Native serial is not an HS code."
+    },
+    {
+      "native_index": 70,
+      "expected_raw_label": "70 pearls, precious stones, metals, coins, etc",
+      "hs_chapter": "71",
+      "scope_status": "editorial_chapter_identity",
+      "source_hs_edition": "H2",
+      "note": "Descriptor identity reviewed against HS chapters. Native serial is not an HS code."
+    },
+    {
+      "native_index": 71,
+      "expected_raw_label": "71 iron and steel",
+      "hs_chapter": "72",
+      "scope_status": "editorial_chapter_identity",
+      "source_hs_edition": "H2",
+      "note": "Descriptor identity reviewed against HS chapters. Native serial is not an HS code."
+    },
+    {
+      "native_index": 72,
+      "expected_raw_label": "72 articles of iron or steel",
+      "hs_chapter": "73",
+      "scope_status": "editorial_chapter_identity",
+      "source_hs_edition": "H2",
+      "note": "Descriptor identity reviewed against HS chapters. Native serial is not an HS code."
+    },
+    {
+      "native_index": 73,
+      "expected_raw_label": "73 copper and articles thereof",
+      "hs_chapter": "74",
+      "scope_status": "editorial_chapter_identity",
+      "source_hs_edition": "H2",
+      "note": "Descriptor identity reviewed against HS chapters. Native serial is not an HS code."
+    },
+    {
+      "native_index": 74,
+      "expected_raw_label": "74 nickel and articles thereof",
+      "hs_chapter": "75",
+      "scope_status": "editorial_chapter_identity",
+      "source_hs_edition": "H2",
+      "note": "Descriptor identity reviewed against HS chapters. Native serial is not an HS code."
+    },
+    {
+      "native_index": 75,
+      "expected_raw_label": "75 aluminium and articles thereof",
+      "hs_chapter": "76",
+      "scope_status": "editorial_chapter_identity",
+      "source_hs_edition": "H2",
+      "note": "Descriptor identity reviewed against HS chapters. Native serial is not an HS code."
+    },
+    {
+      "native_index": 76,
+      "expected_raw_label": "76 lead and articles thereof",
+      "hs_chapter": "78",
+      "scope_status": "editorial_chapter_identity",
+      "source_hs_edition": "H2",
+      "note": "Descriptor identity reviewed against HS chapters. Native serial is not an HS code."
+    },
+    {
+      "native_index": 77,
+      "expected_raw_label": "77 zinc and articles thereof",
+      "hs_chapter": "79",
+      "scope_status": "editorial_chapter_identity",
+      "source_hs_edition": "H2",
+      "note": "Descriptor identity reviewed against HS chapters. Native serial is not an HS code."
+    },
+    {
+      "native_index": 78,
+      "expected_raw_label": "78 tin and articles thereof",
+      "hs_chapter": "80",
+      "scope_status": "editorial_chapter_identity",
+      "source_hs_edition": "H2",
+      "note": "Descriptor identity reviewed against HS chapters. Native serial is not an HS code."
+    },
+    {
+      "native_index": 79,
+      "expected_raw_label": "79 other base metals, cermets, articles thereof",
+      "hs_chapter": "81",
+      "scope_status": "editorial_chapter_identity",
+      "source_hs_edition": "H2",
+      "note": "Descriptor identity reviewed against HS chapters. Native serial is not an HS code."
+    },
+    {
+      "native_index": 80,
+      "expected_raw_label": "80 tools, implements, cutlery, etc of base metal",
+      "hs_chapter": "82",
+      "scope_status": "editorial_chapter_identity",
+      "source_hs_edition": "H2",
+      "note": "Descriptor identity reviewed against HS chapters. Native serial is not an HS code."
+    },
+    {
+      "native_index": 81,
+      "expected_raw_label": "81 miscellaneous articles of base metal",
+      "hs_chapter": "83",
+      "scope_status": "editorial_chapter_identity",
+      "source_hs_edition": "H2",
+      "note": "Descriptor identity reviewed against HS chapters. Native serial is not an HS code."
+    },
+    {
+      "native_index": 82,
+      "expected_raw_label": "82 nuclear reactors, boilers, machinery, etc",
+      "hs_chapter": "84",
+      "scope_status": "editorial_chapter_identity",
+      "source_hs_edition": "H2",
+      "note": "Descriptor identity reviewed against HS chapters. Native serial is not an HS code."
+    },
+    {
+      "native_index": 83,
+      "expected_raw_label": "83 electrical, electronic equipment",
+      "hs_chapter": "85",
+      "scope_status": "editorial_chapter_identity",
+      "source_hs_edition": "H2",
+      "note": "Descriptor identity reviewed against HS chapters. Native serial is not an HS code."
+    },
+    {
+      "native_index": 84,
+      "expected_raw_label": "84 railway, tramway locomotives, rolling stock, equipmen",
+      "hs_chapter": "86",
+      "scope_status": "editorial_chapter_identity",
+      "source_hs_edition": "H2",
+      "note": "Descriptor identity reviewed against HS chapters. Native serial is not an HS code."
+    },
+    {
+      "native_index": 85,
+      "expected_raw_label": "85 vehicles other than railway, tramway",
+      "hs_chapter": "87",
+      "scope_status": "editorial_chapter_identity",
+      "source_hs_edition": "H2",
+      "note": "Descriptor identity reviewed against HS chapters. Native serial is not an HS code."
+    },
+    {
+      "native_index": 86,
+      "expected_raw_label": "86 aircraft, spacecraft, and parts thereof",
+      "hs_chapter": "88",
+      "scope_status": "editorial_chapter_identity",
+      "source_hs_edition": "H2",
+      "note": "Descriptor identity reviewed against HS chapters. Native serial is not an HS code."
+    },
+    {
+      "native_index": 87,
+      "expected_raw_label": "87 ships, boats and other floating structures",
+      "hs_chapter": "89",
+      "scope_status": "editorial_chapter_identity",
+      "source_hs_edition": "H2",
+      "note": "Descriptor identity reviewed against HS chapters. Native serial is not an HS code."
+    },
+    {
+      "native_index": 88,
+      "expected_raw_label": "88 optical, photo, technical, medical, etc apparatus",
+      "hs_chapter": "90",
+      "scope_status": "editorial_chapter_identity",
+      "source_hs_edition": "H2",
+      "note": "Descriptor identity reviewed against HS chapters. Native serial is not an HS code."
+    },
+    {
+      "native_index": 89,
+      "expected_raw_label": "89 clocks and watches and parts thereof",
+      "hs_chapter": "91",
+      "scope_status": "editorial_chapter_identity",
+      "source_hs_edition": "H2",
+      "note": "Descriptor identity reviewed against HS chapters. Native serial is not an HS code."
+    },
+    {
+      "native_index": 90,
+      "expected_raw_label": "90 musical instruments, parts and accessories",
+      "hs_chapter": "92",
+      "scope_status": "editorial_chapter_identity",
+      "source_hs_edition": "H2",
+      "note": "Descriptor identity reviewed against HS chapters. Native serial is not an HS code."
+    },
+    {
+      "native_index": 91,
+      "expected_raw_label": "91 arms and ammunition, parts and accessories thereof",
+      "hs_chapter": "93",
+      "scope_status": "editorial_chapter_identity",
+      "source_hs_edition": "H2",
+      "note": "Descriptor identity reviewed against HS chapters. Native serial is not an HS code."
+    },
+    {
+      "native_index": 92,
+      "expected_raw_label": "92 furniture, lighting, signs, prefabricated buildings",
+      "hs_chapter": "94",
+      "scope_status": "editorial_chapter_identity",
+      "source_hs_edition": "H2",
+      "note": "Descriptor identity reviewed against HS chapters. Native serial is not an HS code."
+    },
+    {
+      "native_index": 93,
+      "expected_raw_label": "93 toys, games, sports requisites",
+      "hs_chapter": "95",
+      "scope_status": "editorial_chapter_identity",
+      "source_hs_edition": "H2",
+      "note": "Descriptor identity reviewed against HS chapters. Native serial is not an HS code."
+    },
+    {
+      "native_index": 94,
+      "expected_raw_label": "94 miscellaneous manufactured articles",
+      "hs_chapter": "96",
+      "scope_status": "editorial_chapter_identity",
+      "source_hs_edition": "H2",
+      "note": "Descriptor identity reviewed against HS chapters. Native serial is not an HS code."
+    },
+    {
+      "native_index": 95,
+      "expected_raw_label": "95 works of art, collectors pieces and antiques",
+      "hs_chapter": "97",
+      "scope_status": "editorial_chapter_identity",
+      "source_hs_edition": "H2",
+      "note": "Descriptor identity reviewed against HS chapters. Native serial is not an HS code."
+    }
+  ],
+  "emerging_services_and_energy": [
+    {
+      "native_index": 97,
+      "expected_raw_label": "97 electricity",
+      "nace2_scope": [
+        "35.11",
+        "35.12",
+        "35.13",
+        "35.14"
+      ],
+      "scope_status": "editorial_activity_scope",
+      "note": "Activity candidates from the native descriptor. Not a publisher-issued EBOPS/NACE concordance. No fine economic allocation inferred."
+    },
+    {
+      "native_index": 98,
+      "expected_raw_label": "98 gas manufacture, distribution",
+      "nace2_scope": [
+        "35.21",
+        "35.22",
+        "35.23"
+      ],
+      "scope_status": "editorial_activity_scope",
+      "note": "Activity candidates from the native descriptor. Not a publisher-issued EBOPS/NACE concordance. No fine economic allocation inferred."
+    },
+    {
+      "native_index": 99,
+      "expected_raw_label": "99 water collection, puriﬁcation, and distribution",
+      "nace2_scope": [
+        "36.00"
+      ],
+      "scope_status": "editorial_activity_scope",
+      "note": "Activity candidates from the native descriptor. Not a publisher-issued EBOPS/NACE concordance. No fine economic allocation inferred."
+    },
+    {
+      "native_index": 100,
+      "expected_raw_label": "100 coal",
+      "nace2_scope": [
+        "05"
+      ],
+      "scope_status": "editorial_activity_scope",
+      "note": "Activity candidates from the native descriptor. Not a publisher-issued EBOPS/NACE concordance. No fine economic allocation inferred."
+    },
+    {
+      "native_index": 101,
+      "expected_raw_label": "101 oil",
+      "nace2_scope": [
+        "06.10"
+      ],
+      "scope_status": "editorial_activity_scope",
+      "note": "Activity candidates from the native descriptor. Not a publisher-issued EBOPS/NACE concordance. No fine economic allocation inferred."
+    },
+    {
+      "native_index": 102,
+      "expected_raw_label": "102 gas",
+      "nace2_scope": [
+        "06.20"
+      ],
+      "scope_status": "editorial_activity_scope",
+      "note": "Activity candidates from the native descriptor. Not a publisher-issued EBOPS/NACE concordance. No fine economic allocation inferred."
+    },
+    {
+      "native_index": 103,
+      "expected_raw_label": "103 petroleum, coal products",
+      "nace2_scope": [
+        "19"
+      ],
+      "scope_status": "editorial_activity_scope",
+      "note": "Activity candidates from the native descriptor. Not a publisher-issued EBOPS/NACE concordance. No fine economic allocation inferred."
+    },
+    {
+      "native_index": 104,
+      "expected_raw_label": "104 manufacturing services on physical inputs owned by others",
+      "nace2_scope": [
+        "C"
+      ],
+      "scope_status": "context_only_not_exhaustive",
+      "note": "Activity candidates from the native descriptor. Not a publisher-issued EBOPS/NACE concordance. Cross-activity scope requires further evidence."
+    },
+    {
+      "native_index": 105,
+      "expected_raw_label": "105 maintenance and repair services n.i.e.",
+      "nace2_scope": [
+        "33",
+        "45.2",
+        "95"
+      ],
+      "scope_status": "context_only_not_exhaustive",
+      "note": "Activity candidates from the native descriptor. Not a publisher-issued EBOPS/NACE concordance. Cross-activity scope requires further evidence."
+    },
+    {
+      "native_index": 106,
+      "expected_raw_label": "106 sea transport",
+      "nace2_scope": [
+        "50.1",
+        "50.2"
+      ],
+      "scope_status": "editorial_activity_scope",
+      "note": "Activity candidates from the native descriptor. Not a publisher-issued EBOPS/NACE concordance. No fine economic allocation inferred."
+    },
+    {
+      "native_index": 107,
+      "expected_raw_label": "107 air transport",
+      "nace2_scope": [
+        "51"
+      ],
+      "scope_status": "editorial_activity_scope",
+      "note": "Activity candidates from the native descriptor. Not a publisher-issued EBOPS/NACE concordance. No fine economic allocation inferred."
+    },
+    {
+      "native_index": 108,
+      "expected_raw_label": "108 other modes of transport",
+      "nace2_scope": [
+        "49",
+        "50.3",
+        "50.4",
+        "52"
+      ],
+      "scope_status": "context_only_not_exhaustive",
+      "note": "Activity candidates from the native descriptor. Not a publisher-issued EBOPS/NACE concordance. Cross-activity scope requires further evidence."
+    },
+    {
+      "native_index": 109,
+      "expected_raw_label": "109 postal and courier services",
+      "nace2_scope": [
+        "53"
+      ],
+      "scope_status": "editorial_activity_scope",
+      "note": "Activity candidates from the native descriptor. Not a publisher-issued EBOPS/NACE concordance. No fine economic allocation inferred."
+    },
+    {
+      "native_index": 110,
+      "expected_raw_label": "110 goods (travel)",
+      "nace2_scope": [],
+      "scope_status": "context_only_not_exhaustive",
+      "note": "Activity candidates from the native descriptor. Not a publisher-issued EBOPS/NACE concordance. Cross-activity scope requires further evidence."
+    },
+    {
+      "native_index": 111,
+      "expected_raw_label": "111 local transport services",
+      "nace2_scope": [
+        "49.3"
+      ],
+      "scope_status": "context_only_not_exhaustive",
+      "note": "Activity candidates from the native descriptor. Not a publisher-issued EBOPS/NACE concordance. Cross-activity scope requires further evidence."
+    },
+    {
+      "native_index": 112,
+      "expected_raw_label": "112 accommodation services",
+      "nace2_scope": [
+        "55"
+      ],
+      "scope_status": "editorial_activity_scope",
+      "note": "Activity candidates from the native descriptor. Not a publisher-issued EBOPS/NACE concordance. No fine economic allocation inferred."
+    },
+    {
+      "native_index": 113,
+      "expected_raw_label": "113 food-serving services",
+      "nace2_scope": [
+        "56"
+      ],
+      "scope_status": "editorial_activity_scope",
+      "note": "Activity candidates from the native descriptor. Not a publisher-issued EBOPS/NACE concordance. No fine economic allocation inferred."
+    },
+    {
+      "native_index": 114,
+      "expected_raw_label": "114 construction",
+      "nace2_scope": [
+        "41",
+        "42",
+        "43"
+      ],
+      "scope_status": "editorial_activity_scope",
+      "note": "Activity candidates from the native descriptor. Not a publisher-issued EBOPS/NACE concordance. No fine economic allocation inferred."
+    },
+    {
+      "native_index": 115,
+      "expected_raw_label": "115 direct insurance",
+      "nace2_scope": [
+        "65.1"
+      ],
+      "scope_status": "editorial_activity_scope",
+      "note": "Activity candidates from the native descriptor. Not a publisher-issued EBOPS/NACE concordance. No fine economic allocation inferred."
+    },
+    {
+      "native_index": 116,
+      "expected_raw_label": "116 pension and standardized guaranteed services",
+      "nace2_scope": [
+        "65.3"
+      ],
+      "scope_status": "context_only_not_exhaustive",
+      "note": "Activity candidates from the native descriptor. Not a publisher-issued EBOPS/NACE concordance. Cross-activity scope requires further evidence."
+    },
+    {
+      "native_index": 117,
+      "expected_raw_label": "117 financial services",
+      "nace2_scope": [
+        "64",
+        "66"
+      ],
+      "scope_status": "context_only_not_exhaustive",
+      "note": "Activity candidates from the native descriptor. Not a publisher-issued EBOPS/NACE concordance. Cross-activity scope requires further evidence."
+    },
+    {
+      "native_index": 118,
+      "expected_raw_label": "118 real estate",
+      "nace2_scope": [
+        "68"
+      ],
+      "scope_status": "editorial_activity_scope",
+      "note": "Activity candidates from the native descriptor. Not a publisher-issued EBOPS/NACE concordance. No fine economic allocation inferred."
+    },
+    {
+      "native_index": 119,
+      "expected_raw_label": "119 charges for the use of intellectual property n.i.e.",
+      "nace2_scope": [
+        "58",
+        "59",
+        "72",
+        "77.4"
+      ],
+      "scope_status": "context_only_not_exhaustive",
+      "note": "Activity candidates from the native descriptor. Not a publisher-issued EBOPS/NACE concordance. Cross-activity scope requires further evidence."
+    },
+    {
+      "native_index": 120,
+      "expected_raw_label": "120 telecommunications services",
+      "nace2_scope": [
+        "61"
+      ],
+      "scope_status": "editorial_activity_scope",
+      "note": "Activity candidates from the native descriptor. Not a publisher-issued EBOPS/NACE concordance. No fine economic allocation inferred."
+    },
+    {
+      "native_index": 121,
+      "expected_raw_label": "121 computer services",
+      "nace2_scope": [
+        "62"
+      ],
+      "scope_status": "editorial_activity_scope",
+      "note": "Activity candidates from the native descriptor. Not a publisher-issued EBOPS/NACE concordance. No fine economic allocation inferred."
+    },
+    {
+      "native_index": 122,
+      "expected_raw_label": "122 information services",
+      "nace2_scope": [
+        "63"
+      ],
+      "scope_status": "editorial_activity_scope",
+      "note": "Activity candidates from the native descriptor. Not a publisher-issued EBOPS/NACE concordance. No fine economic allocation inferred."
+    },
+    {
+      "native_index": 123,
+      "expected_raw_label": "123 research and development services",
+      "nace2_scope": [
+        "72"
+      ],
+      "scope_status": "editorial_activity_scope",
+      "note": "Activity candidates from the native descriptor. Not a publisher-issued EBOPS/NACE concordance. No fine economic allocation inferred."
+    },
+    {
+      "native_index": 124,
+      "expected_raw_label": "124 professional and management consulting services",
+      "nace2_scope": [
+        "69",
+        "70",
+        "73"
+      ],
+      "scope_status": "context_only_not_exhaustive",
+      "note": "Activity candidates from the native descriptor. Not a publisher-issued EBOPS/NACE concordance. Cross-activity scope requires further evidence."
+    },
+    {
+      "native_index": 125,
+      "expected_raw_label": "125 engineering",
+      "nace2_scope": [
+        "71"
+      ],
+      "scope_status": "editorial_activity_scope",
+      "note": "Activity candidates from the native descriptor. Not a publisher-issued EBOPS/NACE concordance. No fine economic allocation inferred."
+    },
+    {
+      "native_index": 126,
+      "expected_raw_label": "126 waste treatment and de-pollution agricultural and mining services",
+      "nace2_scope": [
+        "01.6",
+        "02.4",
+        "09",
+        "37",
+        "38",
+        "39"
+      ],
+      "scope_status": "context_only_not_exhaustive",
+      "note": "Activity candidates from the native descriptor. Not a publisher-issued EBOPS/NACE concordance. Cross-activity scope requires further evidence."
+    },
+    {
+      "native_index": 127,
+      "expected_raw_label": "127 operating leasing services",
+      "nace2_scope": [
+        "77.1",
+        "77.2",
+        "77.3"
+      ],
+      "scope_status": "editorial_activity_scope",
+      "note": "Activity candidates from the native descriptor. Not a publisher-issued EBOPS/NACE concordance. No fine economic allocation inferred."
+    },
+    {
+      "native_index": 128,
+      "expected_raw_label": "128 other business services n.i.e.",
+      "nace2_scope": [],
+      "scope_status": "context_only_not_exhaustive",
+      "note": "Activity candidates from the native descriptor. Not a publisher-issued EBOPS/NACE concordance. Cross-activity scope requires further evidence."
+    },
+    {
+      "native_index": 129,
+      "expected_raw_label": "129 audiovisual and related services",
+      "nace2_scope": [
+        "59",
+        "60"
+      ],
+      "scope_status": "editorial_activity_scope",
+      "note": "Activity candidates from the native descriptor. Not a publisher-issued EBOPS/NACE concordance. No fine economic allocation inferred."
+    },
+    {
+      "native_index": 130,
+      "expected_raw_label": "130 health services",
+      "nace2_scope": [
+        "86"
+      ],
+      "scope_status": "editorial_activity_scope",
+      "note": "Activity candidates from the native descriptor. Not a publisher-issued EBOPS/NACE concordance. No fine economic allocation inferred."
+    },
+    {
+      "native_index": 131,
+      "expected_raw_label": "131 education services",
+      "nace2_scope": [
+        "85"
+      ],
+      "scope_status": "editorial_activity_scope",
+      "note": "Activity candidates from the native descriptor. Not a publisher-issued EBOPS/NACE concordance. No fine economic allocation inferred."
+    },
+    {
+      "native_index": 132,
+      "expected_raw_label": "132 recreation & other services",
+      "nace2_scope": [
+        "90",
+        "91",
+        "92",
+        "93",
+        "94",
+        "95",
+        "96"
+      ],
+      "scope_status": "context_only_not_exhaustive",
+      "note": "Activity candidates from the native descriptor. Not a publisher-issued EBOPS/NACE concordance. Cross-activity scope requires further evidence."
+    },
+    {
+      "native_index": 133,
+      "expected_raw_label": "133 government goods and services n.i.e.",
+      "nace2_scope": [],
+      "scope_status": "context_only_not_exhaustive",
+      "note": "Activity candidates from the native descriptor. Not a publisher-issued EBOPS/NACE concordance. Cross-activity scope requires further evidence."
+    }
+  ],
+  "entice": [
+    {
+      "entice_code": "AGT",
+      "expected_name": "Manufacture of artificial graphite",
+      "nace2_scope": [
+        "23.99"
+      ],
+      "origin": "existing_entice_registry",
+      "scope_status": "reviewed_scope",
+      "evidence": [
+        "https://eur-lex.europa.eu/legal-content/EN/TXT/?uri=CELEX%3A32022R2552"
+      ],
+      "note": "Artificial graphite CPA 23.99.14. Published parent is appropriate; competing CHM catalogue/NACE entries are inconsistent. Electrical graphite articles need separate scope."
+    },
+    {
+      "entice_code": "APP",
+      "expected_name": "Manufacture of primary aluminum",
+      "nace2_scope": [
+        "24.42"
+      ],
+      "origin": "benchmark_editorial_containment",
+      "scope_status": "editorial_containment",
+      "evidence": [
+        "https://sfc.ec.europa.eu/system/files/documents/sfc2007/2022-10/nace-rev-2.pdf"
+      ],
+      "note": "Benchmark-only activity containment from the explicit ENTICE descriptor. Does not certify equality with an entire NACE class or revise the operational registry."
+    },
+    {
+      "entice_code": "APS",
+      "expected_name": "Manufacture of secondary aluminum",
+      "nace2_scope": [
+        "24.42"
+      ],
+      "origin": "benchmark_editorial_containment",
+      "scope_status": "editorial_containment",
+      "evidence": [
+        "https://sfc.ec.europa.eu/system/files/documents/sfc2007/2022-10/nace-rev-2.pdf"
+      ],
+      "note": "Benchmark-only activity containment from the explicit ENTICE descriptor. Does not certify equality with an entire NACE class or revise the operational registry."
+    },
+    {
+      "entice_code": "BVH",
+      "expected_name": "Manufacture of heavy duty BEV",
+      "nace2_scope": [
+        "29.10"
+      ],
+      "origin": "benchmark_editorial_containment",
+      "scope_status": "editorial_containment",
+      "evidence": [
+        "https://sfc.ec.europa.eu/system/files/documents/sfc2007/2022-10/nace-rev-2.pdf"
+      ],
+      "note": "Benchmark-only activity containment from the explicit ENTICE descriptor. Does not certify equality with an entire NACE class or revise the operational registry."
+    },
+    {
+      "entice_code": "BVL",
+      "expected_name": "Manufacture of light duty BEV",
+      "nace2_scope": [
+        "29.10"
+      ],
+      "origin": "existing_entice_registry",
+      "scope_status": "reviewed_scope",
+      "evidence": [
+        "https://sfc.ec.europa.eu/system/files/documents/sfc2007/2022-10/nace-rev-2.pdf"
+      ],
+      "note": "Light-duty motor vehicle manufacture. Remove unrelated division 30 from its NACE scope."
+    },
+    {
+      "entice_code": "CEM",
+      "expected_name": "Manufacture of traditional cement",
+      "nace2_scope": [
+        "23.51"
+      ],
+      "origin": "benchmark_editorial_containment",
+      "scope_status": "editorial_containment",
+      "evidence": [
+        "https://sfc.ec.europa.eu/system/files/documents/sfc2007/2022-10/nace-rev-2.pdf"
+      ],
+      "note": "Benchmark-only activity containment from the explicit ENTICE descriptor. Does not certify equality with an entire NACE class or revise the operational registry."
+    },
+    {
+      "entice_code": "CHR",
+      "expected_name": "Mining of chromium",
+      "nace2_scope": [
+        "07.29"
+      ],
+      "origin": "benchmark_editorial_containment",
+      "scope_status": "editorial_containment",
+      "evidence": [
+        "https://sfc.ec.europa.eu/system/files/documents/sfc2007/2022-10/nace-rev-2.pdf"
+      ],
+      "note": "Benchmark-only activity containment from the explicit ENTICE descriptor. Does not certify equality with an entire NACE class or revise the operational registry."
+    },
+    {
+      "entice_code": "COB",
+      "expected_name": "Mining of cobalt ores and concentrates",
+      "nace2_scope": [
+        "07.29"
+      ],
+      "origin": "benchmark_editorial_containment",
+      "scope_status": "editorial_containment",
+      "evidence": [
+        "https://sfc.ec.europa.eu/system/files/documents/sfc2007/2022-10/nace-rev-2.pdf"
+      ],
+      "note": "Benchmark-only activity containment from the explicit ENTICE descriptor. Does not certify equality with an entire NACE class or revise the operational registry."
+    },
+    {
+      "entice_code": "COR",
+      "expected_name": "Manufacture of refined cobalt",
+      "nace2_scope": [
+        "20.12"
+      ],
+      "origin": "existing_entice_registry",
+      "scope_status": "reviewed_scope",
+      "evidence": [
+        "https://eur-lex.europa.eu/legal-content/EN/TXT/?uri=CELEX%3A32022R2552"
+      ],
+      "note": "Trade scope is cobalt oxides/hydroxides HS 282200; not refined cobalt metal."
+    },
+    {
+      "entice_code": "CPP",
+      "expected_name": "Manufacture of primary copper",
+      "nace2_scope": [
+        "24.44"
+      ],
+      "origin": "benchmark_editorial_containment",
+      "scope_status": "editorial_containment",
+      "evidence": [
+        "https://sfc.ec.europa.eu/system/files/documents/sfc2007/2022-10/nace-rev-2.pdf"
+      ],
+      "note": "Benchmark-only activity containment from the explicit ENTICE descriptor. Does not certify equality with an entire NACE class or revise the operational registry."
+    },
+    {
+      "entice_code": "CPS",
+      "expected_name": "Manufacture of secondary copper",
+      "nace2_scope": [
+        "24.44"
+      ],
+      "origin": "benchmark_editorial_containment",
+      "scope_status": "editorial_containment",
+      "evidence": [
+        "https://sfc.ec.europa.eu/system/files/documents/sfc2007/2022-10/nace-rev-2.pdf"
+      ],
+      "note": "Benchmark-only activity containment from the explicit ENTICE descriptor. Does not certify equality with an entire NACE class or revise the operational registry."
+    },
+    {
+      "entice_code": "CRR",
+      "expected_name": "Manufacture of refined chromium",
+      "nace2_scope": [
+        "20.12",
+        "20.13"
+      ],
+      "origin": "existing_entice_registry",
+      "scope_status": "reviewed_scope",
+      "evidence": [
+        "https://eur-lex.europa.eu/legal-content/EN/TXT/?uri=CELEX%3A32022R2552"
+      ],
+      "note": "Trade covers chromium oxides and chromates. Both map to CHM; class detail should retain product distinctions."
+    },
+    {
+      "entice_code": "GAR",
+      "expected_name": "Manufacture of refined gallium",
+      "nace2_scope": [
+        "24.45"
+      ],
+      "origin": "existing_entice_registry",
+      "scope_status": "reviewed_scope",
+      "evidence": [
+        "https://sfc.ec.europa.eu/system/files/documents/sfc2007/2022-10/nace-rev-2.pdf"
+      ],
+      "note": "Gallium metal/unwrought scope -> NFM. HS 811292 is a multi-metal product basket; current CHM and chemical EXIO proxy do not follow that scope."
+    },
+    {
+      "entice_code": "GRA",
+      "expected_name": "Mining of natural graphite",
+      "nace2_scope": [
+        "08.99"
+      ],
+      "origin": "benchmark_editorial_containment",
+      "scope_status": "editorial_containment",
+      "evidence": [
+        "https://sfc.ec.europa.eu/system/files/documents/sfc2007/2022-10/nace-rev-2.pdf"
+      ],
+      "note": "Benchmark-only activity containment from the explicit ENTICE descriptor. Does not certify equality with an entire NACE class or revise the operational registry."
+    },
+    {
+      "entice_code": "HEL",
+      "expected_name": "Manufacture of light duty HEV",
+      "nace2_scope": [
+        "29.10"
+      ],
+      "origin": "benchmark_editorial_containment",
+      "scope_status": "editorial_containment",
+      "evidence": [
+        "https://sfc.ec.europa.eu/system/files/documents/sfc2007/2022-10/nace-rev-2.pdf"
+      ],
+      "note": "Benchmark-only activity containment from the explicit ENTICE descriptor. Does not certify equality with an entire NACE class or revise the operational registry."
+    },
+    {
+      "entice_code": "HVC",
+      "expected_name": "Manufacture of high value chemicals",
+      "nace2_scope": [
+        "20.14"
+      ],
+      "origin": "benchmark_editorial_containment",
+      "scope_status": "editorial_containment",
+      "evidence": [
+        "https://sfc.ec.europa.eu/system/files/documents/sfc2007/2022-10/nace-rev-2.pdf"
+      ],
+      "note": "Benchmark-only activity containment from the explicit ENTICE descriptor. Does not certify equality with an entire NACE class or revise the operational registry."
+    },
+    {
+      "entice_code": "HYE",
+      "expected_name": "Manufacture of hydrogen via electrolysis",
+      "nace2_scope": [
+        "20.11"
+      ],
+      "origin": "existing_entice_registry",
+      "scope_status": "reviewed_scope",
+      "evidence": [
+        "https://eur-lex.europa.eu/legal-content/EN/TXT/PDF/?uri=CELEX%3A32022R2552",
+        "https://sfc.ec.europa.eu/system/files/documents/sfc2007/2022-10/nace-rev-2.pdf"
+      ],
+      "note": "PRODCOM 20.11.11.50 identifies hydrogen under industrial gases (NACE Rev. 2 20.11, ISIC Rev. 4 2011). The production technology distinguishes HYE from HYS within the same activity class. The legacy Summary description conflicts with the HYE identity and remains a metadata warning."
+    },
+    {
+      "entice_code": "ICH",
+      "expected_name": "Manufacture of heavy duty ICEV",
+      "nace2_scope": [
+        "29.10"
+      ],
+      "origin": "benchmark_editorial_containment",
+      "scope_status": "editorial_containment",
+      "evidence": [
+        "https://sfc.ec.europa.eu/system/files/documents/sfc2007/2022-10/nace-rev-2.pdf"
+      ],
+      "note": "Benchmark-only activity containment from the explicit ENTICE descriptor. Does not certify equality with an entire NACE class or revise the operational registry."
+    },
+    {
+      "entice_code": "ICL",
+      "expected_name": "Manufacture of light duty ICEV",
+      "nace2_scope": [
+        "29.10"
+      ],
+      "origin": "benchmark_editorial_containment",
+      "scope_status": "editorial_containment",
+      "evidence": [
+        "https://sfc.ec.europa.eu/system/files/documents/sfc2007/2022-10/nace-rev-2.pdf"
+      ],
+      "note": "Benchmark-only activity containment from the explicit ENTICE descriptor. Does not certify equality with an entire NACE class or revise the operational registry."
+    },
+    {
+      "entice_code": "ISS",
+      "expected_name": "Manufacture of secondary iron and steel",
+      "nace2_scope": [
+        "24.10"
+      ],
+      "origin": "benchmark_editorial_containment",
+      "scope_status": "editorial_containment",
+      "evidence": [
+        "https://sfc.ec.europa.eu/system/files/documents/sfc2007/2022-10/nace-rev-2.pdf"
+      ],
+      "note": "Benchmark-only activity containment from the explicit ENTICE descriptor. Does not certify equality with an entire NACE class or revise the operational registry."
+    },
+    {
+      "entice_code": "KFR",
+      "expected_name": "Manufacture of potassium fertilizer",
+      "nace2_scope": [
+        "20.15"
+      ],
+      "origin": "benchmark_editorial_containment",
+      "scope_status": "editorial_containment",
+      "evidence": [
+        "https://sfc.ec.europa.eu/system/files/documents/sfc2007/2022-10/nace-rev-2.pdf"
+      ],
+      "note": "Benchmark-only activity containment from the explicit ENTICE descriptor. Does not certify equality with an entire NACE class or revise the operational registry."
+    },
+    {
+      "entice_code": "LCO",
+      "expected_name": "Manufacture of LCO batteries",
+      "nace2_scope": [
+        "27.20"
+      ],
+      "origin": "benchmark_editorial_containment",
+      "scope_status": "editorial_containment",
+      "evidence": [
+        "https://sfc.ec.europa.eu/system/files/documents/sfc2007/2022-10/nace-rev-2.pdf"
+      ],
+      "note": "Benchmark-only activity containment from the explicit ENTICE descriptor. Does not certify equality with an entire NACE class or revise the operational registry."
+    },
+    {
+      "entice_code": "LFP",
+      "expected_name": "Manufacture of LFP batteries",
+      "nace2_scope": [
+        "27.20"
+      ],
+      "origin": "benchmark_editorial_containment",
+      "scope_status": "editorial_containment",
+      "evidence": [
+        "https://sfc.ec.europa.eu/system/files/documents/sfc2007/2022-10/nace-rev-2.pdf"
+      ],
+      "note": "Benchmark-only activity containment from the explicit ENTICE descriptor. Does not certify equality with an entire NACE class or revise the operational registry."
+    },
+    {
+      "entice_code": "LIR",
+      "expected_name": "Manufacture of refined lithium",
+      "nace2_scope": [
+        "20"
+      ],
+      "origin": "existing_entice_registry",
+      "scope_status": "reviewed_scope",
+      "evidence": [
+        "https://eur-lex.europa.eu/legal-content/EN/TXT/?uri=CELEX%3A32022R2552"
+      ],
+      "note": "Trade identifies lithium oxide/hydroxide and carbonate, not a generic refined-metal activity; refine class codes with the versioned product concordance."
+    },
+    {
+      "entice_code": "LIT",
+      "expected_name": "Mining of lithium",
+      "nace2_scope": [
+        "07.29",
+        "08.99"
+      ],
+      "origin": "benchmark_editorial_containment",
+      "scope_status": "process_scope_required",
+      "evidence": [
+        "https://sfc.ec.europa.eu/system/files/documents/sfc2007/2022-10/nace-rev-2.pdf"
+      ],
+      "note": "Benchmark-only activity containment from the explicit ENTICE descriptor. Does not certify equality with an entire NACE class or revise the operational registry."
+    },
+    {
+      "entice_code": "LMO",
+      "expected_name": "Manufacture of LMO batteries",
+      "nace2_scope": [
+        "27.20"
+      ],
+      "origin": "benchmark_editorial_containment",
+      "scope_status": "editorial_containment",
+      "evidence": [
+        "https://sfc.ec.europa.eu/system/files/documents/sfc2007/2022-10/nace-rev-2.pdf"
+      ],
+      "note": "Benchmark-only activity containment from the explicit ENTICE descriptor. Does not certify equality with an entire NACE class or revise the operational registry."
+    },
+    {
+      "entice_code": "MAN",
+      "expected_name": "Mining of manganese ores and concentrates",
+      "nace2_scope": [
+        "07.29"
+      ],
+      "origin": "benchmark_editorial_containment",
+      "scope_status": "editorial_containment",
+      "evidence": [
+        "https://sfc.ec.europa.eu/system/files/documents/sfc2007/2022-10/nace-rev-2.pdf"
+      ],
+      "note": "Benchmark-only activity containment from the explicit ENTICE descriptor. Does not certify equality with an entire NACE class or revise the operational registry."
+    },
+    {
+      "entice_code": "MAO",
+      "expected_name": "Mining of aluminum ores",
+      "nace2_scope": [
+        "07.29"
+      ],
+      "origin": "benchmark_editorial_containment",
+      "scope_status": "editorial_containment",
+      "evidence": [
+        "https://sfc.ec.europa.eu/system/files/documents/sfc2007/2022-10/nace-rev-2.pdf"
+      ],
+      "note": "Benchmark-only activity containment from the explicit ENTICE descriptor. Does not certify equality with an entire NACE class or revise the operational registry."
+    },
+    {
+      "entice_code": "MCU",
+      "expected_name": "Mining of copper ores",
+      "nace2_scope": [
+        "07.29"
+      ],
+      "origin": "benchmark_editorial_containment",
+      "scope_status": "editorial_containment",
+      "evidence": [
+        "https://sfc.ec.europa.eu/system/files/documents/sfc2007/2022-10/nace-rev-2.pdf"
+      ],
+      "note": "Benchmark-only activity containment from the explicit ENTICE descriptor. Does not certify equality with an entire NACE class or revise the operational registry."
+    },
+    {
+      "entice_code": "MGC",
+      "expected_name": "Mining of natural magnesium carbonate \"magnesite\"+magnesia, fused or dead-burned (sintered)",
+      "nace2_scope": [
+        "08.99"
+      ],
+      "origin": "existing_entice_registry",
+      "scope_status": "reviewed_scope",
+      "evidence": [
+        "https://eur-lex.europa.eu/legal-content/EN/TXT/?uri=CELEX%3A32022R2552"
+      ],
+      "note": "PRODCOM 08.99.29.13/.14/.15 includes magnesite and sintered/fused magnesia. Duplicate name variants have the same parent; retain one identity and separate aliases."
+    },
+    {
+      "entice_code": "MIO",
+      "expected_name": "Mining of iron ores",
+      "nace2_scope": [
+        "07.10"
+      ],
+      "origin": "benchmark_editorial_containment",
+      "scope_status": "editorial_containment",
+      "evidence": [
+        "https://sfc.ec.europa.eu/system/files/documents/sfc2007/2022-10/nace-rev-2.pdf"
+      ],
+      "note": "Benchmark-only activity containment from the explicit ENTICE descriptor. Does not certify equality with an entire NACE class or revise the operational registry."
+    },
+    {
+      "entice_code": "MNR",
+      "expected_name": "Manufacture of refined manganese",
+      "nace2_scope": [
+        "20.12"
+      ],
+      "origin": "existing_entice_registry",
+      "scope_status": "reviewed_scope",
+      "evidence": [
+        "https://eur-lex.europa.eu/legal-content/EN/TXT/?uri=CELEX%3A32022R2552"
+      ],
+      "note": "Trade scope is manganese oxides HS 282010/282090; not refined manganese metal."
+    },
+    {
+      "entice_code": "MSI",
+      "expected_name": "Manufacture of metallurgical silicon",
+      "nace2_scope": [
+        "20.13"
+      ],
+      "origin": "existing_entice_registry",
+      "scope_status": "reviewed_scope",
+      "evidence": [
+        "https://eur-lex.europa.eu/legal-content/EN/TXT/?uri=CELEX%3A32022R2552"
+      ],
+      "note": "Silicon HS 280469 / PRODCOM 20.13.21.70; not mining and not ferro-silicon."
+    },
+    {
+      "entice_code": "MTH",
+      "expected_name": "Manufacture of methanol",
+      "nace2_scope": [
+        "20.14"
+      ],
+      "origin": "benchmark_editorial_containment",
+      "scope_status": "editorial_containment",
+      "evidence": [
+        "https://sfc.ec.europa.eu/system/files/documents/sfc2007/2022-10/nace-rev-2.pdf"
+      ],
+      "note": "Benchmark-only activity containment from the explicit ENTICE descriptor. Does not certify equality with an entire NACE class or revise the operational registry."
+    },
+    {
+      "entice_code": "MUN",
+      "expected_name": "Manufacture of magnesium: unwrought, articles",
+      "nace2_scope": [
+        "24.45"
+      ],
+      "origin": "existing_entice_registry",
+      "scope_status": "reviewed_scope",
+      "evidence": [
+        "https://sfc.ec.europa.eu/system/files/documents/sfc2007/2022-10/nace-rev-2.pdf"
+      ],
+      "note": "Unwrought magnesium -> NFM. Two files are one sector; broader articles/scrap trade coverage needs its own scope review."
+    },
+    {
+      "entice_code": "MUR",
+      "expected_name": "Mining of uranium",
+      "nace2_scope": [
+        "07.21"
+      ],
+      "origin": "benchmark_editorial_containment",
+      "scope_status": "editorial_containment",
+      "evidence": [
+        "https://sfc.ec.europa.eu/system/files/documents/sfc2007/2022-10/nace-rev-2.pdf"
+      ],
+      "note": "Benchmark-only activity containment from the explicit ENTICE descriptor. Does not certify equality with an entire NACE class or revise the operational registry."
+    },
+    {
+      "entice_code": "NCA",
+      "expected_name": "Manufacture of NCA batteries",
+      "nace2_scope": [
+        "27.20"
+      ],
+      "origin": "benchmark_editorial_containment",
+      "scope_status": "editorial_containment",
+      "evidence": [
+        "https://sfc.ec.europa.eu/system/files/documents/sfc2007/2022-10/nace-rev-2.pdf"
+      ],
+      "note": "Benchmark-only activity containment from the explicit ENTICE descriptor. Does not certify equality with an entire NACE class or revise the operational registry."
+    },
+    {
+      "entice_code": "NCM",
+      "expected_name": "Manufacture of NCM batteries",
+      "nace2_scope": [
+        "27.20"
+      ],
+      "origin": "existing_entice_registry",
+      "scope_status": "reviewed_scope",
+      "evidence": [
+        "https://sfc.ec.europa.eu/system/files/documents/sfc2007/2022-10/nace-rev-2.pdf"
+      ],
+      "note": "Classification uses NCM. Resolve the separate published NMC record before selecting an active inventory."
+    },
+    {
+      "entice_code": "NFR",
+      "expected_name": "Manufacture of nitrogen fertilizer",
+      "nace2_scope": [
+        "20.15"
+      ],
+      "origin": "benchmark_editorial_containment",
+      "scope_status": "editorial_containment",
+      "evidence": [
+        "https://sfc.ec.europa.eu/system/files/documents/sfc2007/2022-10/nace-rev-2.pdf"
+      ],
+      "note": "Benchmark-only activity containment from the explicit ENTICE descriptor. Does not certify equality with an entire NACE class or revise the operational registry."
+    },
+    {
+      "entice_code": "NIK",
+      "expected_name": "Mining of nickel ores and concentrates",
+      "nace2_scope": [
+        "07.29"
+      ],
+      "origin": "benchmark_editorial_containment",
+      "scope_status": "editorial_containment",
+      "evidence": [
+        "https://sfc.ec.europa.eu/system/files/documents/sfc2007/2022-10/nace-rev-2.pdf"
+      ],
+      "note": "Benchmark-only activity containment from the explicit ENTICE descriptor. Does not certify equality with an entire NACE class or revise the operational registry."
+    },
+    {
+      "entice_code": "NIO",
+      "expected_name": "Mining of niobium",
+      "nace2_scope": [
+        "07.29"
+      ],
+      "origin": "benchmark_editorial_containment",
+      "scope_status": "editorial_containment",
+      "evidence": [
+        "https://sfc.ec.europa.eu/system/files/documents/sfc2007/2022-10/nace-rev-2.pdf"
+      ],
+      "note": "Benchmark-only activity containment from the explicit ENTICE descriptor. Does not certify equality with an entire NACE class or revise the operational registry."
+    },
+    {
+      "entice_code": "NIR",
+      "expected_name": "Manufacture of refined nickel",
+      "nace2_scope": [
+        "20.12",
+        "20.13"
+      ],
+      "origin": "existing_entice_registry",
+      "scope_status": "reviewed_scope",
+      "evidence": [
+        "https://eur-lex.europa.eu/legal-content/EN/TXT/?uri=CELEX%3A32022R2552"
+      ],
+      "note": "Nickel oxides/hydroxides and chlorides; chemical intermediates, not nickel metal."
+    },
+    {
+      "entice_code": "NMC",
+      "expected_name": "Manufacture of NMC batteries",
+      "nace2_scope": [
+        "27.20"
+      ],
+      "origin": "existing_entice_registry",
+      "scope_status": "reviewed_scope",
+      "evidence": [
+        "https://sfc.ec.europa.eu/system/files/documents/sfc2007/2022-10/nace-rev-2.pdf"
+      ],
+      "note": "Published NMC has OME parent. Battery scope implies EEQ; NMC/NCM have different numerical profiles, so no automatic merge or deletion."
+    },
+    {
+      "entice_code": "PCP",
+      "expected_name": "Manufacture of coke",
+      "nace2_scope": [
+        "19.10"
+      ],
+      "origin": "existing_entice_registry",
+      "scope_status": "reviewed_scope",
+      "evidence": [
+        "https://sfc.ec.europa.eu/system/files/documents/sfc2007/2022-10/nace-rev-2.pdf"
+      ],
+      "note": "Coke manufacture. Broader coal-products input label must not create a second sector; GTAPCE source aliases PEP and PCP need context-specific mapping."
+    },
+    {
+      "entice_code": "PFR",
+      "expected_name": "Manufacture of phosphorus fertilizer",
+      "nace2_scope": [
+        "20.15"
+      ],
+      "origin": "benchmark_editorial_containment",
+      "scope_status": "editorial_containment",
+      "evidence": [
+        "https://sfc.ec.europa.eu/system/files/documents/sfc2007/2022-10/nace-rev-2.pdf"
+      ],
+      "note": "Benchmark-only activity containment from the explicit ENTICE descriptor. Does not certify equality with an entire NACE class or revise the operational registry."
+    },
+    {
+      "entice_code": "PGM",
+      "expected_name": "Mining of platinum group metals",
+      "nace2_scope": [
+        "07.29"
+      ],
+      "origin": "benchmark_editorial_containment",
+      "scope_status": "editorial_containment",
+      "evidence": [
+        "https://sfc.ec.europa.eu/system/files/documents/sfc2007/2022-10/nace-rev-2.pdf"
+      ],
+      "note": "Benchmark-only activity containment from the explicit ENTICE descriptor. Does not certify equality with an entire NACE class or revise the operational registry."
+    },
+    {
+      "entice_code": "PGR",
+      "expected_name": "Manufacture of semi-manufactured platinum group metals",
+      "nace2_scope": [
+        "24.41"
+      ],
+      "origin": "benchmark_editorial_containment",
+      "scope_status": "editorial_containment",
+      "evidence": [
+        "https://sfc.ec.europa.eu/system/files/documents/sfc2007/2022-10/nace-rev-2.pdf"
+      ],
+      "note": "Benchmark-only activity containment from the explicit ENTICE descriptor. Does not certify equality with an entire NACE class or revise the operational registry."
+    },
+    {
+      "entice_code": "PLP",
+      "expected_name": "Manufacture of primary plastic products",
+      "nace2_scope": [
+        "22",
+        "20.16"
+      ],
+      "origin": "existing_entice_registry",
+      "scope_status": "scope_required",
+      "evidence": [
+        "https://sfc.ec.europa.eu/system/files/documents/sfc2007/2022-10/nace-rev-2.pdf"
+      ],
+      "note": "Finished plastic products -> RPP; primary-form polymers/resins -> CHM. The word primary does not establish which product is produced."
+    },
+    {
+      "entice_code": "PLR",
+      "expected_name": "Recycling of plastics",
+      "nace2_scope": [
+        "38.32"
+      ],
+      "origin": "existing_entice_registry",
+      "scope_status": "scope_required",
+      "evidence": [
+        "https://sfc.ec.europa.eu/system/files/documents/sfc2007/2022-10/nace-rev-2.pdf"
+      ],
+      "note": "For materials recovery, the NACE-defined parent is WTR. Current RPP and HS scrap-product mapping do not establish recovery activity scope. Recheck production/cost/trade alignment."
+    },
+    {
+      "entice_code": "PLSR",
+      "expected_name": "Manufacture of secondary plastic products",
+      "nace2_scope": [
+        "22",
+        "38.32"
+      ],
+      "origin": "existing_entice_registry",
+      "scope_status": "scope_required",
+      "evidence": [
+        "https://sfc.ec.europa.eu/system/files/documents/sfc2007/2022-10/nace-rev-2.pdf"
+      ],
+      "note": "Likely legacy code for catalogue PLS. Finished plastic products -> RPP; materials recovery -> WTR. Do not infer activity or withdrawal from the missing code alone."
+    },
+    {
+      "entice_code": "RAL",
+      "expected_name": "Recycling of aluminum",
+      "nace2_scope": [
+        "38.32",
+        "24.42"
+      ],
+      "origin": "existing_entice_registry",
+      "scope_status": "scope_required",
+      "evidence": [
+        "https://sfc.ec.europa.eu/system/files/documents/sfc2007/2022-10/nace-rev-2.pdf"
+      ],
+      "note": "Materials recovery -> WTR; smelting/refining secondary aluminium -> NFM. Keep recovery separate from APS and avoid double counting."
+    },
+    {
+      "entice_code": "RBR",
+      "expected_name": "Manufacture of rubber products",
+      "nace2_scope": [
+        "22.11",
+        "22.19"
+      ],
+      "origin": "benchmark_editorial_containment",
+      "scope_status": "editorial_containment",
+      "evidence": [
+        "https://sfc.ec.europa.eu/system/files/documents/sfc2007/2022-10/nace-rev-2.pdf"
+      ],
+      "note": "Benchmark-only activity containment from the explicit ENTICE descriptor. Does not certify equality with an entire NACE class or revise the operational registry."
+    },
+    {
+      "entice_code": "RCP",
+      "expected_name": "Recycling of copper",
+      "nace2_scope": [
+        "38.32",
+        "24.44"
+      ],
+      "origin": "existing_entice_registry",
+      "scope_status": "scope_required",
+      "evidence": [
+        "https://sfc.ec.europa.eu/system/files/documents/sfc2007/2022-10/nace-rev-2.pdf"
+      ],
+      "note": "Materials recovery -> WTR; smelting/refining secondary copper -> NFM. Keep recovery separate from CPS."
+    },
+    {
+      "entice_code": "REE",
+      "expected_name": "Mining of rare earth elements",
+      "nace2_scope": [
+        "07.29"
+      ],
+      "origin": "benchmark_editorial_containment",
+      "scope_status": "editorial_containment",
+      "evidence": [
+        "https://sfc.ec.europa.eu/system/files/documents/sfc2007/2022-10/nace-rev-2.pdf"
+      ],
+      "note": "Benchmark-only activity containment from the explicit ENTICE descriptor. Does not certify equality with an entire NACE class or revise the operational registry."
+    },
+    {
+      "entice_code": "RER",
+      "expected_name": "Manufacture of refined rare earths",
+      "nace2_scope": [
+        "20",
+        "24.45"
+      ],
+      "origin": "existing_entice_registry",
+      "scope_status": "scope_required",
+      "evidence": [
+        "https://sfc.ec.europa.eu/system/files/documents/sfc2007/2022-10/nace-rev-2.pdf"
+      ],
+      "note": "HS concordance combines rare-earth elements and compounds. Distinguish basic metals from chemical products before a categorical activity assignment."
+    },
+    {
+      "entice_code": "SCI",
+      "expected_name": "Manufacture of steel via BF-BOF with coke injection",
+      "nace2_scope": [
+        "24.10"
+      ],
+      "origin": "benchmark_editorial_containment",
+      "scope_status": "editorial_containment",
+      "evidence": [
+        "https://sfc.ec.europa.eu/system/files/documents/sfc2007/2022-10/nace-rev-2.pdf"
+      ],
+      "note": "Benchmark-only activity containment from the explicit ENTICE descriptor. Does not certify equality with an entire NACE class or revise the operational registry."
+    },
+    {
+      "entice_code": "SDG",
+      "expected_name": "Manufacture of steel via direct reduction with natural gas",
+      "nace2_scope": [
+        "24.10"
+      ],
+      "origin": "benchmark_editorial_containment",
+      "scope_status": "editorial_containment",
+      "evidence": [
+        "https://sfc.ec.europa.eu/system/files/documents/sfc2007/2022-10/nace-rev-2.pdf"
+      ],
+      "note": "Benchmark-only activity containment from the explicit ENTICE descriptor. Does not certify equality with an entire NACE class or revise the operational registry."
+    },
+    {
+      "entice_code": "SDH",
+      "expected_name": "Manufacture of steel via direct reduction with hydrogen",
+      "nace2_scope": [
+        "24.10"
+      ],
+      "origin": "benchmark_editorial_containment",
+      "scope_status": "editorial_containment",
+      "evidence": [
+        "https://sfc.ec.europa.eu/system/files/documents/sfc2007/2022-10/nace-rev-2.pdf"
+      ],
+      "note": "Benchmark-only activity containment from the explicit ENTICE descriptor. Does not certify equality with an entire NACE class or revise the operational registry."
+    },
+    {
+      "entice_code": "SIL",
+      "expected_name": "Mining of silver",
+      "nace2_scope": [
+        "07.29"
+      ],
+      "origin": "benchmark_editorial_containment",
+      "scope_status": "editorial_containment",
+      "evidence": [
+        "https://sfc.ec.europa.eu/system/files/documents/sfc2007/2022-10/nace-rev-2.pdf"
+      ],
+      "note": "Benchmark-only activity containment from the explicit ENTICE descriptor. Does not certify equality with an entire NACE class or revise the operational registry."
+    },
+    {
+      "entice_code": "SIR",
+      "expected_name": "Manufacture of refined silver",
+      "nace2_scope": [
+        "24.41"
+      ],
+      "origin": "benchmark_editorial_containment",
+      "scope_status": "editorial_containment",
+      "evidence": [
+        "https://sfc.ec.europa.eu/system/files/documents/sfc2007/2022-10/nace-rev-2.pdf"
+      ],
+      "note": "Benchmark-only activity containment from the explicit ENTICE descriptor. Does not certify equality with an entire NACE class or revise the operational registry."
+    },
+    {
+      "entice_code": "SOP",
+      "expected_name": "Manufacture of solar panels",
+      "nace2_scope": [
+        "26.11"
+      ],
+      "origin": "existing_entice_registry",
+      "scope_status": "reviewed_scope",
+      "evidence": [
+        "https://eur-lex.europa.eu/legal-content/EN/TXT/?uri=CELEX%3A32022R2552"
+      ],
+      "note": "Photovoltaic cells/modules HS 854143; electrical installation and solar-thermal equipment are different activities."
+    },
+    {
+      "entice_code": "TIR",
+      "expected_name": "Manufacture of refined titanium",
+      "nace2_scope": [
+        "20.12"
+      ],
+      "origin": "existing_entice_registry",
+      "scope_status": "reviewed_scope",
+      "evidence": [
+        "https://eur-lex.europa.eu/legal-content/EN/TXT/?uri=CELEX%3A32022R2552"
+      ],
+      "note": "Trade scope is titanium oxides HS 282300; not basic titanium metal."
+    },
+    {
+      "entice_code": "TIT",
+      "expected_name": "Mining of titanium",
+      "nace2_scope": [
+        "07.29"
+      ],
+      "origin": "benchmark_editorial_containment",
+      "scope_status": "editorial_containment",
+      "evidence": [
+        "https://sfc.ec.europa.eu/system/files/documents/sfc2007/2022-10/nace-rev-2.pdf"
+      ],
+      "note": "Benchmark-only activity containment from the explicit ENTICE descriptor. Does not certify equality with an entire NACE class or revise the operational registry."
+    },
+    {
+      "entice_code": "TVP",
+      "expected_name": "Transport via pipeline service",
+      "nace2_scope": [
+        "49.50"
+      ],
+      "origin": "benchmark_editorial_containment",
+      "scope_status": "editorial_containment",
+      "evidence": [
+        "https://sfc.ec.europa.eu/system/files/documents/sfc2007/2022-10/nace-rev-2.pdf"
+      ],
+      "note": "Benchmark-only activity containment from the explicit ENTICE descriptor. Does not certify equality with an entire NACE class or revise the operational registry."
+    },
+    {
+      "entice_code": "WNT",
+      "expected_name": "Manufacture of wind turbines",
+      "nace2_scope": [
+        "28.11",
+        "27.11"
+      ],
+      "origin": "existing_entice_registry",
+      "scope_status": "scope_required",
+      "evidence": [
+        "https://sfc.ec.europa.eu/system/files/documents/sfc2007/2022-10/nace-rev-2.pdf"
+      ],
+      "note": "Turbines/turbine-generator sets -> OME; separate electrical generators -> EEQ. Catalogue repeats WNT with these different names; trade and inventory scopes must be separated."
+    },
+    {
+      "entice_code": "ZIN",
+      "expected_name": "Mining of zinc",
+      "nace2_scope": [
+        "07.29"
+      ],
+      "origin": "benchmark_editorial_containment",
+      "scope_status": "editorial_containment",
+      "evidence": [
+        "https://sfc.ec.europa.eu/system/files/documents/sfc2007/2022-10/nace-rev-2.pdf"
+      ],
+      "note": "Benchmark-only activity containment from the explicit ENTICE descriptor. Does not certify equality with an entire NACE class or revise the operational registry."
+    },
+    {
+      "entice_code": "ZIR",
+      "expected_name": "Manufacture of refined zinc",
+      "nace2_scope": [
+        "20.12"
+      ],
+      "origin": "existing_entice_registry",
+      "scope_status": "reviewed_scope",
+      "evidence": [
+        "https://eur-lex.europa.eu/legal-content/EN/TXT/?uri=CELEX%3A32022R2552"
+      ],
+      "note": "Trade scope is zinc oxide/peroxide HS 281700 / CPA 20.12.11, not refined zinc metal (24.43 -> NFM). Parent CHM is consistent with the chemical scope."
+    }
+  ],
+  "specific_native_reviews": [
+    {
+      "entice_code": "MCU",
+      "dataset": "EXIOBASE_3.11.2_ixi_2023",
+      "native_code": "i13.20.11",
+      "expected_native_name": "Mining of copper ores and concentrates",
+      "specificity": "material_match_candidate",
+      "review_basis": "Explicit native and ENTICE descriptors, separately from NACE class membership.",
+      "note": "Editorial candidate for a fine comparison. Verify detailed coverage and accounting/price basis before numerical use; no automatic identity or allocation."
+    },
+    {
+      "entice_code": "MCU",
+      "dataset": "EXIOBASE_3.11.2_pxp_2023",
+      "native_code": "p13.20.11",
+      "expected_native_name": "Copper ores and concentrates",
+      "specificity": "material_match_candidate",
+      "review_basis": "Explicit native and ENTICE descriptors, separately from NACE class membership.",
+      "note": "Editorial candidate for a fine comparison. Verify detailed coverage and accounting/price basis before numerical use; no automatic identity or allocation."
+    },
+    {
+      "entice_code": "MCU",
+      "dataset": "GLORIA_060_activity_2023",
+      "native_code": "31",
+      "expected_native_name": "Copper ores",
+      "specificity": "material_match_candidate",
+      "review_basis": "Explicit native and ENTICE descriptors, separately from NACE class membership.",
+      "note": "Editorial candidate for a fine comparison. Verify detailed coverage and accounting/price basis before numerical use; no automatic identity or allocation."
+    },
+    {
+      "entice_code": "MAO",
+      "dataset": "EXIOBASE_3.11.2_ixi_2023",
+      "native_code": "i13.20.13",
+      "expected_native_name": "Mining of aluminium ores and concentrates",
+      "specificity": "material_match_candidate",
+      "review_basis": "Explicit native and ENTICE descriptors, separately from NACE class membership.",
+      "note": "Editorial candidate for a fine comparison. Verify detailed coverage and accounting/price basis before numerical use; no automatic identity or allocation."
+    },
+    {
+      "entice_code": "MAO",
+      "dataset": "EXIOBASE_3.11.2_pxp_2023",
+      "native_code": "p13.20.13",
+      "expected_native_name": "Aluminium ores and concentrates",
+      "specificity": "material_match_candidate",
+      "review_basis": "Explicit native and ENTICE descriptors, separately from NACE class membership.",
+      "note": "Editorial candidate for a fine comparison. Verify detailed coverage and accounting/price basis before numerical use; no automatic identity or allocation."
+    },
+    {
+      "entice_code": "MAO",
+      "dataset": "GLORIA_060_activity_2023",
+      "native_code": "30",
+      "expected_native_name": "Aluminium ore",
+      "specificity": "material_match_candidate",
+      "review_basis": "Explicit native and ENTICE descriptors, separately from NACE class membership.",
+      "note": "Editorial candidate for a fine comparison. Verify detailed coverage and accounting/price basis before numerical use; no automatic identity or allocation."
+    },
+    {
+      "entice_code": "MIO",
+      "dataset": "EXIOBASE_3.11.2_ixi_2023",
+      "native_code": "i13.1",
+      "expected_native_name": "Mining of iron ores",
+      "specificity": "material_match_candidate",
+      "review_basis": "Explicit native and ENTICE descriptors, separately from NACE class membership.",
+      "note": "Editorial candidate for a fine comparison. Verify detailed coverage and accounting/price basis before numerical use; no automatic identity or allocation."
+    },
+    {
+      "entice_code": "MIO",
+      "dataset": "EXIOBASE_3.11.2_pxp_2023",
+      "native_code": "p13.1",
+      "expected_native_name": "Iron ores",
+      "specificity": "material_match_candidate",
+      "review_basis": "Explicit native and ENTICE descriptors, separately from NACE class membership.",
+      "note": "Editorial candidate for a fine comparison. Verify detailed coverage and accounting/price basis before numerical use; no automatic identity or allocation."
+    },
+    {
+      "entice_code": "MIO",
+      "dataset": "GLORIA_060_activity_2023",
+      "native_code": "28",
+      "expected_native_name": "Iron ores",
+      "specificity": "material_match_candidate",
+      "review_basis": "Explicit native and ENTICE descriptors, separately from NACE class membership.",
+      "note": "Editorial candidate for a fine comparison. Verify detailed coverage and accounting/price basis before numerical use; no automatic identity or allocation."
+    },
+    {
+      "entice_code": "NIK",
+      "dataset": "EXIOBASE_3.11.2_ixi_2023",
+      "native_code": "i13.20.12",
+      "expected_native_name": "Mining of nickel ores and concentrates",
+      "specificity": "material_match_candidate",
+      "review_basis": "Explicit native and ENTICE descriptors, separately from NACE class membership.",
+      "note": "Editorial candidate for a fine comparison. Verify detailed coverage and accounting/price basis before numerical use; no automatic identity or allocation."
+    },
+    {
+      "entice_code": "NIK",
+      "dataset": "EXIOBASE_3.11.2_pxp_2023",
+      "native_code": "p13.20.12",
+      "expected_native_name": "Nickel ores and concentrates",
+      "specificity": "material_match_candidate",
+      "review_basis": "Explicit native and ENTICE descriptors, separately from NACE class membership.",
+      "note": "Editorial candidate for a fine comparison. Verify detailed coverage and accounting/price basis before numerical use; no automatic identity or allocation."
+    },
+    {
+      "entice_code": "NIK",
+      "dataset": "GLORIA_060_activity_2023",
+      "native_code": "34",
+      "expected_native_name": "Nickel ores",
+      "specificity": "material_match_candidate",
+      "review_basis": "Explicit native and ENTICE descriptors, separately from NACE class membership.",
+      "note": "Editorial candidate for a fine comparison. Verify detailed coverage and accounting/price basis before numerical use; no automatic identity or allocation."
+    },
+    {
+      "entice_code": "MUR",
+      "dataset": "GLORIA_060_activity_2023",
+      "native_code": "29",
+      "expected_native_name": "Uranium ores",
+      "specificity": "material_match_candidate",
+      "review_basis": "Explicit native and ENTICE descriptors, separately from NACE class membership.",
+      "note": "Editorial candidate for a fine comparison. Verify detailed coverage and accounting/price basis before numerical use; no automatic identity or allocation."
+    },
+    {
+      "entice_code": "APP",
+      "dataset": "EXIOBASE_3.11.2_ixi_2023",
+      "native_code": "i27.42",
+      "expected_native_name": "Aluminium production",
+      "specificity": "process_scope_review_required",
+      "review_basis": "Explicit native and ENTICE descriptors, separately from NACE class membership.",
+      "note": "Editorial candidate for a fine comparison. Verify detailed coverage and accounting/price basis before numerical use; no automatic identity or allocation."
+    },
+    {
+      "entice_code": "APS",
+      "dataset": "EXIOBASE_3.11.2_ixi_2023",
+      "native_code": "i27.42.w",
+      "expected_native_name": "Re-processing of secondary aluminium into new aluminium",
+      "specificity": "process_match_candidate",
+      "review_basis": "Explicit native and ENTICE descriptors, separately from NACE class membership.",
+      "note": "Editorial candidate for a fine comparison. Verify detailed coverage and accounting/price basis before numerical use; no automatic identity or allocation."
+    },
+    {
+      "entice_code": "CPP",
+      "dataset": "EXIOBASE_3.11.2_ixi_2023",
+      "native_code": "i27.44",
+      "expected_native_name": "Copper production",
+      "specificity": "process_scope_review_required",
+      "review_basis": "Explicit native and ENTICE descriptors, separately from NACE class membership.",
+      "note": "Editorial candidate for a fine comparison. Verify detailed coverage and accounting/price basis before numerical use; no automatic identity or allocation."
+    },
+    {
+      "entice_code": "CPS",
+      "dataset": "EXIOBASE_3.11.2_ixi_2023",
+      "native_code": "i27.44.w",
+      "expected_native_name": "Re-processing of secondary copper into new copper",
+      "specificity": "process_match_candidate",
+      "review_basis": "Explicit native and ENTICE descriptors, separately from NACE class membership.",
+      "note": "Editorial candidate for a fine comparison. Verify detailed coverage and accounting/price basis before numerical use; no automatic identity or allocation."
+    },
+    {
+      "entice_code": "ISS",
+      "dataset": "EXIOBASE_3.11.2_ixi_2023",
+      "native_code": "i27.a.w",
+      "expected_native_name": "Re-processing of secondary steel into new steel",
+      "specificity": "process_match_candidate",
+      "review_basis": "Explicit native and ENTICE descriptors, separately from NACE class membership.",
+      "note": "Editorial candidate for a fine comparison. Verify detailed coverage and accounting/price basis before numerical use; no automatic identity or allocation."
+    },
+    {
+      "entice_code": "NFR",
+      "dataset": "EXIOBASE_3.11.2_ixi_2023",
+      "native_code": "i24.b",
+      "expected_native_name": "N-fertiliser",
+      "specificity": "material_match_candidate",
+      "review_basis": "Explicit native and ENTICE descriptors, separately from NACE class membership.",
+      "note": "Editorial candidate for a fine comparison. Verify detailed coverage and accounting/price basis before numerical use; no automatic identity or allocation."
+    },
+    {
+      "entice_code": "NFR",
+      "dataset": "GLORIA_060_activity_2023",
+      "native_code": "64",
+      "expected_native_name": "Nitrogenous fertilizers",
+      "specificity": "material_match_candidate",
+      "review_basis": "Explicit native and ENTICE descriptors, separately from NACE class membership.",
+      "note": "Editorial candidate for a fine comparison. Verify detailed coverage and accounting/price basis before numerical use; no automatic identity or allocation."
+    },
+    {
+      "entice_code": "TVP",
+      "dataset": "EXIOBASE_3.11.2_ixi_2023",
+      "native_code": "i60.3",
+      "expected_native_name": "Transport via pipelines",
+      "specificity": "activity_match_candidate",
+      "review_basis": "Explicit native and ENTICE descriptors, separately from NACE class membership.",
+      "note": "Editorial candidate for a fine comparison. Verify detailed coverage and accounting/price basis before numerical use; no automatic identity or allocation."
+    },
+    {
+      "entice_code": "TVP",
+      "dataset": "EXIOBASE_3.11.2_pxp_2023",
+      "native_code": "p60.3",
+      "expected_native_name": "Transportation services via pipelines",
+      "specificity": "activity_match_candidate",
+      "review_basis": "Explicit native and ENTICE descriptors, separately from NACE class membership.",
+      "note": "Editorial candidate for a fine comparison. Verify detailed coverage and accounting/price basis before numerical use; no automatic identity or allocation."
+    },
+    {
+      "entice_code": "TVP",
+      "dataset": "GLORIA_060_activity_2023",
+      "native_code": "103",
+      "expected_native_name": "Transport via pipeline",
+      "specificity": "activity_match_candidate",
+      "review_basis": "Explicit native and ENTICE descriptors, separately from NACE class membership.",
+      "note": "Editorial candidate for a fine comparison. Verify detailed coverage and accounting/price basis before numerical use; no automatic identity or allocation."
+    }
+  ]
+}

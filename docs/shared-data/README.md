@@ -66,18 +66,43 @@ sectors; the total database sector count, including GTAP parents, is in
 marked `failed`; their diagnostics stay with the input workbooks and no database
 folder is created.
 
-Each D2.8 inventory folder contains:
+Accepted D2.8 inventory packages use these roles:
 
-- `add_sectors.xlsx`: the compiled workbook for the step actually attempted;
-- `source_add_sectors.xlsx`: its full source workbook and plan;
-- `remaining_add_sectors.xlsx`, when available: the subsequent pending plan;
-- `run.json`: shared name, status, counts and the paired database location.
+- `add_sectors.xlsx`: cumulative inputs from the accepted stages, plus any pending
+  sectors in the latest source, with the editable **`Intermediate steps`** plan.
+- `step_add_sectors.xlsx`: exact compiled input of the last accepted step,
+  intentionally without the global plan.
+- `source_add_sectors.xlsx`: original source of that trial; a resumed trial may
+  contain only its pending children.
+- `remaining_add_sectors.xlsx`: only sectors still to execute; empty at completion.
+- `inventory_manifest.json`: coverage, executed/pending plan, source hashes and
+  stage-equivalence checks for the assembled workbook.
+- `README.md` and `run.json`: file roles, status and paired database location.
 
-For resumed trials, the compiled workbook is incremental: for example, the
-67-child result adds the last 18 children to the preceding 49-child checkpoint.
+The folder count `M` is the number of **completed** children, not the number of
+rows in the full plan. Earlier publication used `add_sectors.xlsx` for only the
+last incremental step. The three accepted packages listed below have been
+upgraded without changing the database matrices or their original source,
+remaining and compiled step inputs. Failed historical attempts retain the old
+layout and are explicitly marked failed.
+
+The final 67-child workbook covers all 67 children across 13 regions (871
+inventories), with executed groups of 17, 32 and 18. It combines the source
+actually accepted for each group, including the final trade reconciliation;
+it is not a copy of the first unreconciled 67-child source. Each group is
+recompiled and compared against its saved input without solving the model.
+This assembled reference is not evidence of a new run or exact numerical replay;
+use the original stage inputs and recorded code for historical reproduction.
+
+To upgrade another accepted legacy package without a model rerun, use
+`python scripts/upgrade_published_inventories.py --database "Database/D2.8/<run name>"`
+from `codex/configurable-regions`, with the matching MARIO checkout selected.
+Repeat `--database` in chronological order for a chain. The command refuses an
+already upgraded package, verifies all stages before replacing the primary
+workbook, archives the previous file and checks database bytes are unchanged.
+
 The prior accepted database is recorded in `source_database_directory`, relative
-to the result database folder. The three accepted stages below retain their
-respective input workbooks.
+to the result database folder. The stages retain their original workbooks.
 
 Each accepted database folder contains `flows/` directly, with Z, Y, V, X, E,
 EY, VY and units in Parquet, plus `metadata.json`, `state.json`, `run.json` and

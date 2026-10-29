@@ -1,0 +1,5 @@
+{
+  "accounting": "inherit",
+  "check_feasibility": true,
+  "scale": 1000.0
+}

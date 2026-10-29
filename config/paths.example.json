@@ -1,15 +1,21 @@
 {
   "data_root": "/path/to/Data split",
   "baseline_format": "mario_parquet",
+  "geography": null,
+  "disaggregation": {
+    "inventories": "Inventories/D2.4 inventories/Regenerated 20261001",
+    "cleaning_policy": true,
+    "steps": null
+  },
   "paths": {
     "baseline": "Database/_GTAP Power 2023/Cache",
     "gtap_totals": "Database/_GTAP Power 2023/Cache/GTAP12_X.xlsx",
     "classifications": "Classifications/ENTICE classifications.xlsx",
     "mario_inventories": "Inventories/D2.4 inventories/MARIO inventories/20260630",
+    "partner_templates": "Data collection/Final",
     "inventory_runs": "Inventories/D2.4 inventories",
     "purdue_trade": "Data collection/Final/PURDUE/Shared material/Trades/trade.xlsx",
     "purdue_split_targets": "Data collection/Final/PURDUE/Shared material/Output and trade targets/splttargs.xlsx",
-    "partner_templates": "Data collection/Final",
     "reference_inventories": "Inventories/D2.4 inventories",
     "resolved_inventories": "Inventories/D2.4 inventories/Regenerated 20261001",
     "split_inventory_runs": "Inventories/D2.8 inventories",

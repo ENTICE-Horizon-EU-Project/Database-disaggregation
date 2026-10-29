@@ -7,6 +7,7 @@ Run as Jupyter-style cells (#%%). The flow is:
   3. Save the enhanced database, then re-parse it as coefficients.
   4. Export the per-sector D2.4 inventory workbooks (export_d24_inventories).
   5. Inject Purdue bilateral trade data into the exported workbooks.
+     Block on cumulative child output/trade budgets in the selected geography.
   6. Plot the X / VA disaggregation of each split parent sector for QA.
 
 Set ENTICE_DATA_ROOT or data_root in paths.local.json to the shared ENTICE
@@ -19,13 +20,18 @@ from datetime import datetime
 
 import mario
 
-from entice_inventory.export.build_d24_inventories import (
+from database_disaggregation.export.build_d24_inventories import (
     export_d24_inventories,
     update_trades_in_exported_inventories,
 )
-from entice_inventory.export import plot_d24_split
-from entice_inventory.core.paths import project_data_root, data_path, PROJECT_ROOT
-from entice_inventory.core.baseline import load_baseline
+from database_disaggregation.export import plot_d24_split
+from database_disaggregation.core.paths import project_data_root, data_path, PROJECT_ROOT
+from database_disaggregation.core.baseline import load_baseline
+from database_disaggregation.core.geography import configured_geography
+from database_disaggregation.core.disaggregation import prepare_inputs, read_output_references
+from database_disaggregation.core.parent_budgets import ParentBudgets, read_child_targets, require_parent_budgets, evaluate_parent_budgets
+import json
+from database_disaggregation.core.paths import local_config
 
 # --- Paths (all derived from BASE) ----------------------------------------- #
 BASE = project_data_root(required=True)
@@ -43,6 +49,7 @@ D24_WORK.mkdir(parents=True, exist_ok=False)
 #%%
 # 1. Baseline GTAP database (flows).
 db = load_baseline(GTAP_DB)
+parent_budgets = ParentBudgets.from_database(db)
 
 #%%
 # 2. Read the MARIO add_sector inventories and apply them.
@@ -78,6 +85,22 @@ updated_files = update_trades_in_exported_inventories(
     purdue_trade_path=str(PURDUE_TRADE),
 )
 
+# Capacity checks cover all children together, regardless of future sector groups.
+targets = read_child_targets(sorted(D24_INVENTORIES.glob('*.xlsx')),
+                             output_references=read_output_references(MARIO_INVENTORIES))
+geography = configured_geography()
+if geography is not None:
+    parent_budgets, targets = parent_budgets.aggregate(geography), targets.aggregate(geography)
+cleaning_policy=local_config().get('disaggregation',{}).get('cleaning_policy')
+if isinstance(cleaning_policy,str):
+    policy_path=Path(cleaning_policy).expanduser()
+    cleaning_policy=policy_path if policy_path.is_absolute() else BASE/policy_path
+if cleaning_policy:
+    # Raw diagnostics remain visible; mandatory acceptance runs after reconciliation.
+    (D24_WORK/'raw_parent_budgets.json').write_text(json.dumps(evaluate_parent_budgets(parent_budgets,targets),indent=2))
+else:
+    require_parent_budgets(parent_budgets, targets, report_path=D24_WORK / 'parent_budgets.json')
+
 #%%
 # 6. QA plot: X / VA disaggregation of each split parent sector.
 plot_d24_split.plot_sector_split(
@@ -91,3 +114,13 @@ plot_d24_split.plot_sector_split(
     save_path="X_VA.png",
     sharey=True,
 )
+
+#%%
+# 7. Optional shared final geography, after native profile resolution. The same
+# boundary is available directly to Camilla's already resolved inventories via
+# scripts/run_disaggregation.py; this step does not solve the split model.
+geography = configured_geography()
+if geography is not None or cleaning_policy:
+    prepare_inputs(D24_INVENTORIES, D24_WORK / 'disaggregation', geography=geography,
+                   steps=local_config().get('disaggregation', {}).get('steps'),
+                   output_reference_dir=MARIO_INVENTORIES,cleaning_policy=cleaning_policy)

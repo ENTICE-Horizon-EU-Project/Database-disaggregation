@@ -1,6 +1,16 @@
 {
   "schema_version": 1,
-  "status": "Accepted design direction; not yet connected to the production runner",
+  "status": "Cumulative child and producer-export budgets are mandatory after any explicit reconciliation; other review screens retain their optional policy",
+  "blocking_checks": {
+    "cumulative_child_output": "Sum all children of each parent in each selected region; must not exceed baseline X",
+    "cumulative_child_trade": "Sum all children of each parent on each directed foreign route; must not exceed baseline parent Z + Y deliveries",
+    "producer_exports": "Sum foreign exports of each child in each selected producing region; must not exceed that child's output",
+    "absolute_tolerance": 1e-6,
+    "relative_tolerance": 1e-8,
+    "action": "stop_and_report_all_violations",
+    "automatic_adjustment": "None in acceptance checks; explicit cleaning-policy.json reconciliation creates separate audited priors before acceptance",
+    "incomplete_output_coverage": "stop; never infer missing observations as zero"
+  },
   "checks_optional": true,
   "default_action": "warn_and_continue",
   "skipped_checks_must_be_listed": true,
@@ -20,6 +30,8 @@
     }
   },
   "reconciliation": {
+    "implemented_policy": "config/cleaning-policy.json",
+    "documentation": "docs/reconciliation.md",
     "output_equals_total_exports": false,
     "accounting_identities": "Enforce within declared solver numerical tolerances and report post-solve residuals.",
     "observed_target_bands": "Configurable by source and observation; the warning threshold is not an assumed statistical uncertainty.",

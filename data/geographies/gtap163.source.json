@@ -1,0 +1,7 @@
+{
+  "name": "GTAP163 native identity partition",
+  "source": "exiobase49.json (source keys only)",
+  "source_sha256": "02a3122d813fb10b2b92c036c65e9c934ce3c1a476b8f441d865921335cc5d7c",
+  "scope": "All 163 native GTAP Power 2023 regions. No regional aggregation. Labels verified against Cache/X.parquet before the pilot.",
+  "source_values_used": false
+}

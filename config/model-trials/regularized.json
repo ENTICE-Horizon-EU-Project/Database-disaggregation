@@ -1,0 +1,10 @@
+{
+  "accounting": "inherit",
+  "value_added_loss": "signed_kl",
+  "final_demand_weight": 0.1,
+  "complete_intermediate_priors": true,
+  "supply_weight": 1.0,
+  "check_feasibility": true,
+  "compact_constraints": true,
+  "scale": 1000.0
+}

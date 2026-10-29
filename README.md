@@ -12,27 +12,10 @@ require an appropriate parser, classification adapter and validation of their
 input conventions.
 
 The repository was renamed from `ENTICE_inventory`. The Python distribution
-remains `entice-inventory`, with import namespace `entice_inventory`, so existing
+remains `database-disaggregation`, with import namespace `database_disaggregation`, so existing
 imports continue to work. Data and results live in the project SharePoint
 **Data split** folder; this repository holds code, mappings, configuration and
 provenance records.
-
-## Change regional aggregation for the current D2.8 MRIO workflow
-
-Use branch **`codex/configurable-regions`** together with MARIO
-`codex/mrio-model-improvements`. Follow the
-[step-by-step regional pipeline guide](https://github.com/SESAM-Polimi/Database-disaggregation/blob/codex/configurable-regions/README.md#run-the-mrio-pipeline-with-another-regional-aggregation):
-configure your shared-data root, edit the complete native-to-target region map,
-prepare a new baseline/workbook, set the `Intermediate steps` plan, then execute
-and resume a controlled model trial. Changing geography requires a fresh
-preparation from native GTAP; a 13-region checkpoint cannot be reused for a new map.
-
-The experimental branch also provides the offline benchmark dashboard and
-cumulative input packages: `add_sectors.xlsx` holds the full plan, while
-`step_add_sectors.xlsx` archives the last compiled step. An empty
-`remaining_add_sectors.xlsx` means no children are pending. See the
-[current shared-data guide](https://github.com/SESAM-Polimi/Database-disaggregation/blob/codex/configurable-regions/docs/shared-data/README.md).
-These workflow scripts are on the experimental branch, not on `main`.
 
 ## Workflow
 
@@ -45,11 +28,29 @@ These workflow scripts are on the experimental branch, not on `main`.
 4. Construct a database with MARIO. Historical D2.4 insertion uses `split=False`;
    monetary MRIO disaggregation uses `split=True` and CVXLab.
 5. Export inventories, databases and diagnostics to paired shared folders.
+6. Benchmark saved monetary MRIO results against their exact baseline, with an
+   offline interactive dashboard and JSON/CSV KPIs; no model rerun is needed.
 
 Source preparation, reconciliation and the optimisation model are separate
 steps. Reproducing an inventory is distinct from validating the economic
 plausibility of a balanced MRIO. Environmental E is still provisional in the
 current accepted 13-region monetary split.
+
+## Benchmark saved MRIO results
+
+Database dashboards now use the **MARIO workshop format**: sector selection,
+production, regional deliveries, use shares and available cross-database
+comparisons. The same template serves notebook and saved-result reporting.
+Refresh all existing reports with `python scripts/refresh_dashboards.py --all
+--overwrite`; this reads saved results and needs no external SSD or model run.
+
+
+The experimental branch includes a first dashboard for the accepted **13-region,
+67-new-sector** split (143 total sectors), compared with its exact 76-sector
+baseline. It covers conservation/accounting, technology, signed V/Y, trade,
+stability and multipliers and a filterable economic review queue. E and environmental
+footprints remain pending. See [benchmarking methodology and commands](docs/benchmarking.md).
+Generated numerical reports stay beside the final database in Data split.
 
 ## Branches and reproducibility
 
@@ -113,7 +114,7 @@ geography. For example, the main path settings have this form:
 }
 ```
 
-Omitted dataset roles use the defaults in `entice_inventory.core.paths`.
+Omitted dataset roles use the defaults in `database_disaggregation.core.paths`.
 Absolute paths are also accepted as explicit overrides; no user's OneDrive
 location is embedded in the Python path resolver.
 
@@ -141,6 +142,130 @@ Absolute mapping paths also work. The map is a complete source-to-target
 partition; duplicate or missing source assignments are rejected.
 `geography: null` retains the native geography. The disaggregation inventory
 directory is configured separately and is relative to `data_root`.
+
+## Run the MRIO pipeline with another regional aggregation
+
+Use **this branch (`codex/configurable-regions`)** and MARIO
+`codex/mrio-model-improvements`, with its dependencies installed. Run the commands
+from the repository root. Select the intended MARIO checkout explicitly if your
+environment already has another editable MARIO installation:
+
+```bash
+conda activate mario
+export MARIO_SOURCE="/path/to/MARIO/checkout-on-codex-mrio-model-improvements"
+export PYTHONPATH="$MARIO_SOURCE:$PWD/src"
+```
+
+1. Set your SharePoint `data_root` in `paths.local.json` (or select your own JSON
+   with `ENTICE_CONFIG`). Keep the preparation baseline pointed at the **native
+   GTAP cache**, `Database/_GTAP Power 2023/Cache`; do not replace it with a saved
+   13-region result or the 13-region benchmark baseline.
+2. Copy `data/geographies/gtap13.json` to a new mapping, such as
+   `data/geographies/my_regions.json`, and edit its target labels. The JSON maps
+   **all 163 source GTAP region codes to target region names**, one assignment
+   per source. For example, changing `"ITA": "EU27"` to `"ITA": "Italy"` separates
+   Italy from EU27 and creates a 14th region. Keep every other assignment; missing,
+   duplicate and unknown source codes are rejected. CSV/TSV/XLSX with two columns
+   (source, target) and a header row are also accepted.
+3. Prepare a **new** working directory. This command aggregates the baseline and
+   inventories, applies the reconciliation policy, checks cumulative budgets and
+   writes the editable workbook; it **does not solve the model**:
+
+```bash
+python scripts/run_disaggregation.py \
+  --mapping data/geographies/my_regions.json \
+  --cleaning-policy config/cleaning-policy.json \
+  --intermediate-steps \
+  --output build/disaggregation/my_regions_01
+```
+
+`--mapping` overrides the geography in `paths.local.json`. Alternatively set
+`geography.mapping` to the new file with `mapping_base: "repository"`, then omit
+`--mapping`. Set `geography` to `null` to retain all native regions. Command-line
+relative paths resolve from your current directory; dataset paths in the user
+configuration resolve from `data_root`.
+
+4. Open `build/disaggregation/my_regions_01/add_sectors.xlsx` and edit the
+   **`Intermediate steps`** sheet. Each column is an ordered group; every `Master`
+   sector must occur exactly once. Without a `--steps` JSON, preparation creates
+   one column named `Step 1` containing all children. It does **not** automatically
+   create a Mining group. For a staged trial, split this column into the intended
+   groups and name the first one `Mining` if you use the example below. Instead
+   of editing Excel you can pass `--steps config/my_steps.json` at preparation,
+   with an ordered object such as `{"Mining": ["CHR", "COB", "..."], "Next": ["..."]}`;
+   replace the illustrative lists with the complete sector plan.
+5. Run a controlled first group, using the **entropy-first policy**:
+
+```bash
+python scripts/run_model_trial.py \
+  --prepared build/disaggregation/my_regions_01 \
+  --policy config/model-trials/entropy-first.json \
+  --stop-after-step Mining
+```
+
+The fresh controlled runner currently defaults to stopping after `Mining`;
+**supply the real group name explicitly**. If you kept the single `Step 1`
+column, `--stop-after-step "Step 1"` solves all its children together. To execute
+all groups in a fresh trial, name the last column as the stopping group.
+The controlled runner now defaults to this policy when no fixed `--options` or
+`--historical-model` is supplied. It tries **KL for the first group**, then
+**partial entropy with signed KL for subsequent groups**. For each entropy model,
+solver order is **MOSEK → Clarabel → SCS**. Only after those attempts fail does it
+try the named **quadratic** model, with **Gurobi → MOSEK → Clarabel → OSQP**.
+The feasibility preflight uses **Gurobi → HiGHS → Clarabel** for installation,
+licence or numerical failures; a mathematical infeasibility stops that preflight.
+
+Every attempt starts from the same preceding accepted database. The policy
+requires a finite evaluated objective and retains all independent acceptance checks and records unsuccessful attempts and
+model changes in `model_attempts.json` and checkpoint `model_history`. Schema,
+input-integrity and programming errors stop the run instead of triggering an
+objective change. Solver settings and order are editable in the policy JSON.
+MOSEK and Gurobi need their Python packages and valid licences. Open solvers remain
+supported, and unavailable commercial solvers are logged and skipped.
+
+Entropy support is no longer a fixed `1e-8`: each step computes
+`10 ** (floor(log10(min(abs(nonzero monetary prior)))) - 4)` across the references
+in enabled entropy terms, before numerical scaling. For example, a minimum of
+`0.03` gives `1e-6`. Zeros, masks, controls and disabled losses are excluded; signed
+values use their absolute magnitude. `entropy_support.json` records the inputs,
+coefficient and scaled coefficient. Quadratic normalisation keeps its separate
+floor. See [model and solver policy](docs/model-policy.md) for details.
+
+For a fixed formulation/solver without automatic fallback, keep using `--options`,
+`--solver` and `--solver-options`. For the historical formulation use
+`--historical-model --solver MOSEK`. MARIO's direct `add_sectors` call remains an
+explicit single-model operation; the pipeline orchestrates the policy.
+
+6. To continue a newly accepted checkpoint with the **same geography and policy**,
+   use its database path printed by the runner:
+
+```bash
+python scripts/run_model_trial.py --resume "/path/to/accepted/checkpoint-or-shared-database"
+```
+
+Resume runs all pending groups when no stopping group is supplied. With the
+default policy, it selects the subsequent-insertion entropy model. Fixed-model
+replays must supply the matching `--options` and solver arguments explicitly.
+To revise pending inputs, pass `--workbook` with an
+edited copy of `remaining_add_sectors.xlsx`. The completed-sector fingerprints
+remain protected. Checkpoints written before the adaptive-entropy-support
+revision remain readable,
+but cannot resume under this changed formulation. Start a fresh experiment, or
+use the recorded historical code and configuration for an exact replay.
+
+Changing geography always requires a new preparation from the native baseline;
+it cannot reuse a checkpoint from another partition. A new aggregation can expose
+different target conflicts, so a successful 13-region trial is not a guarantee
+of feasibility for another map.
+
+The controlled runner records inputs/code and automatically publishes paired
+inventory/database folders to SharePoint. `build/` is temporary computational
+storage. Accepted input packages now expose the cumulative workbook and its step
+plan as `add_sectors.xlsx`; the exact last-step input is retained separately as
+`step_add_sectors.xlsx`. The `remaining_...` file is a resume aid and is empty
+when there is nothing left to split.
+
+For a concrete larger-geography example, see the [49-region MCU scalability pilot](docs/scalability.md).
 
 ## Shared inputs and outputs
 
@@ -172,8 +297,8 @@ files does not automatically replace the selected Purdue delivery.
 
 | Task | Entry point |
 |---|---|
-| Build an inventory from a partner template | `entice_inventory.inventory.template_to_inventory` |
-| Build inventories from Purdue cost data | `entice_inventory.inventory.exioiot_to_inventory`, `copcosts_to_inventory` where present |
+| Build an inventory from a partner template | `database_disaggregation.inventory.template_to_inventory` |
+| Build inventories from Purdue cost data | `database_disaggregation.inventory.exioiot_to_inventory`, `copcosts_to_inventory` where present |
 | Historical D2.4 insertion and export | `scripts/run_d24_pipeline.py` (`#%%` cells; `split=False`) |
 | Re-export one sector from saved coefficients | `scripts/export_d24_sector.py --help` |
 | Inspect sector and region definitions | `scripts/registry.py --help` |
@@ -194,7 +319,7 @@ config/                       portable examples and workflow policies
 paths.local.json              user-editable path configuration
 data/                         bundled mappings, registry and geography definitions
 scripts/                      workflow, export and diagnostic commands
-src/entice_inventory/
+src/database_disaggregation/
   core/                       paths, baseline access and shared utilities
   inventory/                  source-to-inventory conversion
   export/                     inventory export and plots
@@ -208,5 +333,17 @@ build/                        ignored computational work and diagnostics
 Historical audit records identify the code and files used at the time; they
 are not rewritten to claim that an old run used today's configuration.
 Structural checks and successful optimisation do not by themselves validate
-economic assumptions. The experimental branch includes a first offline
-benchmark; economic review and sensitivity experiments remain project decisions.
+economic assumptions. The first offline benchmark is available; economic review
+thresholds and sensitivity experiments still need agreement with the project team.
+
+## Notebook API
+
+Use the repository directly for input metadata, preparation, monetary IO analysis,
+reference comparisons and standalone reports. See [the notebook API guide](docs/notebook-api.md).
+
+For unified production, cost-structure and bilateral-trade views by activity
+and region, built from the selected pipeline inputs, see [the data collection dashboard](docs/source-data-explorer.md).
+
+## Explicit workflow experiment
+
+On branch `codex/explicit-workflow`, see [the stage API](docs/explicit-workflow.md) and [the small executable notebook](examples/explicit_workflow.ipynb). Both repositories need the experimental branch; the workshop notebook remains unchanged.

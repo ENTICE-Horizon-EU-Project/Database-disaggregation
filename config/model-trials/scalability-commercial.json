@@ -1,0 +1,51 @@
+{
+  "format": "entice-model-policy-v1",
+  "initial_model": "Split_sectors_MRIO_KL",
+  "subsequent_model": "Split_sectors_MRIO_partial_entropy_V_signed_kl",
+  "fallback_model": "Split_sectors_MRIO_quadratic",
+  "split_model_options": {
+    "accounting": "inherit",
+    "final_demand_weight": 0.1,
+    "supply_weight": 1.0,
+    "check_feasibility": true,
+    "feasibility_solver": [
+      "GUROBI",
+      "HIGHS",
+      "CLARABEL"
+    ],
+    "compact_constraints": true,
+    "defer_satellite_recalculation": true,
+    "scale": 1000.0,
+    "require_finite_objective": true
+  },
+  "solvers": {
+    "entropy": [
+      {
+        "name": "MOSEK",
+        "options": {
+          "MSK_IPAR_NUM_THREADS": 2,
+          "MSK_DPAR_OPTIMIZER_MAX_TIME": 1800.0,
+          "MSK_DPAR_INTPNT_CO_TOL_PFEAS": 1e-10,
+          "MSK_DPAR_INTPNT_CO_TOL_DFEAS": 1e-10,
+          "MSK_DPAR_INTPNT_CO_TOL_REL_GAP": 1e-10,
+          "MSK_IPAR_INTPNT_SOLVE_FORM": "MSK_SOLVE_DUAL"
+        }
+      }
+    ],
+    "quadratic": [
+      {
+        "name": "GUROBI",
+        "options": {
+          "Threads": 2,
+          "TimeLimit": 1800.0,
+          "FeasibilityTol": 1e-09,
+          "OptimalityTol": 1e-09,
+          "BarConvTol": 1e-10,
+          "NumericFocus": 1,
+          "NonConvex": 0,
+          "OutputFlag": 0
+        }
+      }
+    ]
+  }
+}

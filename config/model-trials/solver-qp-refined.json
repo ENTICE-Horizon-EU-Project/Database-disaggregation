@@ -1,0 +1,9 @@
+{
+  "tol_gap_abs": 1e-10,
+  "tol_gap_rel": 1e-10,
+  "tol_feas": 1e-11,
+  "max_iter": 600,
+  "static_regularization_constant": 1e-11,
+  "dynamic_regularization_delta": 2e-9,
+  "iterative_refinement_max_iter": 20
+}
