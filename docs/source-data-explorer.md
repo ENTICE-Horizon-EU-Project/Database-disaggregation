@@ -6,7 +6,7 @@ remains in the same sector selector, including activities whose current source
 is missing or reported only at product-group level.
 
 ```python
-from entice_inventory.reporting import SourceCollection, write_source_dashboard
+from database_disaggregation.reporting import SourceCollection, write_source_dashboard
 
 collection = SourceCollection.from_pipeline()
 write_source_dashboard(collection, "results/ENTICE_data_sources.html")

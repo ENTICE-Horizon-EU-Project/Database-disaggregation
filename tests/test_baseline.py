@@ -3,7 +3,7 @@ import sys
 import unittest
 from unittest.mock import Mock, patch
 
-from entice_inventory.core.baseline import load_baseline
+from database_disaggregation.core.baseline import load_baseline
 
 
 class BaselineReaderTests(unittest.TestCase):

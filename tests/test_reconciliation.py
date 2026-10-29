@@ -10,14 +10,14 @@ import pandas as pd
 import pytest
 from openpyxl import Workbook,load_workbook
 
-from entice_inventory.core.geography import Geography
-from entice_inventory.core.parent_budgets import ParentBudgets
-from entice_inventory.reconciliation.audit import Audit
-from entice_inventory.reconciliation.baseline import NativeBaseline
-from entice_inventory.reconciliation.policy import load_policy
-from entice_inventory.reconciliation.profiles import balance_profile
-from entice_inventory.reconciliation.sources import Sources
-from entice_inventory.reconciliation.targets import prepare_outputs,reconcile_trade
+from database_disaggregation.core.geography import Geography
+from database_disaggregation.core.parent_budgets import ParentBudgets
+from database_disaggregation.reconciliation.audit import Audit
+from database_disaggregation.reconciliation.baseline import NativeBaseline
+from database_disaggregation.reconciliation.policy import load_policy
+from database_disaggregation.reconciliation.profiles import balance_profile
+from database_disaggregation.reconciliation.sources import Sources
+from database_disaggregation.reconciliation.targets import prepare_outputs,reconcile_trade
 
 
 def toy_policy(codes=('A','B')):
@@ -106,7 +106,7 @@ def test_missing_native_output_uses_parent_share_and_overlap_total_is_used_once(
     observations=lambda c,p:[{'members':['R1'],'value':2. if c=='A' else 4.,'identifier':'R1',
                               'source':'synthetic','state':'numeric','kind':'direct','confidence':1.}]
     source=SimpleNamespace(observations=observations)
-    from entice_inventory.core.parent_budgets import ChildTargets
+    from database_disaggregation.core.parent_budgets import ChildTargets
     target=ChildTargets(pd.DataFrame([['A'],['B']],columns=['Sector']),
                         pd.DataFrame(columns=['Sector','Region','Quantity','Unit']),pd.DataFrame())
     audit=Audit(tmp_path/'audit')
@@ -163,8 +163,8 @@ def test_sparse_purdue_zeros_require_declared_domain(tmp_path):
 def test_reconciled_preparation_is_readable_auditable_and_preserves_sources(tmp_path):
     from test_parent_budgets import _baseline
     from test_geography import inventory
-    from entice_inventory.core.disaggregation import prepare_inputs
-    from entice_inventory.core.parent_budgets import read_child_targets,require_parent_budgets
+    from database_disaggregation.core.disaggregation import prepare_inputs
+    from database_disaggregation.core.parent_budgets import read_child_targets,require_parent_budgets
     import mario
     baseline=_baseline(tmp_path);source=tmp_path/'source';source.mkdir()
     for sector in ['A','B']:inventory(source/f'{sector}.xlsx',sector=sector,outputs=(40.,40.,40.))
@@ -214,7 +214,7 @@ def test_share_proxy_is_a_weak_parent_share_and_changed_headers_stop(tmp_path):
 
 
 def test_residual_world_total_adds_to_direct_country_and_parent_zero_stays_zero(tmp_path):
-    from entice_inventory.core.parent_budgets import ChildTargets
+    from database_disaggregation.core.parent_budgets import ChildTargets
     policy=toy_policy(('A',));policy['geography']['cluster_modes']={'A':{'GLOBAL':{'mode':'residual'}}}
     b=budgets(('R1','R2','R3'));b.output.loc[('R3','Parent')]=0.
     native=SimpleNamespace(regions=['R1','R2','R3'],budgets=b)
@@ -237,7 +237,7 @@ def test_residual_world_total_adds_to_direct_country_and_parent_zero_stays_zero(
 
 
 def test_composite_trade_is_allocated_once_after_direct_members(tmp_path):
-    from entice_inventory.reconciliation.targets import prepare_trade
+    from database_disaggregation.reconciliation.targets import prepare_trade
     policy=toy_policy(('A','B','C'));policy['trade']['composites']={'Composite':['A','B','C']}
     native=SimpleNamespace(regions=['R1','R2'],budgets=budgets(('R1','R2')))
     sources=SimpleNamespace(domain_sectors=set(),paired_trade={},customs_trade={
@@ -254,7 +254,7 @@ def test_composite_trade_is_allocated_once_after_direct_members(tmp_path):
 def test_missing_technology_uses_same_child_donor_and_reparent_rebuilds(tmp_path):
     from test_geography import inventory
     from test_parent_budgets import _baseline
-    from entice_inventory.reconciliation.profiles import ProfileBuilder
+    from database_disaggregation.reconciliation.profiles import ProfileBuilder
     baseline=_baseline(tmp_path);native=NativeBaseline(baseline)
     source=tmp_path/'A.xlsx';inventory(source,sector='A',outputs=(1.,1.,1.))
     book=load_workbook(source);master=book['Master']
@@ -275,7 +275,7 @@ def test_missing_technology_uses_same_child_donor_and_reparent_rebuilds(tmp_path
 def test_failed_run_keeps_evidence_without_success_marker(tmp_path):
     from test_parent_budgets import _baseline
     from test_geography import inventory
-    from entice_inventory.reconciliation import reconcile_inventories
+    from database_disaggregation.reconciliation import reconcile_inventories
     source=tmp_path/'source';source.mkdir();inventory(source/'A.xlsx',sector='A')
     original=hashlib.sha256((source/'A.xlsx').read_bytes()).hexdigest()
     policy=toy_policy(('A',));policy['sectors']['A']['declared_parent']='Different parent'

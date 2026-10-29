@@ -11,10 +11,10 @@ import pandas as pd
 import pytest
 from openpyxl import Workbook
 
-from entice_inventory.reporting import SourceCollection, write_source_dashboard
-from entice_inventory.reporting.collection import select_trade
-from entice_inventory.reconciliation.policy import load_policy
-from entice_inventory.reconciliation.sources import observation_geographies, selected_trade_observations
+from database_disaggregation.reporting import SourceCollection, write_source_dashboard
+from database_disaggregation.reporting.collection import select_trade
+from database_disaggregation.reconciliation.policy import load_policy
+from database_disaggregation.reconciliation.sources import observation_geographies, selected_trade_observations
 
 
 def inventory(path, code, lead, amount=1., coefficient=.3):

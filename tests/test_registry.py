@@ -9,7 +9,7 @@ import tempfile
 import unittest
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]/'src'))
-from entice_inventory.core.registry import Registry, inspect_inventory
+from database_disaggregation.core.registry import Registry, inspect_inventory
 
 
 class RegistryTests(unittest.TestCase):

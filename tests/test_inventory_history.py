@@ -7,7 +7,7 @@ from pathlib import Path
 import pandas as pd
 import pytest
 
-from entice_inventory.core.inventory_history import (
+from database_disaggregation.core.inventory_history import (
     assemble_inventory_history, checkpoint_history,
 )
 
@@ -87,7 +87,7 @@ def make_trial(root, source, *, active, completed, index, previous=None):
 def test_resumed_publication_is_complete_and_preserves_exact_stage_inputs(tmp_path, monkeypatch):
     import mario
     from mario.ops.add_sector_workbook import load_add_sector_workbook_input
-    from entice_inventory.core.shared_runs import publish_trial
+    from database_disaggregation.core.shared_runs import publish_trial
     monkeypatch.setattr(mario.Database, 'add_sectors', lambda *a, **k: pytest.fail('Publication must not solve.'))
     first_root = tmp_path/'first'; first_root.mkdir()
     first, first_step = make_trial(first_root, payload(), active=['A'], completed=['A'], index=1)
@@ -135,7 +135,7 @@ def test_changed_saved_step_is_detected_before_publication(tmp_path):
 
 def test_upgrade_archives_legacy_input_and_does_not_touch_database(tmp_path):
     import runpy
-    from entice_inventory.core.shared_runs import publish_trial
+    from database_disaggregation.core.shared_runs import publish_trial
     trial, step = make_trial(tmp_path, payload(('New',)), active=['New'], completed=['New'], index=1)
     result = publish_trial(trial, inventory_root=tmp_path/'Inventories', database_root=tmp_path/'Database')
     inventory, database = Path(result['inventory']), Path(result['database'])

@@ -22,7 +22,7 @@ from types import SimpleNamespace
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / 'src'))
 import pandas as pd
 import pyarrow.parquet as pq
-from entice_inventory.export.build_d24_inventories import (
+from database_disaggregation.export.build_d24_inventories import (
     aggregate_sector_coefficients, build_trade_rows, create_output_workbook,
     read_sector_templates, read_total_outputs, read_purdue_trade_tables,
     read_purdue_trade_workbook, render_inventory_rows, resolve_export_region_maps,

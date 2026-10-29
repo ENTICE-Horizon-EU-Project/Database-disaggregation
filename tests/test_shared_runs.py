@@ -6,7 +6,7 @@ import shutil
 
 import pandas as pd
 import pytest
-from entice_inventory.core.shared_runs import publish_trial, remaining_workbook, run_name
+from database_disaggregation.core.shared_runs import publish_trial, remaining_workbook, run_name
 
 
 def trial_fixture(tmp_path,status='accepted'):

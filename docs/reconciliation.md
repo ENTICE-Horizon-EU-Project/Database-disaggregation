@@ -100,6 +100,21 @@ solve. The D2.4 generation runner also honours `disaggregation.cleaning_policy`:
 it writes its raw target diagnostics, reconciles those targets after native
 profile export, and checks the reconciled inventories before accepting them.
 
+### Use a MARIO database already in memory
+
+```python
+prepared = prepare_inputs(native_inventories, output_directory,
+                          database=native_db, geography=geography,
+                          cleaning_policy=True, output_reference_dir=output_references)
+```
+
+`native_db` is a MARIO IOT in the source inventories' geography, regardless of
+the parser or file format used to construct it. Preparation and reconciliation
+use that object directly; target geography is built on a copy. No database
+reload or baseline export is needed. Sector identities, units and source data
+must be compatible with the selected policy. Matrix and unit fingerprints are
+recorded in the audit instead of claiming original-file provenance.
+
 ### Source roles
 
 The existing `data_root`/`paths` configuration resolves these roles:

@@ -1,15 +1,76 @@
 # Benchmarking saved monetary MRIO databases
 
-The experimental `codex/configurable-regions` branch provides an **offline,
-read-only dashboard** for the accepted 13-region, 67-new-sector experiment.
-The final database contains 143 sectors (76 original sectors/residuals + 67
-children), not 67 total sectors. The baseline contains the original 76 sectors
-at the exact same 13-region geography.
+The active experimental branches provide an **offline, read-only dashboard**
+for saved monetary MRIO results. The current 61-region result has 128 total
+sectors (76 original sectors/residuals plus 52 added activities); its baseline
+has 76 sectors at the same geography. The earlier 13-region and 49-region
+results are retained separately. Every database dashboard uses the same MARIO
+workshop template.
 
 This is post-processing: it imports no MARIO/CVXLab/optimisation solver and does
 not run the disaggregation, balance flows, reconcile targets or recalculate E.
 Keep the numerical dashboard, JSON and CSV in the shared Data split storage.
 The repository contains code, methodology and synthetic tests only.
+
+
+## Standard dashboard format
+
+All generated **database dashboards** use the MARIO workshop layout, including
+the existing 13-region result, both 49-region pilots and the 61-region result.
+The same packaged templates and renderer are used by `reporting.write_dashboard`
+in notebooks and by `benchmark_database.py` / `benchmark_references.py` for saved
+results. The renderer is available on `codex/notebook-api`,
+`codex/configurable-regions` and `codex/mrio-memory`; no MARIO or CVXLab model
+change is involved.
+
+The shared interface has two views:
+
+1. **Results:** sector selector and new/residual/original status; production and
+   available prepared output targets; Sankey or signed trade matrix; destination
+   use shares across using sectors and **all native final-demand categories**.
+   Both views include all Z + Y, including investment, stocks and margins.
+   Production labels are vertical. Origin/destination checkbox dropdowns filter
+   only the trade chart (Sankey and matrix), retain the chosen regions when the
+   sector changes, and provide search, select-all and clear controls. Missing consumers stay grey
+   and undefined denominators stay unavailable. Large regional cases get a wider
+   scrollable heatmap and enough vertical space for Sankey labels.
+2. **Cross-database comparison:** the existing five KPIs, baseline and all
+   available reference sources, broad input structure, trade shares, explicit
+   sector scope and CSV export. The tab is hidden when no references were saved;
+   no source comparison is invented from an unrelated geography.
+
+The numerical baseline audit, strict residuals and source context remain in an
+expandable section. Full KPIs, screening findings and reference audits remain
+in their JSON/CSV sidecars. This changes presentation, not the model, database,
+saved baseline indicators or reference values. E stays outside this dashboard.
+
+To refresh existing reports without recomputing the numerical benchmark or
+reading an external source database:
+
+```bash
+pip install -e '.[benchmark]'
+python scripts/refresh_dashboards.py --all --overwrite
+
+# Or refresh just one saved database:
+python scripts/refresh_dashboards.py \
+  --database 'Database/D2.8/20261028 1754 - 61 regions and 52 sectors' \
+  --overwrite
+```
+
+Paths use the usual `paths.local.json` / `ENTICE_DATA_ROOT`. Existing monetary
+matrices must be locally readable (OneDrive can need time to download older
+placeholders). The external SSD is unnecessary: external profiles are already
+saved in each benchmark JSON. Source datasets, matrices and baseline are never
+rewritten. Cached per-sector targets, or exact step inputs already archived
+with the result, supply the production markers. A legacy report without this
+sector-level cache keeps its original audit and displays no inferred target.
+`--all` touches only directories containing a saved `benchmarking.json`; it does
+not attempt a model run or manufacture a benchmark for every checkpoint.
+
+The original workshop HTML is a reference artifact and is left unchanged.
+Source-data browsing and solver-comparison reports have different purposes and
+are separate from these database dashboards. All outputs remain internal and
+offline, with Plotly, logos and numerical chart data embedded in one HTML file.
 
 ## Run
 
@@ -48,19 +109,13 @@ preceding 17/49-child checkpoint for this comparison.
 
 ## Dashboard views
 
-1. **Overview:** aggregate output, V, foreign deliveries, conservation checks,
-   gross signed flows, review counts.
-2. **Sector explorer:** region, parent, scope, name/code and output filters;
-   sortable/ranked technology, V/Y/trade and multiplier KPIs. Detail compares a
-   child or residual with its baseline parent, on a common input classification.
-3. **Trade & adjustments:** all origin-destination Z+Y deliveries for a selected
-   sector, in M USD or as a delivery/X difference from the baseline parent;
-   route-level prepared-prior → projected-target → final audit where available.
-4. **System diagnostics:** output multipliers,
-   spectral radius, conditioning and omitted zero-output flows.
-5. **Review queue:** filterable findings, click-through to sector detail, CSV
-   export. Findings stay separate from hard accounting checks.
-6. **Method & sources:** formulas, thresholds, scope limits and full input hashes.
+The current interface is the **standard MARIO workshop format** described above.
+Numerical results remain for **internal ENTICE use** and must not be copied to
+MARIO's public Explorer or a public documentation build. The detailed indicators
+and numerical methodology below describe the retained JSON/CSV audits; they do
+not imply that every metric needs a separate panel in the simplified interface.
+External comparisons, where already saved, remain attached. Comtrade customs
+validation is separate and is not populated by a presentation refresh.
 
 ## Hard checks
 
@@ -164,3 +219,22 @@ npm install --prefix /tmp/benchmark-dom --no-audit --no-fund jsdom@26.1.0
 NODE_PATH=/tmp/benchmark-dom/node_modules ENTICE_BENCHMARK_DOM_TEST=1 \
   python -m pytest tests/test_benchmark.py -q
 ```
+
+
+### Complete use shares and regional trade filters (29 October 2026)
+
+The default `analysis.use_profile` includes every category in Y. Households,
+government and NPISH retain their familiar grouping; all other native categories
+are appended without imputation or omission. An explicit `final_demand` mapping
+still permits a deliberately selected subset. Default destination totals equal
+the column totals of the complete Z + Y trade matrix after summing origins.
+Signed values are retained; nonpositive or at-most-1-USD denominators remain
+undefined. Every negative use share is on the red side of the colour scale,
+including residuals below 1 USD. Nothing is clipped or set to zero.
+
+The two regional multi-select dropdowns affect only the deliveries chart, in
+either Sankey or matrix mode. They retain exact selected-route values and keep
+the same selection across sector changes. The use heatmap and database KPIs
+continue to cover their full declared scope. Empty selections show an explicit
+message rather than a stale chart. The Sankey shows positive flows; signed
+routes remain available in the matrix.

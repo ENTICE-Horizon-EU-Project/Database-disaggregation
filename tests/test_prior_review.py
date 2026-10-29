@@ -2,7 +2,7 @@
 from copy import deepcopy
 import math
 import pytest
-from entice_inventory.reconciliation.prior_review import parent_factor_proposal
+from database_disaggregation.reconciliation.prior_review import parent_factor_proposal
 
 
 def profile():

@@ -9,7 +9,7 @@ import zipfile
 ROOT = Path(__file__).resolve().parents[1]
 sys.path[:0] = [str(ROOT/'scripts'), str(ROOT/'src')]
 from repair_xlsx_directory import recover
-from entice_inventory.export.build_d24_inventories import save_workbook_atomic, read_sector_templates
+from database_disaggregation.export.build_d24_inventories import save_workbook_atomic, read_sector_templates
 from openpyxl import Workbook, load_workbook
 
 

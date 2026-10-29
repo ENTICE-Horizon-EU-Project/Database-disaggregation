@@ -16,8 +16,8 @@ import numpy as np
 import pandas as pd
 
 from run_model_trial import fingerprints
-from entice_inventory.reconciliation.row_trade import fit_row_trade
-from entice_inventory.core.shared_runs import remaining_workbook
+from database_disaggregation.reconciliation.row_trade import fit_row_trade
+from database_disaggregation.core.shared_runs import remaining_workbook
 
 NS = 'http://schemas.openxmlformats.org/spreadsheetml/2006/main'
 
