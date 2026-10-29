@@ -114,3 +114,15 @@ def test_reviewed_emerging_serials_are_not_hs_codes():
     assert goods[76]['hs_chapter']=='78'  # Reserved HS chapter 77 is not a sector.
     assert all(r['source_hs_edition']=='H2' for r in goods.values())
     assert len(rules['entice'])==67
+
+
+def test_saved_geography_requires_exact_targets_and_complete_gtap_membership():
+    from database_disaggregation.core.reference_mapping import checkpoint_geography
+    native=[dict(native_code='A',members=['AAA'],membership_complete=True),dict(native_code='X',members=['XXX'],membership_complete=False)]
+    source=[dict(native_code='a',members=['AAA'],membership_complete=True),dict(native_code='x',members=['XXX'],membership_complete=True)]
+    mapping={'geography':{'GTAP12':native,**{f:source for f in ['EXIOBASE','EMERGING','GLORIA']}}}
+    rows=checkpoint_geography(mapping,{'A':'A','X':'REST'},['A','REST'])
+    assert all(r['exact_on_declared_membership'] for r in rows if r['target_region']=='A')
+    assert all(not r['exact_on_declared_membership'] for r in rows if r['target_region']=='REST')
+    with pytest.raises(ValueError,match='targets differ'):
+        checkpoint_geography(mapping,{'A':'A','X':'REST'},['A'])

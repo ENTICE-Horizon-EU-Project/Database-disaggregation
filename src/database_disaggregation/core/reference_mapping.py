@@ -273,3 +273,28 @@ def verify_artifacts(folder):
         if not path.is_relative_to(folder) or not path.is_file() or digest(path) != expected:
             raise ValueError(f'Mapping artifact changed or unavailable: {name}')
     return package
+
+
+def checkpoint_geography(mapping, native_to_target, target_regions):
+    """Audit a saved GTAP aggregation using whole declared source regions."""
+    native = mapping['geography']['GTAP12']
+    if set(native_to_target) != {r['native_code'] for r in native}:
+        raise ValueError('Region map must cover the exact native GTAP universe')
+    if set(native_to_target.values()) != set(target_regions):
+        raise ValueError('Region map targets differ from the saved database')
+    if partition_audit(native)['overlaps']:
+        raise ValueError('Overlapping declared GTAP membership')
+    grouped = {r: set() for r in target_regions}; incomplete = set()
+    for row in native:
+        target = native_to_target[row['native_code']]
+        grouped[target].update(row['members'])
+        if not row['membership_complete']: incomplete.add(target)
+    result = []
+    for target, members in grouped.items():
+        for family in ('EXIOBASE', 'EMERGING', 'GLORIA'):
+            selection = whole_region_selection(members, mapping['geography'][family])
+            if target in incomplete: selection['exact_on_declared_membership'] = False
+            result.append(dict(target_geography=f'ENTICE{len(grouped)}', target_region=target,
+                source_family=family, target_members=sorted(members),
+                target_membership_complete=target not in incomplete, **selection))
+    return result

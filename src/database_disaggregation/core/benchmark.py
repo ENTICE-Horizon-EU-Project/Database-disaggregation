@@ -8,6 +8,8 @@ from __future__ import annotations
 from dataclasses import dataclass
 from datetime import datetime, timezone
 import hashlib
+import io
+import zipfile
 import json
 import os
 from pathlib import Path
@@ -279,7 +281,40 @@ def compare_systems(base, final):
 def prepared_targets(final, state):
     """Audit selected support-table observations from each published stage once."""
     outputs, trades, sources, changes = {}, {}, [], []
-    current, seen = final.root, set()
+    # New cumulative publications archive the exact, dynamically remapped inputs
+    # for every accepted step. A cumulative workbook is not that step's input.
+    archive = final.root / 'diagnostics/exact-inputs.zip'
+    manifest = final.root / 'diagnostics/run_report.json'
+    if archive.is_file() and manifest.is_file():
+        attempts = json.loads(manifest.read_text())['attempts']
+        accepted = [a for a in attempts if a['status'] == 'accepted']
+        accepted_sectors = [s for a in accepted for s in a['sectors']]
+        if len(set(accepted_sectors)) != len(accepted_sectors) or set(accepted_sectors) != set(state['completed_sectors']):
+            raise ValueError('Archived accepted steps do not match completed sectors.')
+        sources += [dict(path=str(archive), sha256=sha256(archive)),
+                    dict(path=str(manifest), sha256=sha256(manifest))]
+        with zipfile.ZipFile(archive) as z:
+            for attempt in accepted:
+                member = f"{attempt['step_index']:03d}_{attempt['step'].replace(' ', '_')}/step_add_sectors.xlsx"
+                payload = z.read(member)
+                with pd.ExcelFile(io.BytesIO(payload)) as workbook:
+                    for name, keys, store, field in (
+                        ('Total outputs', ['Sector', 'Region'], outputs, 'Sector'),
+                        ('Trades', ['Sector_from', 'Region_from', 'Region_to'], trades, 'Sector_from'),
+                    ):
+                        table = pd.read_excel(workbook, sheet_name=name)
+                        table = table.loc[table[field].isin(attempt['sectors'])]
+                        if table.duplicated(keys).any() or not table.Unit.eq('M USD').all():
+                            raise ValueError(f'{member}: invalid or duplicate {name} targets.')
+                        for row in table.to_dict('records'):
+                            key = tuple(row[k] for k in keys); quantity = float(row['Quantity'])
+                            if not np.isfinite(quantity) or key in store:
+                                raise ValueError(f'Duplicate or non-finite archived target: {key}')
+                            store[key] = quantity
+        current = Path('/nonexistent-benchmark-history')
+    else:
+        current = final.root
+    seen = set()
     while (current / 'run.json').is_file():
         if current in seen:
             raise ValueError('Cycle in published run provenance.')
@@ -355,7 +390,7 @@ def build_report(baseline, database, *, system=True):
     state = json.loads((final.root / 'state.json').read_text())
     if state.get('split_model_options', {}).get('accounting') != 'inherit':
         raise ValueError('This first benchmark version requires checkpoint accounting="inherit".')
-    if state.get('tolerances') != {'absolute': ATOL, 'relative': RTOL}:
+    if {k: state.get('tolerances', {}).get(k) for k in ('absolute', 'relative')} != {'absolute': ATOL, 'relative': RTOL}:
         raise ValueError('Checkpoint tolerances differ from the audited benchmark policy.')
     completed = state['completed_sectors']
     if len(set(completed)) != len(completed) or set(completed) - state['sector_parents'].keys():
@@ -377,6 +412,7 @@ def build_report(baseline, database, *, system=True):
                        max_absolute=float(max(0, -final['Z'].to_numpy().min())), unit='M USD', atol=ATOL, rtol=0))
     acct, accounting_checks = accounting(base, final, mapped)
     checks += accounting_checks
+    report_only = state.get('numerical_validation_policy', {}).get('validation') == 'report_only'
     common = list(base['X'].index.get_level_values(1).unique())
     b_rows, dims = profiles(base, common)
     rows, _ = profiles(final, common, parents)
@@ -420,6 +456,12 @@ def build_report(baseline, database, *, system=True):
     if target_summary['status'] == 'checked' and target_summary['outputs'] != target_summary['expected_child_outputs']:
         checks.append(dict(name='Complete prepared output coverage', passed=False, failed_cells=1,
                            max_absolute=None, unit='observations', cells=target_summary['expected_child_outputs']))
+    # Retain every strict result and dollar residual. Follow the saved policy
+    # for enforcement; report_only is not a declaration of economic validity.
+    for check in checks:
+        check['enforced'] = not report_only or check.get('unit') not in ('M USD',)
+        if check['name'] == 'Reaggregation VY':
+            check['enforced'] = True
     systems = dict(status='not_computed')
     if system:
         try:
@@ -464,7 +506,12 @@ def build_report(baseline, database, *, system=True):
                    zero_output_gross_z_inputs=sum(r['gross_z_input'] for r in rows if r['output'] <= ATOL),
                    zero_output_gross_y=sum(r['gross_y'] for r in rows if r['output'] <= ATOL),
                    zero_output_gross_v=sum(r['gross_v'] for r in rows if r['output'] <= ATOL),
-                   hard_checks_passed=all(c['passed'] for c in checks), review_flags=len(issues),
+                   hard_checks_passed=all(c['passed'] or not c['enforced'] for c in checks),
+                   strict_checks_passed=all(c['passed'] for c in checks),
+                   numerical_review_checks=sum(not c['passed'] and not c['enforced'] for c in checks),
+                   planned_new_sectors=len(state.get('planned_sectors', state['sector_parents'])),
+                   skipped_sectors=sorted(set(state.get('planned_sectors', state['sector_parents'])) - set(completed)),
+                   review_flags=len(issues),
                    review_sector_regions=len({(r['region'], r['sector']) for r in issues}),
                    pending_recalculations=state.get('pending_recalculations', []))
     try:
@@ -477,6 +524,18 @@ def build_report(baseline, database, *, system=True):
     dims['sector_names'] = {code: item['name'] for code, item in registry.sectors.items()}
     dims['sector_names'].update({item['id']: item.get('name', item.get('label', item['id']))
                                 for item in registry.adapters['GTAP12']['parent_catalogue']})
+    dims['baseline_sector_names'] = dict(dims['sector_names'])
+    dims['sector_names'].update(state.get('residual_index_renames', {}))
+    name_sources = []
+    additions = final.root / 'diagnostics/provenance/additional-sectors-13.json'
+    if additions.is_file():
+        digest = sha256(additions)
+        items = json.loads(additions.read_text()).get('sectors', {})
+        for code, item in items.items():
+            dims['sector_names'].setdefault(code, item['name'])
+        if sha256(additions) != digest:
+            raise RuntimeError('Published sector-name source changed during benchmarking.')
+        name_sources.append(dict(path=str(additions), sha256=digest))
     return dict(format='entice-benchmark-v2', generated_at=datetime.now(timezone.utc).isoformat(),
                 summary=summary, dimensions=dims, checks=checks, targets=target_summary,
                 sectors=rows, baseline_sectors=b_rows, issues=issues, systems=systems,
@@ -484,13 +543,15 @@ def build_report(baseline, database, *, system=True):
                 provenance=dict(baseline=str(base.root), database=str(final.root), baseline_sha256=base.hashes,
                                 database_sha256=final.hashes, sources_unchanged=True, auxiliary_sources=sources,
                                 code_revision=revision, engine_sha256=sha256(__file__),
-                                registry_sha256=registry.fingerprints,
+                                registry_sha256=registry.fingerprints, published_name_sources=name_sources,
                                 baseline_source_hashes_verified=baseline_record.is_file(),
                                 baseline_origin=json.loads((base.root / 'baseline_provenance.json').read_text())
                                 if (base.root / 'baseline_provenance.json').is_file() else None),
                 policy=dict(atol_MUSD=ATOL, rtol=RTOL, active_output_threshold_MUSD=ATOL,
                             share_screening_threshold=.25,
-                            accounting='inherit', monetary_unit='M USD'))
+                            accounting='inherit', monetary_unit='M USD',
+                            numerical_validation='report_only' if report_only else 'strict',
+                            economic_review='pending'))
 
 
 def write_report(report, output, *, overwrite=False):

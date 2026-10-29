@@ -28,5 +28,10 @@
     "copper_sectors": "Data collection/Final/PURDUE/Shared material/Cost structures/COPSEC.csv",
     "d24_database_runs": "Database/D2.4"
   },
-  "mario_source": null
+  "mario_source": null,
+  "benchmarking": {
+    "reference_root": "/path/to/IO databases",
+    "source_dir": "Classifications/Benchmark mappings/2023/sources",
+    "mapping_output": "Classifications/Benchmark mappings/2023"
+  }
 }

@@ -40,6 +40,9 @@ def profiles_from_iot(x, regions, sector_codes, target_regions, supplier_groups,
     masks={r:np.repeat(np.isin(regions,codes),ns) for r,codes in target_regions.items()}
     for r,codes in target_regions.items():
         if not codes or not set(codes)<=set(regions):raise ValueError(f'Unknown source geography: {r}')
+    owners = [code for codes in target_regions.values() for code in codes]
+    if len(set(owners)) != len(owners):
+        raise ValueError('Overlapping target geographies would double count domestic flows')
     inp=np.zeros(n); imported=np.zeros(n); outgoing=np.zeros(n); exports_z=np.zeros(n)
     group_in=np.zeros((n,len(GROUPS))); domestic_in=np.zeros(n)
     sg=np.tile(supplier_groups,nr); rows_seen=0; negative_z=0; min_z=0.
@@ -232,7 +235,19 @@ def atomic_json(path,value):
     os.replace(temp,path)
 
 
-def build_comparisons(report,mapping,baskets,*,reference_root,cache,mario_source,engine_identity):
+def basket_sector_selection(basket, final_sectors, baseline_sectors, parents):
+    """Never substitute the parent for an unavailable fine child."""
+    if basket['id'] == 'all':
+        return list(final_sectors), list(baseline_sectors), []
+    if basket['entice_parents']:
+        base = basket['entice_parents']
+        return [s for s in final_sectors if s in base or parents.get(s) in base], base, []
+    fine = basket['entice_children']
+    missing = sorted(set(fine) - set(parents))
+    return fine, sorted({parents[s] for s in fine if s in parents}), missing
+
+
+def build_comparisons(report,mapping,baskets,*,reference_root,cache,mario_source,engine_identity,geography=None):
     from .reference_mapping import footprint_from_explorer
     native={family:[r for r in mapping['native_sectors'] if r['dataset']==dataset] for family,dataset in {'EXIOBASE':'EXIOBASE_3.11.2_ixi_2023','EMERGING':'EMERGING_2.2_2023','GLORIA':'GLORIA_060_activity_2023'}.items()}
     nodes=mapping['nace2_nodes']
@@ -255,14 +270,19 @@ def build_comparisons(report,mapping,baskets,*,reference_root,cache,mario_source
             else:raise ValueError(f'Unmapped original GTAP sector: {s}')
     parents={r['sector']:r['parent'] for r in report['sectors'] if r['is_child']}
     child_groups={r['entice_code']:group_for(r['nace2_classes'],nodes) for r in mapping['entice_sectors']}
-    final_groups={r['sector']:child_groups[r['sector']] if r['is_child'] else gtap_groups[r['sector']] for r in report['sectors']}
+    # New activities outside the frozen mapping package remain explicitly mixed.
+    unmapped_children = sorted(set(parents) - set(child_groups))
+    final_groups={r['sector']:child_groups.get(r['sector'],9) if r['is_child'] else gtap_groups[r['sector']] for r in report['sectors']}
+    geography = geography if geography is not None else mapping['entice13_compatibility']
+    if {r['target_region'] for r in geography} != set(report['dimensions']['regions']):
+        raise ValueError('Reference geography does not match the saved benchmark regions')
     final,final_hashes=saved_profiles(report['provenance']['database'],final_groups)
     baseline,base_hashes=saved_profiles(report['provenance']['baseline'],gtap_groups)
     if final_hashes!=report['provenance']['database_sha256'] or base_hashes!=report['provenance']['baseline_sha256']:raise ValueError('Saved baseline/final no longer matches the accepted benchmark')
     paths={'EXIOBASE':Path(reference_root)/'EXIOBASE/3.11.2/IOT_2023_ixi.zip','EMERGING':Path(reference_root)/'EMERGING/2.2/EMERGING_V2_2023_m.mat','GLORIA':Path(reference_root)/'GLORIA/060/GLORIA_MRIO_Loop060_part_I_MRIOdatabase/GLORIA_MRIOs_60_2023.zip'}
-    rows=[];source_records=[]
+    rows=[];source_records=[];unavailable_baskets=[]
     for family,path in paths.items():
-        geos={r['target_region']:r['native_regions'] for r in mapping['entice13_compatibility'] if r['source_family']==family and r['exact_on_declared_membership']}
+        geos={r['target_region']:r['native_regions'] for r in geography if r['source_family']==family and r['exact_on_declared_membership'] and r['target_membership_complete']}
         stat=path.stat();identity=dict(path=str(path),size=stat.st_size,mtime_ns=stat.st_mtime_ns,engine=engine_identity,groups=groups[family],geography=geos)
         cache_path=Path(cache)/(family.lower()+'-2023-profiles.json')
         cached=json.loads(cache_path.read_text()) if cache_path.exists() else None
@@ -281,11 +301,10 @@ def build_comparisons(report,mapping,baskets,*,reference_root,cache,mario_source
         scale=baskets['currency']['exiobase_EUR_to_USD'] if family=='EXIOBASE' else .001 if family=='GLORIA' else 1.
         for basket in baskets['baskets']:
             if basket['family']!=family:continue
-            if basket['id']=='all':fsectors=final['sector_codes'];bsectors=baseline['sector_codes']
-            elif basket['entice_parents']:
-                bsectors=basket['entice_parents'];fsectors=[s for s in final['sector_codes'] if s in bsectors or parents.get(s) in bsectors]
-            else:
-                fsectors=basket['entice_children'];bsectors=sorted({parents[s] for s in fsectors})
+            fsectors,bsectors,missing = basket_sector_selection(basket,final['sector_codes'],baseline['sector_codes'],parents)
+            if missing:
+                unavailable_baskets.append(dict(family=family,basket=basket['id'],label=basket['label'],missing_entice_children=missing,reason='Activity not separated in this checkpoint; retained in its parent.'))
+                continue
             if set(fsectors)-set(final['sector_codes']):raise ValueError('Unknown ENTICE basket child')
             native_names={r['native_code']:r['native_name'] for r in native[family]}
             for c,label in zip(basket['native_codes'],basket['native_names'],strict=True):
@@ -294,4 +313,4 @@ def build_comparisons(report,mapping,baskets,*,reference_root,cache,mario_source
             for region in geos:
                 rows.append(dict(family=family,region=region,basket=basket['id'],label=basket['label'],nace_reference=basket['nace_reference'],comparison_basis=basket['comparison_basis'],qualification=basket['qualification'],entice_sectors=fsectors,baseline_sectors=bsectors,baseline_scope='same aggregate families' if basket['entice_parents'] or basket['id']=='all' else 'broader original parent; contextual only',native_codes=basket['native_codes'],native_names=basket['native_names'],entice=money_metrics(final['regions'][region],fi),baseline=money_metrics(baseline['regions'][region],bi),reference=money_metrics(profiles['regions'][region],ri,scale)))
     if fingerprints(report['provenance']['database'])!=final_hashes or fingerprints(report['provenance']['baseline'])!=base_hashes:raise ValueError('Saved flows changed during benchmarking')
-    return dict(schema_version=1,year=2023,internal_only=True,reference='NACE Rev. 2',input_groups=GROUPS,rows=rows,sources=source_records,gtap_scope_source=dict(path=str(gtap_file),sha256=sha256(gtap_file)),currency=baskets['currency'],geography_exclusions=[r for r in mapping['entice13_compatibility'] if not r['exact_on_declared_membership']],policy=dict(model_rerun=False,source_data_adjusted=False,scope='Whole native sectors, aggregate ENTICE residuals plus all children; fine descriptor matches shown separately. Overlapping baskets are never added together.',valuation='Native source valuation retained. Currency conversion does not harmonise prices, production accounting, or product/activity boundaries. Differences are review signals, not pass/fail or model errors.',ratios='Sum numerators and denominators before dividing; signed flows retained. Ratios with denominator <= 1 USD are unavailable.',trade='Foreign Z + Y after common-region aggregation; all source counterpart regions retained. IO database comparisons are not observed customs trade or Comtrade validation.',value_added='No cross-database V indicator: accounting components are not yet harmonised.',gloria='Native SUT to product IOT using industry technology; sparse aggregate algebra, no balancing or optimisation. Native thousands of USD multiplied by 0.001.',baseline='Baseline uses identical aggregate families for broad baskets; a fine child has only its wider baseline parent as context.'))
+    return dict(schema_version=1,year=2023,internal_only=True,reference='NACE Rev. 2',input_groups=GROUPS,rows=rows,sources=source_records,gtap_scope_source=dict(path=str(gtap_file),sha256=sha256(gtap_file)),currency=baskets['currency'],geography_exclusions=[r for r in geography if not r['exact_on_declared_membership']],unavailable_baskets=unavailable_baskets,unmapped_input_children=unmapped_children,policy=dict(model_rerun=False,source_data_adjusted=False,scope='Whole native sectors, aggregate ENTICE residuals plus all children; fine descriptor matches shown separately. Overlapping baskets are never added together.',valuation='Native source valuation retained. Currency conversion does not harmonise prices, production accounting, or product/activity boundaries. Differences are review signals, not pass/fail or model errors.',ratios='Sum numerators and denominators before dividing; signed flows retained. Ratios with denominator <= 1 USD are unavailable.',trade='Foreign Z + Y after common-region aggregation; all source counterpart regions retained. IO database comparisons are not observed customs trade or Comtrade validation.',value_added='No cross-database V indicator: accounting components are not yet harmonised.',gloria='Native SUT to product IOT using industry technology; sparse aggregate algebra, no balancing or optimisation. Native thousands of USD multiplied by 0.001.',baseline='Baseline uses identical aggregate families for broad baskets; a fine child has only its wider baseline parent as context.'))

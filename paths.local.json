@@ -32,5 +32,10 @@
     "copper_sectors": "Data collection/Final/PURDUE/Shared material/Cost structures/COPSEC.csv",
     "d24_database_runs": "Database/D2.4"
   },
-  "mario_source": "/Users/lorenzorinaldi/Documents/GitHub/MARIO"
+  "mario_source": "/Users/lorenzorinaldi/Documents/GitHub/MARIO",
+  "benchmarking": {
+    "reference_root": "/Volumes/SanDisk SSD/Work/IO databases",
+    "source_dir": "Classifications/Benchmark mappings/2023/sources",
+    "mapping_output": "Classifications/Benchmark mappings/2023"
+  }
 }

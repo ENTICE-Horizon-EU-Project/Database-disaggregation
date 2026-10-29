@@ -25,6 +25,13 @@ def render_saved_dashboard(report, *, audit_stem="benchmarking"):
         raise ValueError('Saved benchmark no longer matches its source matrices.')
     database=SimpleNamespace(Z=flows['Z'],Y=flows['Y'],X=flows['X'])
     database.get_index=lambda level:list(database.X.index.get_level_values(0 if level=='Region' else -1).unique())
+    labels=report['dimensions'].get('sector_names',{})
+    base_labels=report['dimensions'].get('baseline_sector_names',labels)
+    types={}
+    for row in report['sectors']:
+        kind='new' if row['is_child'] else 'residual_parent' if row['is_residual'] else 'original'
+        types[row['sector']]=dict(kind=kind,label={'new':'New sector','residual_parent':'Residual parent','original':'Original sector'}[kind],
+            parents=[dict(code=row['parent'],name=base_labels.get(row['parent'],row['parent']))] if row['is_child'] else [])
     if 'by_sector' not in report['targets']:
         state_path=root/'state.json'
         if state_path.is_file() and (root/'diagnostics/exact-inputs.zip').is_file():

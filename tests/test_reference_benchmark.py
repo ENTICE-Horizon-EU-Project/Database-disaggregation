@@ -87,3 +87,16 @@ def test_emerging_transposed_column_storage_and_native_order(tmp_path):
     assert p['regions']['A']['intermediate_inputs']==[5.]
     assert p['regions']['A']['exports']==[1.]
     assert p['audit']['source_output_demand_relative_L1']==0
+
+
+def test_missing_fine_activity_is_unavailable_but_broad_parent_keeps_actual_children():
+    final=['P','C','Q']; base=['P','Q']; parents={'C':'P'}
+    broad={'id':'group','entice_parents':['P'],'entice_children':[]}
+    assert R.basket_sector_selection(broad,final,base,parents)==(['P','C'],['P'],[])
+    fine={'id':'Missing','entice_parents':[],'entice_children':['Missing']}
+    assert R.basket_sector_selection(fine,final,base,parents)==(['Missing'],[],['Missing'])
+
+
+def test_overlapping_geographies_are_rejected_before_domestic_double_counting():
+    with pytest.raises(ValueError,match='Overlapping target'):
+        R.profiles_from_iot(np.ones(2),['A','B'],['s'],{'AB':['A','B'],'A':['A']},[0],[(0,np.eye(2))],[(0,np.ones((2,2)))])

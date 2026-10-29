@@ -237,3 +237,64 @@ def test_named_export_normalises_sector_codes_for_comparison(pair):
     actual = Flows.read(root)
     for name, frame in expected.frames.items():
         pd.testing.assert_frame_equal(actual[name], frame, check_exact=True)
+
+
+def test_published_names_restore_codes_without_renaming_demand(pair):
+    bp, fp = pair
+    state = json.loads((fp / 'state.json').read_text())
+    state['residual_index_renames'] = {'P': 'Rest of parent', 'C': 'Coal products'}
+    for name in ('Z', 'Y', 'V', 'X'):
+        path = fp / f'flows/{name}.parquet'; frame = pd.read_parquet(path)
+        for attr in ('index', 'columns'):
+            a = getattr(frame, attr)
+            if isinstance(a, pd.MultiIndex) and set(a.get_level_values('Level')) == {'Sector'}:
+                setattr(frame, attr, pd.MultiIndex.from_tuples([(r,l,state['residual_index_renames'].get(s,s)) for r,l,s in a], names=a.names))
+        frame.to_parquet(path)
+        state['files'][f'flows/{name}.parquet'] = sha256(path)
+    (fp / 'state.json').write_text(json.dumps(state))
+    report = build_report(bp,fp,system=False)
+    assert report['summary']['hard_checks_passed']
+    assert report['dimensions']['sector_names']['C'] == 'Coal products'
+    assert set(Flows.read(fp)['Y'].columns.get_level_values(-1)) == {'hhd','inv'}
+
+
+def test_report_only_keeps_strict_diagnostics_and_source_hash_enforcement(pair):
+    bp, fp = pair
+    z = pd.read_parquet(fp / 'flows/Z.parquet'); z.iloc[0,0] += .01; z.to_parquet(fp / 'flows/Z.parquet')
+    update_hash(fp,'Z')
+    assert not build_report(bp,fp,system=False)['summary']['hard_checks_passed']
+    state = json.loads((fp / 'state.json').read_text())
+    state['numerical_validation_policy'] = {'validation':'report_only'}
+    state['tolerances']['monetary_residuals_enforced'] = False
+    (fp / 'state.json').write_text(json.dumps(state))
+    report = build_report(bp,fp,system=False)
+    assert report['summary']['hard_checks_passed']
+    assert not report['summary']['strict_checks_passed']
+    check = next(c for c in report['checks'] if c['name']=='Reaggregation Z')
+    assert not check['passed'] and not check['enforced']
+    assert check['max_absolute'] == pytest.approx(.01)
+    z.iloc[0,0] += 1; z.to_parquet(fp / 'flows/Z.parquet')
+    with pytest.raises(ValueError,match='checksum failed'):
+        build_report(bp,fp,system=False)
+
+
+def test_archived_targets_use_only_accepted_steps(pair):
+    import io, zipfile
+    from database_disaggregation.core.benchmark import prepared_targets
+    bp,fp=pair;diag=fp/'diagnostics';diag.mkdir()
+    payload=io.BytesIO()
+    with pd.ExcelWriter(payload) as writer:
+        pd.DataFrame([['C','R1',30.,'M USD'],['C','R2',36.,'M USD']],columns=['Sector','Region','Quantity','Unit']).to_excel(writer,sheet_name='Total outputs',index=False)
+        pd.DataFrame([['C','R1','R2',0.,'M USD']],columns=['Sector_from','Region_from','Region_to','Quantity','Unit']).to_excel(writer,sheet_name='Trades',index=False)
+    with zipfile.ZipFile(diag/'exact-inputs.zip','w') as z:
+        z.writestr('001_Sector_C/step_add_sectors.xlsx',payload.getvalue())
+        z.writestr('002_Sector_Unavailable/step_add_sectors.xlsx',b'Not an accepted input')
+    (diag/'run_report.json').write_text(json.dumps({'attempts':[
+        {'step_index':1,'step':'Sector C','status':'accepted','sectors':['C']},
+        {'step_index':2,'step':'Sector Unavailable','status':'failed','sectors':['Unavailable']},
+    ]}))
+    state=json.loads((fp/'state.json').read_text())
+    checks,summary,_,sources=prepared_targets(Flows.read(fp),state)
+    assert summary['outputs']==2 and summary['trade_routes']==1
+    assert checks[0]['passed'] and not checks[1]['passed']
+    assert len(sources)==2
