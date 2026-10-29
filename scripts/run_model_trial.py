@@ -78,7 +78,7 @@ def main():
             parser.error('Expected state.json in --resume.')
         if args.options is None and policy is None and not args.historical_model:
             options = json.loads((source/'state.json').read_text()).get('split_model_options')
-        from entice_inventory.core.shared_runs import remaining_workbook
+        from database_disaggregation.core.shared_runs import remaining_workbook
         workbook = (args.workbook or remaining_workbook(source)).resolve()
     else:
         workbook = source/'add_sectors.xlsx'
@@ -92,8 +92,8 @@ def main():
     shutil.copy2(workbook, output/'add_sectors.xlsx')
     import mario
     import cvxlab
-    import entice_inventory
-    from entice_inventory.core.parent_budgets import ParentBudgets, ChildTargets, require_parent_budgets
+    import database_disaggregation
+    from database_disaggregation.core.parent_budgets import ParentBudgets, ChildTargets, require_parent_budgets
     manifest = {'status': 'running', 'started_at':started_at.isoformat(),
                 'source_checkpoint' if args.resume else 'source_preparation': str(source),
                 'runner_sha256': hashlib.sha256(Path(__file__).read_bytes()).hexdigest(),
@@ -102,7 +102,7 @@ def main():
                 'source_workbook': str(workbook), 'stop_after_step': stop_after_step,
                 'runtime': {p: version(p) for p in ('mariopy','cvxlab','cvxpy','numpy','pandas','clarabel')},
                 'code': {name: code_identity(module) for name,module in
-                         [('mario',mario),('cvxlab',cvxlab),('entice_inventory',entice_inventory)]}}
+                         [('mario',mario),('cvxlab',cvxlab),('database_disaggregation',database_disaggregation)]}}
     for package in ('Mosek', 'gurobipy', 'scs', 'osqp', 'highspy'):
         try:
             manifest['runtime'][package] = version(package)
@@ -142,7 +142,7 @@ def main():
         if policy is None:
             db.add_sectors('inventories', **kwargs)
         else:
-            from entice_inventory.core.model_policy import run_model_policy
+            from database_disaggregation.core.model_policy import run_model_policy
             db = run_model_policy(db, output/'add_sectors.xlsx', output, policy, stop_after_step=stop_after_step)
             manifest['split_model_options'] = db._intermediate_steps_state['split_model_options']
             manifest['model_history'] = db._intermediate_steps_state.get('model_history', [])
@@ -170,7 +170,7 @@ def main():
         path.write_text(json.dumps(manifest, indent=2, allow_nan=False))
         if not args.no_publish:
             try:
-                from entice_inventory.core.shared_runs import publish_trial
+                from database_disaggregation.core.shared_runs import publish_trial
                 manifest['publication']=publish_trial(output)
                 print('Shared results: '+(manifest['publication']['database'] or manifest['publication']['inventory']))
             except Exception as exc:

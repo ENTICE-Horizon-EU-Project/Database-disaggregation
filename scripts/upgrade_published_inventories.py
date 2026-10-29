@@ -8,8 +8,8 @@ from pathlib import Path
 import shutil
 import tempfile
 
-from entice_inventory.core.inventory_history import assemble_inventory_history, checkpoint_history
-from entice_inventory.core.paths import project_data_root
+from database_disaggregation.core.inventory_history import assemble_inventory_history, checkpoint_history
+from database_disaggregation.core.paths import project_data_root
 
 
 def upgrade(database):

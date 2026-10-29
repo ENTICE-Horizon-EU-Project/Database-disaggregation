@@ -12,7 +12,7 @@ require an appropriate parser, classification adapter and validation of their
 input conventions.
 
 The repository was renamed from `ENTICE_inventory`. The Python distribution
-remains `entice-inventory`, with import namespace `entice_inventory`, so existing
+remains `database-disaggregation`, with import namespace `database_disaggregation`, so existing
 imports continue to work. Data and results live in the project SharePoint
 **Data split** folder; this repository holds code, mappings, configuration and
 provenance records.
@@ -38,12 +38,27 @@ current accepted 13-region monetary split.
 
 ## Benchmark saved MRIO results
 
-The experimental branch includes a first dashboard for the accepted **13-region,
-67-new-sector** split (143 total sectors), compared with its exact 76-sector
-baseline. It covers conservation/accounting, technology, signed V/Y, trade,
-stability and multipliers and a filterable economic review queue. E and environmental
-footprints remain pending. See [benchmarking methodology and commands](docs/benchmarking.md).
-Generated numerical reports stay beside the final database in Data split.
+Database dashboards now use the **MARIO workshop format**: sector selection,
+production, regional deliveries, use shares and available cross-database
+comparisons. The same template serves notebook and saved-result reporting.
+Refresh all existing reports with `python scripts/refresh_dashboards.py --all
+--overwrite`; this reads saved results and needs no external SSD or model run.
+
+
+The internal offline dashboard reads saved results; it never runs a solver.
+The latest audited case is **61 regions, 52 added activities, 128 total sectors**,
+compared with its exact 61-region / 76-sector pre-split baseline. Seventeen
+planned activities remain inside their parents and have no standalone fine-sector
+comparison. The earlier 13-region case remains available separately.
+
+Five principal indicators compare the result with its baseline and with
+**EXIOBASE, EMERGING and GLORIA 2023** on compatible sector and geographical
+scopes. Conservation, accounting, signed flows and economic review findings
+remain inspectable. Strict residuals stay visible under the saved `report_only`
+policy; this is not economic certification. E remains pending.
+See [methodology, the current case and replay commands](docs/benchmarking.md#61-region-saved-result).
+Generated HTML, JSON, CSV, reference profiles and mapping snapshots stay beside
+the final database in Data split. Keep them internal.
 
 ## Branches and reproducibility
 
@@ -107,7 +122,7 @@ geography. For example, the main path settings have this form:
 }
 ```
 
-Omitted dataset roles use the defaults in `entice_inventory.core.paths`.
+Omitted dataset roles use the defaults in `database_disaggregation.core.paths`.
 Absolute paths are also accepted as explicit overrides; no user's OneDrive
 location is embedded in the Python path resolver.
 
@@ -290,8 +305,8 @@ files does not automatically replace the selected Purdue delivery.
 
 | Task | Entry point |
 |---|---|
-| Build an inventory from a partner template | `entice_inventory.inventory.template_to_inventory` |
-| Build inventories from Purdue cost data | `entice_inventory.inventory.exioiot_to_inventory`, `copcosts_to_inventory` where present |
+| Build an inventory from a partner template | `database_disaggregation.inventory.template_to_inventory` |
+| Build inventories from Purdue cost data | `database_disaggregation.inventory.exioiot_to_inventory`, `copcosts_to_inventory` where present |
 | Historical D2.4 insertion and export | `scripts/run_d24_pipeline.py` (`#%%` cells; `split=False`) |
 | Re-export one sector from saved coefficients | `scripts/export_d24_sector.py --help` |
 | Inspect sector and region definitions | `scripts/registry.py --help` |
@@ -312,7 +327,7 @@ config/                       portable examples and workflow policies
 paths.local.json              user-editable path configuration
 data/                         bundled mappings, registry and geography definitions
 scripts/                      workflow, export and diagnostic commands
-src/entice_inventory/
+src/database_disaggregation/
   core/                       paths, baseline access and shared utilities
   inventory/                  source-to-inventory conversion
   export/                     inventory export and plots
@@ -328,3 +343,23 @@ are not rewritten to claim that an old run used today's configuration.
 Structural checks and successful optimisation do not by themselves validate
 economic assumptions. The first offline benchmark is available; economic review
 thresholds and sensitivity experiments still need agreement with the project team.
+
+
+## Internal reference-database mappings
+
+The 2023 reference workflow builds HS–NACE Rev. 2 and geographic concordances for
+EXIOBASE 3.11.2, EMERGING 2.2 and GLORIA 060. Set the `benchmarking` paths in
+`paths.local.json`, then run `python scripts/build_reference_mappings.py`. See
+[benchmarking](docs/benchmarking.md#build-the-internal-2023-mapping-bundle) for
+dependencies, explicit scope reviews and verification. Mapping outputs stay in
+shared Data split storage for internal ENTICE use. No disaggregation model is run.
+
+The internal dashboard also supports **numerical comparisons with EXIOBASE,
+EMERGING and GLORIA 2023**, from saved databases. After building the verified
+mapping bundle, run `scripts/benchmark_references.py --database <saved-run>
+--overwrite` in the existing MARIO environment. It aggregates ENTICE residuals
+and children to the source detail, preserves the baseline comparison, and adds
+an offline reference tab with five KPIs and explicit sector/geography scopes.
+See [the numerical reference workflow](docs/benchmarking.md#numerical-2023-references-in-the-internal-dashboard)
+for configuration, the full command and limitations. No model is rerun; numerical
+outputs and caches stay beside the database in shared storage, outside Git.

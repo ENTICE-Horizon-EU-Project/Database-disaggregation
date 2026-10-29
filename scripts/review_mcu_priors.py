@@ -15,8 +15,8 @@ import subprocess
 from openpyxl import load_workbook
 import pandas as pd
 import pyarrow.parquet as pq
-from entice_inventory.core.paths import data_path
-from entice_inventory.reconciliation.prior_review import parent_factor_proposal
+from database_disaggregation.core.paths import data_path
+from database_disaggregation.reconciliation.prior_review import parent_factor_proposal
 
 VA_CODES={'fixcap','othrent','lablskl','labmskl','labhskl','othtax','prodtax'}
 
@@ -147,7 +147,7 @@ def main():
     repo=Path(__file__).resolve().parents[1]
     report=dict(format='mcu-prior-review-v1',created_at=datetime.now(timezone.utc).isoformat(),status='review_and_proposals_only',
         source_sha256=hashes,code_revision=subprocess.check_output(['git','-C',str(repo),'rev-parse','HEAD'],text=True).strip(),
-        code_sha256={str(f.relative_to(repo)):sha(f) for f in [Path(__file__).resolve(),repo/'src/entice_inventory/reconciliation/prior_review.py']},
+        code_sha256={str(f.relative_to(repo)):sha(f) for f in [Path(__file__).resolve(),repo/'src/database_disaggregation/reconciliation/prior_review.py']},
         sources_unchanged=True,solver_invoked=False,preparation_policy_changed=False,
         raw_csv_units='Raw CSV values as supplied; normalized ratios are computed explicitly. No currency interpretation or conversion is asserted for raw numbers.',
         raw_region_count=len(raw),raw_invalid_regions=[r for r in native if r['invalid_positive_factor']],

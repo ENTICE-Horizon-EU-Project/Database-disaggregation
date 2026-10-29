@@ -2,7 +2,7 @@
 import argparse
 import json
 from pathlib import Path
-from entice_inventory.core.shared_runs import publish_trial
+from database_disaggregation.core.shared_runs import publish_trial
 
 
 if __name__=='__main__':

@@ -2,7 +2,7 @@ import numpy as np
 import pytest
 
 pytest.importorskip('cvxpy')
-from entice_inventory.reconciliation.row_trade import fit_row_trade
+from database_disaggregation.reconciliation.row_trade import fit_row_trade
 
 
 def test_row_trade_increases_a_zero_prior_when_the_residual_has_no_output():

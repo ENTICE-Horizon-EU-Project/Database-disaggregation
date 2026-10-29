@@ -2,7 +2,7 @@
 import argparse
 import json
 from pathlib import Path
-from entice_inventory.reconciliation.factor_domains import reconcile_prepared_factors
+from database_disaggregation.reconciliation.factor_domains import reconcile_prepared_factors
 
 if __name__ == '__main__':
     p = argparse.ArgumentParser(description=__doc__)

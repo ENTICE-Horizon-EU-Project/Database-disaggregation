@@ -7,11 +7,11 @@ import argparse
 import json
 from pathlib import Path
 
-from entice_inventory.core.paths import local_config, project_data_root, data_path
-from entice_inventory.core.geography import Geography, configured_geography
-from entice_inventory.core.disaggregation import prepare_inputs
-from entice_inventory.core.parent_budgets import ChildTargets, ParentBudgets, require_parent_budgets
-from entice_inventory.core.shared_runs import remaining_workbook
+from database_disaggregation.core.paths import local_config, project_data_root, data_path
+from database_disaggregation.core.geography import Geography, configured_geography
+from database_disaggregation.core.disaggregation import prepare_inputs
+from database_disaggregation.core.parent_budgets import ChildTargets, ParentBudgets, require_parent_budgets
+from database_disaggregation.core.shared_runs import remaining_workbook
 
 
 def main():

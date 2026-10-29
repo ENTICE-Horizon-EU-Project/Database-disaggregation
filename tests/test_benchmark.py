@@ -8,7 +8,7 @@ import numpy as np
 import pandas as pd
 import pytest
 
-from entice_inventory.core.benchmark import (
+from database_disaggregation.core.benchmark import (
     ATOL, Flows, accounting, aggregate_to_baseline, build_report, compare_systems,
     fingerprints, mapping_to_baseline, profiles, sha256, write_report,
 )
@@ -139,7 +139,7 @@ def test_baseline_provenance_is_verified_not_just_recorded(pair):
 
 
 def test_listed_zero_trade_target_is_checked_and_missing_route_is_not_zero(pair):
-    from entice_inventory.core.benchmark import prepared_targets
+    from database_disaggregation.core.benchmark import prepared_targets
     bp, fp = pair
     inv = fp.parent / 'inventories'
     inv.mkdir()
@@ -183,7 +183,13 @@ def test_export_is_self_contained_and_protects_sources(pair, tmp_path):
     assert all(p.is_file() for p in files)
     html = target.read_text()
     assert '__BENCHMARK_DATA__' not in html
-    assert 'script src=' not in html and 'fetch(' not in html
+    assert 'href="benchmarking.json"' in html
+    assert 'MARIO workshop' == report['provenance']['dashboard_style']
+    custom=tmp_path/'custom dashboard.html'
+    write_report(report,custom)
+    assert 'href="custom dashboard.json"' in custom.read_text()
+    assert 'href="custom dashboard-sectors.csv"' in custom.read_text()
+    assert 'script src=' not in html and '<link rel="stylesheet" href="http' not in html
     assert json.loads(files[1].read_text())['provenance']['sources_unchanged']
     assert [fingerprints(p) for p in pair] == before
     with pytest.raises(FileExistsError):
@@ -192,7 +198,7 @@ def test_export_is_self_contained_and_protects_sources(pair, tmp_path):
         write_report(report, pair[1] / 'flows/report.html')
 
 
-@pytest.mark.skipif(os.environ.get('ENTICE_BENCHMARK_DOM_TEST') != '1', reason='Optional Node/jsdom DOM smoke test')
+@pytest.mark.skipif(os.environ.get('ENTICE_BENCHMARK_BROWSER_TEST') != '1', reason='Optional offline browser check')
 def test_dashboard_dom_interactions(pair, tmp_path):
     report = build_report(*pair)
     report['issues'] = [dict(region='R1', sector='C', parent='P', metric='Negative Labor', value=-1,
@@ -201,7 +207,7 @@ def test_dashboard_dom_interactions(pair, tmp_path):
                                     reconciled=2, final=2, adjustment=1, source_kind='direct', previously_observed=True)]
     target = tmp_path / 'fixture.html'
     write_report(report, target)
-    result = subprocess.run(['node', str(Path(__file__).with_name('benchmark_dashboard_smoke.cjs')), str(target)],
+    result = subprocess.run(['node', str(Path(__file__).with_name('workshop_dashboard_browser.cjs')), str(target)],
                             text=True, capture_output=True)
     assert result.returncode == 0, result.stdout + result.stderr
 
@@ -215,3 +221,64 @@ def test_partial_checkpoint_benchmarks_completed_children_only(pair):
     assert report['summary']['hard_checks_passed']
     assert report['summary']['new_sectors'] == 1
     assert all(not row['is_residual'] for row in report['sectors'] if row['sector'] == 'Q')
+
+
+def test_published_names_restore_codes_without_renaming_demand(pair):
+    bp, fp = pair
+    state = json.loads((fp / 'state.json').read_text())
+    state['residual_index_renames'] = {'P': 'Rest of parent', 'C': 'Coal products'}
+    for name in ('Z', 'Y', 'V', 'X'):
+        path = fp / f'flows/{name}.parquet'; frame = pd.read_parquet(path)
+        for attr in ('index', 'columns'):
+            a = getattr(frame, attr)
+            if isinstance(a, pd.MultiIndex) and set(a.get_level_values('Level')) == {'Sector'}:
+                setattr(frame, attr, pd.MultiIndex.from_tuples([(r,l,state['residual_index_renames'].get(s,s)) for r,l,s in a], names=a.names))
+        frame.to_parquet(path)
+        state['files'][f'flows/{name}.parquet'] = sha256(path)
+    (fp / 'state.json').write_text(json.dumps(state))
+    report = build_report(bp,fp,system=False)
+    assert report['summary']['hard_checks_passed']
+    assert report['dimensions']['sector_names']['C'] == 'Coal products'
+    assert set(Flows.read(fp)['Y'].columns.get_level_values(-1)) == {'hhd','inv'}
+
+
+def test_report_only_keeps_strict_diagnostics_and_source_hash_enforcement(pair):
+    bp, fp = pair
+    z = pd.read_parquet(fp / 'flows/Z.parquet'); z.iloc[0,0] += .01; z.to_parquet(fp / 'flows/Z.parquet')
+    update_hash(fp,'Z')
+    assert not build_report(bp,fp,system=False)['summary']['hard_checks_passed']
+    state = json.loads((fp / 'state.json').read_text())
+    state['numerical_validation_policy'] = {'validation':'report_only'}
+    state['tolerances']['monetary_residuals_enforced'] = False
+    (fp / 'state.json').write_text(json.dumps(state))
+    report = build_report(bp,fp,system=False)
+    assert report['summary']['hard_checks_passed']
+    assert not report['summary']['strict_checks_passed']
+    check = next(c for c in report['checks'] if c['name']=='Reaggregation Z')
+    assert not check['passed'] and not check['enforced']
+    assert check['max_absolute'] == pytest.approx(.01)
+    z.iloc[0,0] += 1; z.to_parquet(fp / 'flows/Z.parquet')
+    with pytest.raises(ValueError,match='checksum failed'):
+        build_report(bp,fp,system=False)
+
+
+def test_archived_targets_use_only_accepted_steps(pair):
+    import io, zipfile
+    from database_disaggregation.core.benchmark import prepared_targets
+    bp,fp=pair;diag=fp/'diagnostics';diag.mkdir()
+    payload=io.BytesIO()
+    with pd.ExcelWriter(payload) as writer:
+        pd.DataFrame([['C','R1',30.,'M USD'],['C','R2',36.,'M USD']],columns=['Sector','Region','Quantity','Unit']).to_excel(writer,sheet_name='Total outputs',index=False)
+        pd.DataFrame([['C','R1','R2',0.,'M USD']],columns=['Sector_from','Region_from','Region_to','Quantity','Unit']).to_excel(writer,sheet_name='Trades',index=False)
+    with zipfile.ZipFile(diag/'exact-inputs.zip','w') as z:
+        z.writestr('001_Sector_C/step_add_sectors.xlsx',payload.getvalue())
+        z.writestr('002_Sector_Unavailable/step_add_sectors.xlsx',b'Not an accepted input')
+    (diag/'run_report.json').write_text(json.dumps({'attempts':[
+        {'step_index':1,'step':'Sector C','status':'accepted','sectors':['C']},
+        {'step_index':2,'step':'Sector Unavailable','status':'failed','sectors':['Unavailable']},
+    ]}))
+    state=json.loads((fp/'state.json').read_text())
+    checks,summary,_,sources=prepared_targets(Flows.read(fp),state)
+    assert summary['outputs']==2 and summary['trade_routes']==1
+    assert checks[0]['passed'] and not checks[1]['passed']
+    assert len(sources)==2

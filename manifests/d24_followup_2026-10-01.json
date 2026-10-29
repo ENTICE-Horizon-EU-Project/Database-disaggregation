@@ -726,11 +726,11 @@
       "sha256": "113753488bcc33ac4311ff3b7be688ca4958c47259673f46bc83111896239824"
     },
     {
-      "path": "src/entice_inventory/export/build_d24_inventories.py",
+      "path": "src/database_disaggregation/export/build_d24_inventories.py",
       "sha256": "38496f9d811f910bda71b045b06f1064a58ad45e297336ca4f06a73cdac0c6f6"
     },
     {
-      "path": "src/entice_inventory/core/matching_utils.py",
+      "path": "src/database_disaggregation/core/matching_utils.py",
       "sha256": "cfdc5536b0e38dbf281df7b220120f58faed09f94632828c19c66d7dda49fd5b"
     },
     {
