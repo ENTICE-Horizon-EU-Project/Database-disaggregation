@@ -7,7 +7,7 @@ const refPercent=v=>v==null?'—':refFormat(v*100)+'%';
 const referenceColors={ENTICE:teal,'GTAP baseline':'#B5BEC5',EXIOBASE:'#1D3E53',EMERGING:'#4D7495',FIGARO:'#7E8899',GLORIA:'#70988C'};
 function referenceOptions(id,entries,preferred){
  const el=refElement(id);el.innerHTML='';
- entries.forEach(([value,label])=>{const option=document.createElement('option');option.value=value;option.textContent=label;el.appendChild(option)});
+ entries.forEach(([value,label])=>{const option=document.createElement('option');option.value=value;option.textContent=label;option.title=label;el.appendChild(option)});
  el.value=entries.some(([v])=>v===preferred)?preferred:(entries[0]?.[0]||'');
 }
 function referenceRegion(){
@@ -17,7 +17,7 @@ function referenceRegion(){
  referenceOptions('reference-basket',entries,refElement('reference-basket').value||'all');
  const available=[...new Set(EXT.rows.filter(r=>r.region===region).map(r=>r.family))].sort();
  const excluded=[...new Set((EXT.geography_exclusions||[]).filter(r=>r.target_region===region).map(r=>r.source_family))].sort();
- refElement('reference-selection').textContent=choices.size+' comparable sectors / groups in '+region+'. Regional coverage: '+available.join(', ')+'.'+(excluded.length?' Excluded by exact geographic matching: '+excluded.join(', ')+'.':'');
+ refElement('reference-selection').textContent=choices.size+' comparable sectors / groups in '+regionLabel(region)+'. Regional coverage: '+available.join(', ')+'.'+(excluded.length?' Excluded by exact geographic matching: '+excluded.join(', ')+'.':'');
  referenceBasket();
 }
 function referenceBasket(){drawReference()}
@@ -32,13 +32,13 @@ function drawReference(){
  const headers=['Database','Output · M USD','Intermediate inputs / X','Imported input share','Net final demand / X','Foreign deliveries / X'];
  const cells=([label,m])=>[escapeRef(label),refFormat(m.output),refPercent(m.intermediate_input_ratio),refPercent(m.imported_input_share),refPercent(m.final_demand_ratio),refPercent(m.export_ratio)];
  refElement('reference-table').innerHTML='<table><thead><tr>'+headers.map(h=>'<th>'+h+'</th>').join('')+'</tr></thead><tbody>'+datasets.map(d=>'<tr>'+cells(d).map(v=>'<td>'+v+'</td>').join('')+'</tr>').join('')+'</tbody></table>';
- refElement('reference-status').textContent=row.label+' · '+row.region+' · All '+rows.length+' available reference database(s) shown with ENTICE and the GTAP baseline. All monetary values are in M USD.';
+ refElement('reference-status').textContent=row.label+' · '+regionLabel(row.region)+' · All '+rows.length+' available reference database(s) shown with ENTICE and the GTAP baseline. All monetary values are in M USD.';
  refElement('reference-coverage').textContent='Inputs assigned to one broad group: '+datasets.map(([name,m])=>name+' '+refPercent(m.mixed_input_share==null?null:1-m.mixed_input_share)).join('; ')+'.';
  refElement('reference-legend').innerHTML=datasets.map(([name,,family])=>'<li><span aria-hidden="true" style="background:'+referenceColors[family]+'"></span>'+escapeRef(name)+'</li>').join('');
  const layout={...common,height:Math.max(510,120+EXT.input_groups.length*datasets.length*14),margin:{l:180,r:30,t:20,b:70},barmode:'group',bargap:.18,showlegend:false,xaxis:{title:'Input / output (%)',automargin:true},yaxis:{autorange:'reversed',automargin:true}};
- const compare=(name,values,color)=>({type:'bar',orientation:'h',name,y:EXT.input_groups,x:values.map(v=>v==null?null:100*v),marker:{color,line:{color:'white',width:.5}},hovertemplate:'%{y}<br>%{x:.2f}%<extra>'+name+'</extra>'});
+ const compare=(name,values,color)=>({type:'bar',orientation:'h',name,y:EXT.input_groups,x:values.map(v=>v==null?null:100*v),marker:{color,line:{color:'white',width:.5}},hovertemplate:'Region: '+regionHoverLabel(row.region)+'<br>%{y}<br>%{x:.2f}%<extra>'+name+'</extra>'});
  const tradeLabels=['Imported input share','Foreign deliveries / output'];
- const trace=(name,m,color)=>({type:'bar',orientation:'h',name,y:tradeLabels,x:[m.imported_input_share,m.export_ratio].map(v=>v==null?null:v*100),marker:{color,line:{color:'white',width:.5}},hovertemplate:'%{y}<br>%{x:.2f}%<extra>'+name+'</extra>'});
+ const trace=(name,m,color)=>({type:'bar',orientation:'h',name,y:tradeLabels,x:[m.imported_input_share,m.export_ratio].map(v=>v==null?null:v*100),marker:{color,line:{color:'white',width:.5}},hovertemplate:'Region: '+regionHoverLabel(row.region)+'<br>%{y}<br>%{x:.2f}%<extra>'+name+'</extra>'});
  const units='EXIOBASE and FIGARO converted from EUR using the recorded 2023 annual rate ('+EXT.currency.exiobase_EUR_to_USD+' USD/EUR); GLORIA converted from thousands to millions of USD. Currency conversion does not harmonise valuation or sector definitions.';
  refElement('reference-scope').innerHTML=rows.map(r=>{
   const source=EXT.sources.find(s=>s.family===r.family),flags=(EXT.entice_scope_warnings||[]).filter(w=>r.entice_sectors.includes(w.entice_code));
@@ -49,7 +49,7 @@ function drawReference(){
   renderPlot('reference-trade',datasets.map(([name,m,family])=>trace(name,m,referenceColors[family])),{...layout,height:Math.max(320,120+2*datasets.length*20),xaxis:{title:'Share (%)',automargin:true}});
  }
 }
-referenceOptions('reference-region',[...new Set(EXT.rows.map(r=>r.region))].sort().map(r=>[r,r]),'USA');
+referenceOptions('reference-region',[...new Set(EXT.rows.map(r=>r.region))].sort().map(r=>[r,regionLabel(r)]),'USA');
 refElement('reference-region').addEventListener('change',referenceRegion);
 refElement('reference-basket').addEventListener('change',referenceBasket);
 referenceRegion();

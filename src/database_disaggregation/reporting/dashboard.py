@@ -5,8 +5,8 @@ import base64
 import html
 import json
 import pandas as pd
-from database_disaggregation.analysis.flows import FD_GROUPS, final_demand_mapping, use_profile, trade_matrix
-from database_disaggregation.analysis.labels import sector_labels
+from database_disaggregation.analysis.flows import FD_GROUPS, final_demand_mapping, use_profile, trade_matrix, cost_profile
+from database_disaggregation.analysis.labels import sector_labels, region_labels
 
 def _sector_types(products, workbook, labels):
     """Classify the current sectors from explicit add/split workbook metadata."""
@@ -40,7 +40,7 @@ def _sector_types(products, workbook, labels):
     return result
 
 
-def dashboard_payload(database, *, checks=None, references=None, labels=None, workbook=None,
+def dashboard_payload(database, *, checks=None, references=None, labels=None, workbook=None, region_names=None,
                       sector_metadata=None, target_profiles=None):
     """One offline HTML report; product selector updates the three result views.
 
@@ -55,11 +55,15 @@ def dashboard_payload(database, *, checks=None, references=None, labels=None, wo
         references = {'rows': [], 'sources': [], 'input_groups': [], 'currency': {}}
     products = list(database.get_index("Sector"))
     regions = list(database.get_index("Region"))
+    if region_names is not None and set(regions) - set(region_names):
+        raise ValueError('Region names must cover the exact saved regions.')
+    names = region_labels() if region_names is None else region_names
     sector_types = _sector_types(products, workbook, labels) if sector_metadata is None else sector_metadata
     if set(sector_types) != set(products):
         raise ValueError('Explicit sector metadata must cover the exact saved sectors.')
     target_profiles = target_profiles or {}
     payload = {}
+    cost_items = []
     for product in products:
         profile = use_profile(database, product)
         shares, uses, total = profile.shares.T, profile.amounts.T, profile.totals
@@ -70,24 +74,44 @@ def dashboard_payload(database, *, checks=None, references=None, labels=None, wo
         targets = subset.loc[subset["kind"] == "Output"].set_index("origin")["target"]
         recorded = target_profiles.get(product, {})
         archived_targets = recorded.get('output_targets', {})
+        verified = recorded.get('constraints_verified', False)
+        cost = cost_profile(database, product) if getattr(database, 'V', None) is not None else None
+        if cost is not None:
+            cost_items = cost.shares.index.tolist()
+        def numeric(frame):
+            return frame.astype(object).where(frame.notna(), None).values.tolist()
+        trade_targets = recorded.get('trade_targets', {}) if verified else {}
+        trade_cells = recorded.get('trade_cells', {}) if verified else {}
         payload[product] = {
             "name": labels.get(product, product), "sector_type": sector_types[product],
             "output": production.tolist(),
-            "output_target": [float(targets.loc[r]) if r in targets.index else archived_targets.get(r) for r in regions],
+            "output_target": [archived_targets[r] if verified and r in archived_targets else
+                              float(targets.loc[r]) if r in targets.index else archived_targets.get(r) for r in regions],
+            "output_reference_kind": 'Constraint' if verified else 'Prepared reference',
+            "output_cells": [recorded.get('output_cells', {}).get(r) for r in regions],
+            "input_provenance": {key: recorded[key] for key in ('step', 'step_index', 'input_href', 'input_sha256', 'archive_member') if key in recorded},
+            "trade_constraint": [[trade_targets.get(origin, {}).get(destination) for destination in regions] for origin in regions],
+            "trade_cells": [[trade_cells.get(origin, {}).get(destination) for destination in regions] for origin in regions],
+            "trade_delta": recorded.get('trade_delta', 0.),
+            "cost_shares": numeric(cost.shares.T) if cost is not None else None,
+            "cost_amounts": numeric(cost.amounts.T) if cost is not None else None,
+            "cost_totals": cost.totals.tolist() if cost is not None else None,
             "shares": shares.astype(object).where(shares.notna(), None).values.tolist(),
             "uses": uses.astype(object).where(uses.notna(), None).values.tolist(),
             "totals": total.tolist(), "trade": trade_matrix(database, product).values.tolist(),
-            "checks": recorded if recorded else {"count": len(subset), "passed": int(subset.passed.sum()),
+            "checks": {key: recorded.get(key) for key in ('count','passed','max_error')} if recorded else {"count": len(subset), "passed": int(subset.passed.sum()),
                        "max_error": float(subset.absolute_error.max()) if len(subset) else None},
         }
     fd = final_demand_mapping(database)
     missing = fd.loc[~fd["Included in denominator"] & fd.Use.isin(FD_GROUPS), "Use"].tolist()
     return dict(format='entice-workshop-dashboard-v1', products=products, regions=regions,
+                region_names={region: names.get(region, region) for region in regions},
                 uses=shares.columns.tolist(),use_names=[labels.get(item,item) for item in shares.columns],
+                cost_items=cost_items,cost_names=[labels.get(item,item) for item in cost_items],
                 payload=payload,missing=missing,references=references)
 
 
-def write_dashboard(database, output, *, checks=None, references=None, labels=None, workbook=None,
+def write_dashboard(database, output, *, checks=None, references=None, labels=None, workbook=None, region_names=None,
                     title="Sector disaggregation results", subtitle=None, benchmark=None):
     """Write the offline dashboard from a MARIO database or saved checkpoint.
 
@@ -120,7 +144,7 @@ def write_dashboard(database, output, *, checks=None, references=None, labels=No
             raise ValueError('Saved benchmark outputs differ from the current database.')
         payload=dashboard_payload(database,**context)
     else:
-        payload=dashboard_payload(database,checks=checks,references=references,labels=labels,workbook=workbook)
+        payload=dashboard_payload(database,checks=checks,references=references,labels=labels,workbook=workbook,region_names=region_names)
     subtitle=subtitle or f"{len(payload['regions'])} regions · {len(payload['products'])} sectors"
     output=Path(output);output.parent.mkdir(parents=True,exist_ok=True)
     output.write_text(render_dashboard(payload,title=title,subtitle=subtitle,benchmark=benchmark,audit_stem=audit_stem))

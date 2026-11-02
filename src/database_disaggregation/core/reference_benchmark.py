@@ -235,19 +235,7 @@ def atomic_json(path,value):
     os.replace(temp,path)
 
 
-def basket_sector_selection(basket, final_sectors, baseline_sectors, parents):
-    """Never substitute the parent for an unavailable fine child."""
-    if basket['id'] == 'all':
-        return list(final_sectors), list(baseline_sectors), []
-    if basket['entice_parents']:
-        base = basket['entice_parents']
-        return [s for s in final_sectors if s in base or parents.get(s) in base], base, []
-    fine = basket['entice_children']
-    missing = sorted(set(fine) - set(parents))
-    return fine, sorted({parents[s] for s in fine if s in parents}), missing
-
-
-def build_comparisons(report,mapping,baskets,*,reference_root,cache,mario_source,engine_identity,geography=None):
+def build_comparisons(report,mapping,baskets,*,reference_root,cache,mario_source,engine_identity,geography=None,cache_only=False,cache_provenance=None):
     from .reference_mapping import footprint_from_explorer
     native={family:[r for r in mapping['native_sectors'] if r['dataset']==dataset] for family,dataset in {'EXIOBASE':'EXIOBASE_3.11.2_ixi_2023','EMERGING':'EMERGING_2.2_2023','GLORIA':'GLORIA_060_activity_2023'}.items()}
     nodes=mapping['nace2_nodes']
@@ -283,21 +271,31 @@ def build_comparisons(report,mapping,baskets,*,reference_root,cache,mario_source
     rows=[];source_records=[];unavailable_baskets=[]
     for family,path in paths.items():
         geos={r['target_region']:r['native_regions'] for r in geography if r['source_family']==family and r['exact_on_declared_membership'] and r['target_membership_complete']}
-        stat=path.stat();identity=dict(path=str(path),size=stat.st_size,mtime_ns=stat.st_mtime_ns,engine=engine_identity,groups=groups[family],geography=geos)
         cache_path=Path(cache)/(family.lower()+'-2023-profiles.json')
         cached=json.loads(cache_path.read_text()) if cache_path.exists() else None
-        if cached and cached.get('identity')==identity:
-            profiles=cached['profiles'];source_hash=cached['source_sha256'];print(f'{family}: reuse verified profile cache',flush=True)
+        if cache_only:
+            cached=verified_profile_cache(cache_path,family=family,recorded=(cache_provenance or {}).get(family),groups=groups[family],geography=geos)
+            identity=cached['identity']
+            profiles=cached['profiles'];source_hash=cached['source_sha256']
+            source_size,source_mtime=identity['size'],identity['mtime_ns']
+            print(f'{family}: reuse checksum-verified offline profile cache; native source not reread',flush=True)
         else:
-            print(f'{family}: hashing and extracting 2023 native flows',flush=True);start=time.monotonic();source_hash=sha256(path)
-            if family=='EXIOBASE':profiles=exio_profiles(path,native[family],geos,groups[family])
-            elif family=='EMERGING':profiles=emerging_profiles(path,native[family],geos,groups[family])
-            else:profiles=gloria_profiles(path,native[family],geos,groups[family],mario_source=mario_source)
-            profiles['extraction_seconds']=time.monotonic()-start
-            after=path.stat()
-            if after.st_size!=stat.st_size or after.st_mtime_ns!=stat.st_mtime_ns:raise ValueError('Reference source changed during extraction')
-            atomic_json(cache_path,dict(identity=identity,source_sha256=source_hash,profiles=profiles))
-        source_records.append(dict(family=family,year=2023,path=str(path),sha256=source_hash,size=stat.st_size,mtime_ns=stat.st_mtime_ns,profile_sha256=sha256(cache_path),profile_cache=str(cache_path),native_unit=profiles['native_unit'],representation=profiles['representation'],geography=geos,audit=profiles['audit'],extraction_seconds=profiles['extraction_seconds']))
+            stat=path.stat();identity=dict(path=str(path),size=stat.st_size,mtime_ns=stat.st_mtime_ns,engine=engine_identity,groups=groups[family],geography=geos)
+            if cached and cached.get('identity')==identity:
+                profiles=cached['profiles'];source_hash=cached['source_sha256'];print(f'{family}: reuse verified profile cache',flush=True)
+            else:
+                print(f'{family}: hashing and extracting 2023 native flows',flush=True);start=time.monotonic();source_hash=sha256(path)
+                if family=='EXIOBASE':profiles=exio_profiles(path,native[family],geos,groups[family])
+                elif family=='EMERGING':profiles=emerging_profiles(path,native[family],geos,groups[family])
+                else:profiles=gloria_profiles(path,native[family],geos,groups[family],mario_source=mario_source)
+                profiles['extraction_seconds']=time.monotonic()-start
+                after=path.stat()
+                if after.st_size!=stat.st_size or after.st_mtime_ns!=stat.st_mtime_ns:raise ValueError('Reference source changed during extraction')
+                atomic_json(cache_path,dict(identity=identity,source_sha256=source_hash,profiles=profiles))
+            source_size,source_mtime=stat.st_size,stat.st_mtime_ns
+        if set(profiles['sector_codes'])!={r['native_code'] for r in native[family]}:
+            raise ValueError(f'{family}: cached sector universe differs from the audited mapping')
+        source_records.append(dict(family=family,year=2023,path=str(path),sha256=source_hash,size=source_size,mtime_ns=source_mtime,profile_sha256=sha256(cache_path),profile_cache=str(cache_path),native_unit=profiles['native_unit'],representation=profiles['representation'],geography=geos,audit=profiles['audit'],extraction_seconds=profiles['extraction_seconds'],cache_only=cache_only,native_source_reverified=False if cache_only else None,extraction_engine_sha256=identity['engine']))
         scale=baskets['currency']['exiobase_EUR_to_USD'] if family=='EXIOBASE' else .001 if family=='GLORIA' else 1.
         for basket in baskets['baskets']:
             if basket['family']!=family:continue
@@ -314,3 +312,38 @@ def build_comparisons(report,mapping,baskets,*,reference_root,cache,mario_source
                 rows.append(dict(family=family,region=region,basket=basket['id'],label=basket['label'],nace_reference=basket['nace_reference'],comparison_basis=basket['comparison_basis'],qualification=basket['qualification'],entice_sectors=fsectors,baseline_sectors=bsectors,baseline_scope='same aggregate families' if basket['entice_parents'] or basket['id']=='all' else 'broader original parent; contextual only',native_codes=basket['native_codes'],native_names=basket['native_names'],entice=money_metrics(final['regions'][region],fi),baseline=money_metrics(baseline['regions'][region],bi),reference=money_metrics(profiles['regions'][region],ri,scale)))
     if fingerprints(report['provenance']['database'])!=final_hashes or fingerprints(report['provenance']['baseline'])!=base_hashes:raise ValueError('Saved flows changed during benchmarking')
     return dict(schema_version=1,year=2023,internal_only=True,reference='NACE Rev. 2',input_groups=GROUPS,rows=rows,sources=source_records,gtap_scope_source=dict(path=str(gtap_file),sha256=sha256(gtap_file)),currency=baskets['currency'],geography_exclusions=[r for r in geography if not r['exact_on_declared_membership']],unavailable_baskets=unavailable_baskets,unmapped_input_children=unmapped_children,policy=dict(model_rerun=False,source_data_adjusted=False,scope='Whole native sectors, aggregate ENTICE residuals plus all children; fine descriptor matches shown separately. Overlapping baskets are never added together.',valuation='Native source valuation retained. Currency conversion does not harmonise prices, production accounting, or product/activity boundaries. Differences are review signals, not pass/fail or model errors.',ratios='Sum numerators and denominators before dividing; signed flows retained. Ratios with denominator <= 1 USD are unavailable.',trade='Foreign Z + Y after common-region aggregation; all source counterpart regions retained. IO database comparisons are not observed customs trade or Comtrade validation.',value_added='No cross-database V indicator: accounting components are not yet harmonised.',gloria='Native SUT to product IOT using industry technology; sparse aggregate algebra, no balancing or optimisation. Native thousands of USD multiplied by 0.001.',baseline='Baseline uses identical aggregate families for broad baskets; a fine child has only its wider baseline parent as context.'))
+
+
+
+def basket_sector_selection(basket, final_sectors, baseline_sectors, parents):
+    """Never substitute the parent for an unavailable fine child."""
+    if basket['id'] == 'all':
+        return list(final_sectors), list(baseline_sectors), []
+    if basket['entice_parents']:
+        base = basket['entice_parents']
+        return [s for s in final_sectors if s in base or parents.get(s) in base], base, []
+    fine = basket['entice_children']
+    missing = sorted(set(fine) - set(parents))
+    return fine, sorted({parents[s] for s in fine if s in parents}), missing
+
+
+
+def verified_profile_cache(path, *, family, recorded, groups, geography):
+    """Validate an offline extraction against its previously recorded audit.
+
+    This never stats or opens the native reference source. The extraction engine
+    hash remains recorded as history; current geography and supplier groups must
+    still match exactly. No cache is accepted from filename or existence alone.
+    """
+    path=Path(path)
+    if not path.is_file() or not recorded:
+        raise ValueError(f'{family}: cache-only mode requires an audited profile cache and recorded provenance')
+    cached=json.loads(path.read_text());identity=cached['identity']
+    expected={key:recorded[key] for key in ('path','size','mtime_ns')}
+    if any(identity.get(key)!=value for key,value in expected.items()):
+        raise ValueError(f'{family}: cache source identity differs from recorded provenance')
+    if sha256(path)!=recorded['profile_sha256'] or cached['source_sha256']!=recorded['sha256']:
+        raise ValueError(f'{family}: audited profile cache checksum mismatch')
+    if identity['groups']!=groups or identity['geography']!=geography:
+        raise ValueError(f'{family}: cached geography or supplier mapping differs from the current comparison')
+    return cached

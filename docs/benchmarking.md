@@ -624,3 +624,78 @@ the same selection across sector changes. The use heatmap and database KPIs
 continue to cover their full declared scope. Empty selections show an explicit
 message rather than a stale chart. The Sankey shows positive flows; signed
 routes remain available in the matrix.
+
+
+## Saved-run dashboard: effective constraints and offline reference caches
+
+The Results view distinguishes **Production**, **Deliveries between regions**,
+**Cost structure**, and **Who uses the sector’s output?**. Same-parent navigation
+includes actual accepted siblings and the residual parent. All interface text is
+English; every view repeats the selected sector.
+
+Production constraints and foreign bilateral trade constraints come from the
+exact accepted-step workbook in `diagnostics/step-artifacts.zip` (legacy name:
+`exact-inputs.zip`), matched against the final accepted-sector list. Exported
+workbooks in `inputs/steps/` preserve the archived input parts. The original
+byte-level SHA-256 refers to the immutable archive member. SharePoint may add
+document properties; these are accepted only after verifying that every input
+part, worksheet and formula is byte-identical and original relationships survive.
+`constraints.csv` records the sheet/cell, original SHA-256, final result and signed
+difference. A bilateral constraint covers **all Z and Y deliveries on the route**.
+It is never allocated to individual customers or final-demand components.
+Domestic observations are not treated as explicit bilateral constraints because
+MARIO disables them in `Trade_selector`. Zero-valued selected foreign routes
+remain genuine constraints. Ordinary prepared references are labelled separately
+unless effective model-constraint provenance is available.
+
+The main sector picker accepts searches by code or name and can filter all, new,
+residual-parent or original sectors. The production chart displays result and
+constraint; hovers show the signed USD difference. Clicking a region updates its
+effective-input detail. Both heatmaps always follow database classification
+order; there are no row-order controls. The cross-database view is labelled
+**Beta** in navigation and its heading. This is constraint consistency, not independent
+validation of preprocessing or of economic plausibility. Input recipes are priors
+unless separately declared as constraints.
+
+Cost structure sums all supplying origins for each supplier sector and appends
+all value-added rows. Each destination’s column is divided by its **total signed
+Z inputs plus V**, not by X. All supplier rows remain available, with negative
+items in red. Undefined/nonpositive denominators remain unavailable. The uses
+heatmap instead takes the selected sector’s supplying rows, combines origins,
+and divides every purchaser/final-demand use by total destination consumption.
+
+To refresh a matching saved result without an attached source disk:
+
+```bash
+python scripts/refresh_saved_dashboard.py \
+  --database '/path/to/workshop/results/database' \
+  --cached-references '/path/to/previous/result/reference-benchmarks' \
+  --geography '/path/to/workshop/data_cleaned/geography.json' \
+  --mario-source '/path/to/MARIO-with-explorer-classifications' \
+  --backup-dir '/path/to/workshop/.archive/dashboard-before-refresh'
+```
+
+This command recalculates ENTICE and baseline metrics from their saved flows and
+uses **cache-only** reference extraction. The prior report’s cache checksum and
+native-source SHA-256, sector universe, supplier-group mapping and exact geography
+must match. It never stats or reads the SSD source. The report explicitly records
+that original native sources were not reverified in this refresh. Missing fine
+sectors stay in their parents: broad baskets aggregate actual accepted children
+plus the residual; unavailable fine baskets are listed explicitly. All outputs
+remain internal. No model, preprocessing or Leontief solve is run.
+
+
+### Display names and saved geography
+
+Sector labels outside the canonical registry are retained from the saved
+`diagnostics/provenance/additional-sectors-13.json` source. This includes
+**BAR · Cultivation of barley**. The refresh command preserves that source with
+the result; technical codes and numerical matrices do not change.
+
+Pass `--region-names '/path/to/Classifications/GTAP model regions/regions.csv'`
+to publish reviewed `code,name,native_regions` metadata. Region codes and native
+membership must match the run’s exact geography. Full names are used in all
+production, cost, use and trade hovers, Sankey node hovers, Origins/Destinations
+checkboxes and searches, and the cross-database region selector and hovers.
+Axes and Sankey node labels keep compact codes. Aggregate descriptions are taken
+from the verified geography metadata, never inferred from abbreviations.

@@ -10,6 +10,7 @@ const path=require('node:path');
    const page=await browser.newPage({viewport:{width:1440,height:1050}}),errors=[],requests=[];
    page.on('pageerror',e=>errors.push(e.message));
    page.on('request',r=>{if(/^https?:/.test(r.url()))requests.push(r.url())});
+  async function pickSector(code){await page.locator('#product').fill(code);await page.locator('#product-options [data-sector="'+code+'"]').click();await page.waitForFunction(code=>selectedProduct===code,code)}
    await page.goto(pathToFileURL(path.resolve(file)).href);
    await page.waitForFunction(()=>document.getElementById('output').data?.length>0);
    const meta=await page.evaluate(()=>({regions:D.regions.length,sectors:D.products.length,refs:D.references.rows.length,
@@ -17,7 +18,7 @@ const path=require('node:path');
       commonRegion:D.references.rows.find(r=>r.region==='USA')?.region||D.references.rows[0]?.region,
       basket:D.references.rows.some(r=>r.basket==='all')?'all':D.references.rows[0]?.basket}));
    assert.match(await page.locator('label[for=product]').textContent(),/Select a sector/);
-   await page.selectOption('#product',meta.child);
+   await pickSector(meta.child);
    await page.waitForFunction(p=>document.getElementById('output').data[0].y.every((v,i)=>v===D.payload[p].output[i]),meta.child);
    await page.selectOption('#tradeview','matrix');
    await page.waitForFunction(()=>document.getElementById('trade').data[0].type==='heatmap');
@@ -26,16 +27,16 @@ const path=require('node:path');
    assert.equal(await page.evaluate(()=>document.getElementById('output').layout.xaxis.tickangle),-90);
    const smallNegative=await page.evaluate(()=>useScale([[-1e-13,20,100]]));
    assert.equal(smallNegative.low,-1e-13);assert.equal(smallNegative.colors[0][1],'#b2182b');
-   const closure=await page.evaluate(()=>{const v=D.payload[document.getElementById('product').value];return v.totals.every((total,j)=>{const trade=v.trade.reduce((sum,row)=>sum+row[j],0);return Math.abs(total-trade)<=1e-7+1e-10*Math.abs(trade)})});
+   const closure=await page.evaluate(()=>{const v=D.payload[selectedProduct];return v.totals.every((total,j)=>{const trade=v.trade.reduce((sum,row)=>sum+row[j],0);return Math.abs(total-trade)<=1e-7+1e-10*Math.abs(trade)})});
    assert.ok(closure,'All final-demand categories must be present in the use denominator.');
-   const route=await page.evaluate(()=>{const v=D.payload[document.getElementById('product').value];let best=null;for(let i=0;i<D.regions.length;i++)for(let j=0;j<D.regions.length;j++)if(i!==j&&v.trade[i][j]>0&&(!best||v.trade[i][j]>best.value))best={origin:D.regions[i],destination:D.regions[j],value:v.trade[i][j]};if(best)return best;for(let i=0;i<D.regions.length;i++)if(v.trade[i][i]>0)return {origin:D.regions[i],destination:D.regions[i],value:v.trade[i][i]};return null});
+   const route=await page.evaluate(()=>{const v=D.payload[selectedProduct];let best=null;for(let i=0;i<D.regions.length;i++)for(let j=0;j<D.regions.length;j++)if(i!==j&&v.trade[i][j]>0&&(!best||v.trade[i][j]>best.value))best={origin:D.regions[i],destination:D.regions[j],value:v.trade[i][j]};if(best)return best;for(let i=0;i<D.regions.length;i++)if(v.trade[i][i]>0)return {origin:D.regions[i],destination:D.regions[i],value:v.trade[i][i]};return null});
    assert.ok(route);
    await page.selectOption('#tradeview','sankey');
    await page.click('#origin-picker summary');await page.click('#origin-clear');
    assert.match(await page.locator('#trade').textContent(),/Select at least one origin/);
-   await page.locator('#origin-options').getByLabel(route.origin,{exact:true}).check();
+   await page.locator('#origin-options input[value="'+route.origin+'"]').check();
    await page.click('#destination-picker summary');await page.click('#destination-clear');
-   await page.locator('#destination-options').getByLabel(route.destination,{exact:true}).check();
+   await page.locator('#destination-options input[value="'+route.destination+'"]').check();
    await page.click('#destination-picker summary');
    const one=await page.evaluate(()=>({labels:document.getElementById('trade').data[0].node.label,values:document.getElementById('trade').data[0].link.value}));
    assert.deepEqual(one.labels,['Origin · '+route.origin,'Use · '+route.destination]);assert.deepEqual(one.values,[route.value]);
@@ -43,19 +44,19 @@ const path=require('node:path');
    await page.selectOption('#tradeview','matrix');
    assert.deepEqual(await page.evaluate(()=>document.getElementById('trade').data[0].z),[[route.value]]);
    const alternate=await page.evaluate(child=>D.products.find(p=>p!==child),meta.child);
-   await page.selectOption('#product',alternate); // A sector change preserves the selected regions.
+   await pickSector(alternate); // A sector change preserves the selected regions.
    assert.match(await page.locator('#trade-selection').textContent(),/1 origin × 1 destination/);
-   await page.selectOption('#product',meta.child);
+   await pickSector(meta.child);
    await page.selectOption('#tradeview','sankey');
    if(meta.regions===61){
     await page.locator('.panel').filter({has:page.locator('#output')}).screenshot({path:'/private/tmp/entice-production-vertical61.png'});
     await page.locator('.panel').filter({has:page.locator('#trade')}).screenshot({path:'/private/tmp/entice-trade-filter61.png'});
    }
    const other=await page.evaluate(route=>({origin:D.regions.find(r=>r!==route.origin),destination:D.regions.find(r=>r!==route.destination)}),route);
-   await page.click('#origin-picker summary');await page.locator('#origin-options').getByLabel(other.origin,{exact:true}).check();
-   await page.click('#destination-picker summary');await page.locator('#destination-options').getByLabel(other.destination,{exact:true}).check();await page.click('#destination-picker summary');
+   await page.click('#origin-picker summary');await page.locator('#origin-options input[value="'+other.origin+'"]').check();
+   await page.click('#destination-picker summary');await page.locator('#destination-options input[value="'+other.destination+'"]').check();await page.click('#destination-picker summary');
    await page.selectOption('#tradeview','matrix');
-   const multi=await page.evaluate(()=>{const graph=document.getElementById('trade').data[0],values=D.payload[document.getElementById('product').value].trade;return {shown:graph.z,expected:graph.y.map(origin=>graph.x.map(destination=>values[D.regions.indexOf(origin)][D.regions.indexOf(destination)]))}});
+   const multi=await page.evaluate(()=>{const graph=document.getElementById('trade').data[0],values=D.payload[selectedProduct].trade;return {shown:graph.z,expected:graph.y.map(origin=>graph.x.map(destination=>values[D.regions.indexOf(origin)][D.regions.indexOf(destination)]))}});
    assert.equal(multi.shown.length,2);assert.equal(multi.shown[0].length,2);assert.deepEqual(multi.shown,multi.expected);
    await page.click('#origin-picker summary');await page.click('#origin-all');
    await page.click('#destination-picker summary');await page.click('#destination-all');await page.click('#destination-picker summary');

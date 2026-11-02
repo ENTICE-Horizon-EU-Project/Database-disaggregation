@@ -133,3 +133,35 @@ def use_profile(database, product, *, final_demand=None, minimum_total=1e-6):
     shares, amounts, totals = _selected_uses(database, product,
         final_demand=final_demand, minimum_total=minimum_total)
     return UseProfile(product, shares.T, amounts.T, totals)
+
+
+def cost_profile(database, product, *, minimum_total=1e-6):
+    """All supplier sectors and value added, by producing destination region.
+
+    Sum supplying origins before dividing by total signed Z inputs plus V.
+    This denominator is total cost, not independently recorded production X.
+    Negative taxes/margins are retained; nonpositive totals are unavailable.
+    """
+    if not np.isfinite(minimum_total) or minimum_total < 0:
+        raise ValueError('minimum_total must be nonnegative.')
+    sectors = list(database.get_index('Sector'))
+    regions = list(database.get_index('Region'))
+    if product not in sectors:
+        raise KeyError(product)
+    columns = database.Z.columns.get_level_values(-1) == product
+    inputs = database.Z.loc[:, columns].groupby(level=-1).sum().reindex(sectors)
+    inputs.columns = inputs.columns.get_level_values('Region')
+    inputs = inputs.reindex(columns=regions)
+    value_added = database.V.loc[:, database.V.columns.get_level_values(-1) == product].copy()
+    value_added.columns = value_added.columns.get_level_values('Region')
+    value_added.index = pd.Index(['VA · ' + str(item[-1] if isinstance(item, tuple) else item)
+                                 for item in value_added.index], name='Input')
+    inputs.index = pd.Index(sectors, name='Input')
+    if set(inputs.index) & set(value_added.index):
+        raise ValueError('Value-added labels collide with supplier sectors.')
+    amounts = pd.concat([inputs, value_added.reindex(columns=regions)])
+    totals = amounts.sum(axis=0, min_count=1)
+    shares = amounts.div(totals.where(totals > minimum_total), axis=1) * 100
+    valid = totals > minimum_total
+    np.testing.assert_allclose(shares.loc[:, valid].sum(axis=0), 100, atol=1e-8, rtol=0)
+    return UseProfile(product, shares, amounts, totals)

@@ -298,3 +298,17 @@ def test_archived_targets_use_only_accepted_steps(pair):
     assert summary['outputs']==2 and summary['trade_routes']==1
     assert checks[0]['passed'] and not checks[1]['passed']
     assert len(sources)==2
+
+
+def test_published_display_names_include_additional_activities_and_exact_regions(pair):
+    bp, fp = pair
+    metadata = fp / 'diagnostics/provenance'
+    metadata.mkdir(parents=True)
+    (metadata / 'additional-sectors-13.json').write_text(json.dumps({'sectors': {'C': {'name': 'Specific collected activity'}}}))
+    (metadata / 'region-names.csv').write_text('code,name\nR1,First region\nR2,Second region\n')
+    before = fingerprints(fp)
+    report = build_report(bp, fp, system=False)
+    assert report['dimensions']['sector_names']['C'] == 'Specific collected activity'
+    assert report['dimensions']['region_names'] == {'R1': 'First region', 'R2': 'Second region'}
+    assert report['provenance']['region_name_source']['sha256'] == sha256(metadata / 'region-names.csv')
+    assert fingerprints(fp) == before

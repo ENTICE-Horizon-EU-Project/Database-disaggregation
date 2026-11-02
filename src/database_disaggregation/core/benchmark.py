@@ -283,8 +283,12 @@ def prepared_targets(final, state):
     outputs, trades, sources, changes = {}, {}, [], []
     # New cumulative publications archive the exact, dynamically remapped inputs
     # for every accepted step. A cumulative workbook is not that step's input.
-    archive = final.root / 'diagnostics/exact-inputs.zip'
-    manifest = final.root / 'diagnostics/run_report.json'
+    archive = final.root / 'diagnostics/step-artifacts.zip'
+    if not archive.exists():
+        archive = final.root / 'diagnostics/exact-inputs.zip'
+    manifest = final.root / 'execution_report.json'
+    if not manifest.exists():
+        manifest = final.root / 'diagnostics/run_report.json'
     if archive.is_file() and manifest.is_file():
         attempts = json.loads(manifest.read_text())['attempts']
         accepted = [a for a in attempts if a['status'] == 'accepted']
@@ -377,6 +381,7 @@ def prepared_targets(final, state):
     return checks, dict(status='checked', by_sector=by_sector, outputs=len(outputs), trade_routes=len(trades),
                         expected_child_outputs=len(state['completed_sectors']) * len(x.index.get_level_values(0).unique()),
                         note='Prepared targets, after harmonisation; adherence is not independent validation.'), changes, sources
+
 
 
 def build_report(baseline, database, *, system=True):
@@ -526,6 +531,15 @@ def build_report(baseline, database, *, system=True):
                                 for item in registry.adapters['GTAP12']['parent_catalogue']})
     dims['baseline_sector_names'] = dict(dims['sector_names'])
     dims['sector_names'].update(state.get('residual_index_renames', {}))
+    region_name_source = final.root / 'diagnostics/provenance/region-names.csv'
+    region_name_provenance = None
+    if region_name_source.is_file():
+        from database_disaggregation.analysis.labels import read_region_names
+        digest = sha256(region_name_source)
+        dims['region_names'] = read_region_names(region_name_source, regions=dims['regions'])
+        if sha256(region_name_source) != digest:
+            raise RuntimeError('Published region-name source changed during benchmarking.')
+        region_name_provenance = dict(path=str(region_name_source), sha256=digest)
     name_sources = []
     additions = final.root / 'diagnostics/provenance/additional-sectors-13.json'
     if additions.is_file():
@@ -543,6 +557,7 @@ def build_report(baseline, database, *, system=True):
                 provenance=dict(baseline=str(base.root), database=str(final.root), baseline_sha256=base.hashes,
                                 database_sha256=final.hashes, sources_unchanged=True, auxiliary_sources=sources,
                                 code_revision=revision, engine_sha256=sha256(__file__),
+                                region_name_source=region_name_provenance,
                                 registry_sha256=registry.fingerprints, published_name_sources=name_sources,
                                 baseline_source_hashes_verified=baseline_record.is_file(),
                                 baseline_origin=json.loads((base.root / 'baseline_provenance.json').read_text())
@@ -552,6 +567,7 @@ def build_report(baseline, database, *, system=True):
                             accounting='inherit', monetary_unit='M USD',
                             numerical_validation='report_only' if report_only else 'strict',
                             economic_review='pending'))
+
 
 
 def write_report(report, output, *, overwrite=False):

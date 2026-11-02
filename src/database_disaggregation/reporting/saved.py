@@ -14,7 +14,7 @@ def benchmark_context(report):
         kind='new' if row['is_child'] else 'residual_parent' if row['is_residual'] else 'original'
         types[row['sector']]=dict(kind=kind,label={'new':'New sector','residual_parent':'Residual parent','original':'Original sector'}[kind],
             parents=[dict(code=row['parent'],name=base_labels.get(row['parent'],row['parent']))] if row['is_child'] else [])
-    return dict(labels=labels,sector_metadata=types,
+    return dict(labels=labels,sector_metadata=types,region_names=report['dimensions'].get('region_names'),
                 target_profiles=report['targets'].get('by_sector',{}),
                 references=report.get('external_comparisons'))
 
@@ -23,7 +23,7 @@ def render_saved_dashboard(report, *, audit_stem="benchmarking"):
     root=Path(report['provenance']['database']);flows=Flows.read(root)
     if flows.hashes!=report['provenance']['database_sha256']:
         raise ValueError('Saved benchmark no longer matches its source matrices.')
-    database=SimpleNamespace(Z=flows['Z'],Y=flows['Y'],X=flows['X'])
+    database=SimpleNamespace(Z=flows['Z'],Y=flows['Y'],V=flows['V'],X=flows['X'])
     database.get_index=lambda level:list(database.X.index.get_level_values(0 if level=='Region' else -1).unique())
     labels=report['dimensions'].get('sector_names',{})
     base_labels=report['dimensions'].get('baseline_sector_names',labels)
