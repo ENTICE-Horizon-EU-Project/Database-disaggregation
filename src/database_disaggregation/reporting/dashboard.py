@@ -81,17 +81,13 @@ def dashboard_payload(database, *, checks=None, references=None, labels=None, wo
         def numeric(frame):
             return frame.astype(object).where(frame.notna(), None).values.tolist()
         trade_targets = recorded.get('trade_targets', {}) if verified else {}
-        trade_cells = recorded.get('trade_cells', {}) if verified else {}
         payload[product] = {
             "name": labels.get(product, product), "sector_type": sector_types[product],
             "output": production.tolist(),
             "output_target": [archived_targets[r] if verified and r in archived_targets else
                               float(targets.loc[r]) if r in targets.index else archived_targets.get(r) for r in regions],
             "output_reference_kind": 'Constraint' if verified else 'Prepared reference',
-            "output_cells": [recorded.get('output_cells', {}).get(r) for r in regions],
-            "input_provenance": {key: recorded[key] for key in ('step', 'step_index', 'input_href', 'input_sha256', 'archive_member') if key in recorded},
             "trade_constraint": [[trade_targets.get(origin, {}).get(destination) for destination in regions] for origin in regions],
-            "trade_cells": [[trade_cells.get(origin, {}).get(destination) for destination in regions] for origin in regions],
             "trade_delta": recorded.get('trade_delta', 0.),
             "cost_shares": numeric(cost.shares.T) if cost is not None else None,
             "cost_amounts": numeric(cost.amounts.T) if cost is not None else None,

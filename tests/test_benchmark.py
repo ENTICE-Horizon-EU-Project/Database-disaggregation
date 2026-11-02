@@ -183,12 +183,12 @@ def test_export_is_self_contained_and_protects_sources(pair, tmp_path):
     assert all(p.is_file() for p in files)
     html = target.read_text()
     assert '__BENCHMARK_DATA__' not in html
-    assert 'href="benchmarking.json"' in html
+    assert 'href="benchmarking.json"' not in html
     assert 'MARIO workshop' == report['provenance']['dashboard_style']
     custom=tmp_path/'custom dashboard.html'
     write_report(report,custom)
-    assert 'href="custom dashboard.json"' in custom.read_text()
-    assert 'href="custom dashboard-sectors.csv"' in custom.read_text()
+    assert 'href="custom dashboard.json"' not in custom.read_text()
+    assert 'href="custom dashboard-sectors.csv"' not in custom.read_text()
     assert 'script src=' not in html and '<link rel="stylesheet" href="http' not in html
     assert json.loads(files[1].read_text())['provenance']['sources_unchanged']
     assert [fingerprints(p) for p in pair] == before

@@ -21,7 +21,7 @@ const path=require('node:path');
   const before=await page.evaluate(()=>{
    const v=D.payload[selectedProduct],cost=document.getElementById('costs'),uses=document.getElementById('uses');
    for(const key of ['production-note','trade-note','cost-note','use-note'])if(!document.getElementById(key).textContent.includes(selectedProduct+' · '+v.name))throw Error('Selected sector missing from '+key);
-   return {names:document.getElementById('output').data.map(t=>t.name),input:document.querySelector('#input-evidence a').getAttribute('href'),
+   return {names:document.getElementById('output').data.map(t=>t.name),
     costs:cost.data[0].y.length,expectedCosts:D.products.length+4,
     costRows:[...cost.data[0].y].sort(),expectedRows:[...D.cost_items].sort(),
     costX:cost.layout.xaxis.title.text,costY:cost.layout.yaxis.title.text,
@@ -29,7 +29,10 @@ const path=require('node:path');
     closure:v.cost_shares.every(row=>row.every(x=>x===null)||Math.abs(row.reduce((sum,value)=>sum+(value||0),0)-100)<1e-8)};
   });
   assert.ok(before.names.includes('Constraint'));
-  assert.ok(before.input.startsWith('inputs/steps/'));
+  assert.equal(await page.locator('#input-evidence').count(),0);
+  assert.ok(await page.evaluate(()=>Object.values(D.payload).every(v=>!('input_provenance' in v)&&!('output_cells' in v)&&!('trade_cells' in v))));
+  assert.ok(await page.evaluate(()=>D.references.sources.every(s=>!('path' in s)&&!('profile_cache' in s))));
+  assert.ok(await page.evaluate(()=>[...document.querySelectorAll('a[href]')].every(a=>!a.getAttribute('href')||a.getAttribute('href').startsWith('#')||a.getAttribute('href').startsWith('blob:'))));
   assert.equal(before.costs,before.expectedCosts);assert.deepEqual(before.costRows,before.expectedRows);
   assert.equal(before.costX,'Destination regions');assert.equal(before.costY,'Input sectors / value added');
   assert.equal(before.usesX,'Destination regions');assert.equal(before.usesY,'Using sectors / final-demand categories');
@@ -72,7 +75,7 @@ const path=require('node:path');
   await page.click('#destination-picker summary');
   const hover=await page.evaluate(()=>document.getElementById('trade').data[0].link.customdata[0]);
   const routeNames=await page.evaluate(route=>[D.region_names[route.origin],D.region_names[route.destination]],route);for(const name of routeNames)assert.ok(hover.replaceAll('<br>',' ').includes(name));
-  assert.match(hover,/Result:/);assert.match(hover,/Constraint:/);assert.match(hover,/Difference:/);assert.match(hover,/total Z \+ all Y/);assert.match(hover,/Trades!E/);
+  assert.match(hover,/Result:/);assert.match(hover,/Constraint:/);assert.match(hover,/Difference:/);assert.match(hover,/total Z \+ all Y/);assert.doesNotMatch(hover,/Input:|Trades!/);
   await page.selectOption('#tradeview','matrix');
   assert.equal(await page.evaluate(()=>document.getElementById('trade').data[0].text[0][0]),hover);
   assert.ok(await page.evaluate(()=>document.getElementById('trade').layout.height<=740));
@@ -86,6 +89,6 @@ const path=require('node:path');
   await page.waitForFunction(()=>document.documentElement.scrollWidth<=innerWidth+1);
   assert.deepEqual(errors,[]);assert.deepEqual(requests,[]);
   console.log(JSON.stringify({meta,all_cost_rows:true,signed_cost_closure:true,search_by_code_and_name:true,sector_type_filter:true,original_row_order:true,production_click_evidence:true,region_full_names:true,bar_full_name:true,effective_constraints:true,
-   bilateral_hover_scope:true,sibling_navigation:true,reference_export:true,mobile_overflow:false,errors,requests}));
+   no_external_file_links:true,bilateral_hover_scope:true,sibling_navigation:true,reference_export:true,mobile_overflow:false,errors,requests}));
  }finally{await browser.close()}
 })().catch(error=>{console.error(error);process.exit(1)});

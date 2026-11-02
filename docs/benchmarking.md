@@ -651,11 +651,18 @@ unless effective model-constraint provenance is available.
 The main sector picker accepts searches by code or name and can filter all, new,
 residual-parent or original sectors. The production chart displays result and
 constraint; hovers show the signed USD difference. Clicking a region updates its
-effective-input detail. Both heatmaps always follow database classification
+result/constraint detail. Both heatmaps always follow database classification
 order; there are no row-order controls. The cross-database view is labelled
 **Beta** in navigation and its heading. This is constraint consistency, not independent
 validation of preprocessing or of economic plausibility. Input recipes are priors
 unless separately declared as constraints.
+
+The standalone dashboard does not link to local inventories, workbooks, audit
+files or baseline folders, and its hovers omit workbook sheet/cell references.
+Results, effective constraint values, differences and numerical checks remain
+visible. Full input provenance stays in the saved JSON/CSV reports; local source
+and cache paths are not embedded in the dashboard. The comparison CSV export is
+generated directly from the data embedded in the HTML and remains available.
 
 Cost structure sums all supplying origins for each supplier sector and appends
 all value-added rows. Each destination’s column is divided by its **total signed

@@ -21,24 +21,36 @@ def _audit(report, audit_stem):
         (esc(str(len(skipped))+' planned activities remain inside their parents: '+', '.join(skipped)+'. ') if skipped else '')+
         esc(str(review)+' comparisons outside the strict recorded tolerance; residuals remain visible in the audit. ' if review else '')+
         'Economic review and environmental extensions remain separate.</div>')
-    panel=('<details class="panel"><summary><b>Numerical audit, baseline and sources</b></summary><p class="muted">'+
+    panel=('<details class="panel"><summary><b>Numerical audit</b></summary><p class="muted">'+
         'Saved monetary flows and baseline are unchanged. Numerical policy: '+esc(policy.get('numerical_validation','strict'))+
         '. Strict deviations are reported without altering the saved result. Targets are prepared model inputs, not independent validation.</p>'+
         '<div class="scroll"><table><thead><tr><th>Check</th><th>Recorded result</th><th>Max absolute difference</th><th>Unit</th></tr></thead><tbody>'+''.join(rows)+'</tbody></table></div>'+
-        '<p class="muted">Economic screening flags: '+esc(summary.get('review_flags',0))+'. Gross intermediate inputs where output is at most 1 USD: '+format(summary.get('zero_output_gross_z_inputs',0),',.6g')+' M USD. Undefined ratios are not replaced by zero. Environmental extensions remain pending.</p>'+
-        '<p class="muted">Exact baseline: '+esc(report['provenance']['baseline'])+'</p>'+
-        '<p><a href="'+esc(audit_stem+'.json')+'" download>Full numerical audit · JSON</a> · <a href="'+esc(audit_stem+'-sectors.csv')+'" download>Sector KPIs · CSV</a></p></details>')
+        '<p class="muted">Economic screening flags: '+esc(summary.get('review_flags',0))+'. Gross intermediate inputs where output is at most 1 USD: '+format(summary.get('zero_output_gross_z_inputs',0),',.6g')+' M USD. Undefined ratios are not replaced by zero. Environmental extensions remain pending.</p></details>')
     return notice,panel
+
+def _display_references(references):
+    """Embed comparison data and display metadata without local source paths.
+
+    Full source fingerprints, cache locations and mapping provenance remain in
+    the saved benchmark report, separate from the standalone dashboard.
+    """
+    keys=('schema_version','year','internal_only','rows','input_groups','currency',
+          'geography_exclusions','entice_scope_warnings')
+    result={key:references[key] for key in keys if key in references}
+    result['sources']=[{key:source[key] for key in ('family','year','native_unit','representation')
+                       if key in source} for source in references.get('sources',[])]
+    return result
 
 def render_dashboard(payload, *, title='Sector disaggregation results', subtitle='', benchmark=None, audit_stem="benchmarking"):
     from plotly.offline import get_plotlyjs
     resource=files('database_disaggregation.reporting')
     page=resource.joinpath('templates/dashboard.html').read_text()
-    refs=payload['references'];notice,audit=_audit(benchmark,audit_stem)
+    refs=_display_references(payload['references']);notice,audit=_audit(benchmark,audit_stem)
+    display_payload=dict(payload,references=refs)
     replacements={'__PLOTLY__':get_plotlyjs(),'__TITLE__':html.escape(title),'__SUBTITLE__':html.escape(subtitle),
         '__REFERENCE_PANEL__':resource.joinpath('templates/comparisons.html').read_text().replace('__REFERENCE_YEAR__',html.escape(str(refs.get('year','')))),
         '__REFERENCE_SCRIPT__':resource.joinpath('templates/comparisons.js').read_text(),
-        '__DATA__':json.dumps(payload,allow_nan=False,separators=(',',':')).replace('<',r'\u003c'),
+        '__DATA__':json.dumps(display_payload,allow_nan=False,separators=(',',':')).replace('<',r'\u003c'),
         '__RESULT_NOTICE__':notice,'__BENCHMARK_AUDIT__':audit}
     for token,name,mime in [('__ENTICE_LOGO__','entice.svg','image/svg+xml'),('__MARIO_LOGO__','mario-logo.png','image/png')]:
         replacements[token]='data:'+mime+';base64,'+base64.b64encode(resource.joinpath('assets',name).read_bytes()).decode('ascii')

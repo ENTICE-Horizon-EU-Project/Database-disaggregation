@@ -84,7 +84,7 @@ def saved_benchmark(db):
         policy={'numerical_validation':'report_only'},external_comparisons=None)
 
 
-def test_matching_saved_report_renders_names_parents_and_existing_audit_links(tmp_path):
+def test_matching_saved_report_renders_names_parents_without_external_file_links(tmp_path):
     db=database();report=saved_benchmark(db)
     source=tmp_path/'benchmarking.json';source.write_text(json.dumps(report))
     target=tmp_path/'notebook.html'
@@ -94,7 +94,8 @@ def test_matching_saved_report_renders_names_parents_and_existing_audit_links(tm
     assert data['payload']['p']['sector_type']['parents']==[{'code':'q','name':'Original parent'}]
     assert data['payload']['p']['checks']['passed']==1
     assert '1 planned activities remain inside their parents' in page
-    assert source.as_uri() in page
+    assert source.as_uri() not in page
+    assert '/saved/run/baseline' not in page
 
 
 def test_a_saved_report_cannot_be_attached_to_a_different_output(tmp_path):
