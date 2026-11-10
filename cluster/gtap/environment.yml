@@ -1,0 +1,19 @@
+name: gtap-cfdhub
+channels:
+  - conda-forge
+dependencies:
+  - python=3.13
+  - pip
+  - git
+  - pip:
+      - "-e git+https://github.com/it-is-me-mario/MARIO.git@e725e7d656541796a449145e658fef0defb1b34f#egg=mariopy"
+      - "-e git+https://github.com/cvxlab/cvxlab.git@28b23edc58141f4d1198b8a7fa8d5dc1b40f5559#egg=cvxlab"
+      - "-e ../..[analysis,benchmark,export,mappings,plots,reconcile]"
+      - numpy==2.1.1
+      - pandas==2.3.3
+      - pyarrow==24.0.0
+      - scipy==1.18.0
+      - cvxpy==1.9.2
+      - highspy==1.15.1
+      - clarabel==0.11.1
+      - snakeviz==2.2.2

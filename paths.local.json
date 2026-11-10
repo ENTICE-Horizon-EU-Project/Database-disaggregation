@@ -1,11 +1,7 @@
 {
-  "data_root": "/Users/lorenzorinaldi/Library/CloudStorage/OneDrive-SharedLibraries-WSPO365/RCD-Entice-EXT - Documents/General/2.Deliverables and Milestones/WP2. Improved data and empirics on trade and climate/Data split",
+  "data_root": "external-data",
   "baseline_format": "mario_parquet",
-  "geography": {
-    "name": "ENTICE13",
-    "mapping": "data/geographies/gtap13.json",
-    "mapping_base": "repository"
-  },
+  "geography": null,
   "disaggregation": {
     "inventories": "Inventories/D2.4 inventories/Regenerated 20261001",
     "steps": null,
@@ -32,9 +28,8 @@
     "copper_sectors": "Data collection/Final/PURDUE/Shared material/Cost structures/COPSEC.csv",
     "d24_database_runs": "Database/D2.4"
   },
-  "mario_source": "/Users/lorenzorinaldi/Documents/GitHub/MARIO",
+  "mario_source": null,
   "benchmarking": {
-    "reference_root": "/Volumes/SanDisk SSD/Work/IO databases",
     "source_dir": "Classifications/Benchmark mappings/2023/sources",
     "mapping_output": "Classifications/Benchmark mappings/2023"
   }

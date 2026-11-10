@@ -222,6 +222,7 @@ Run commands from this checkout in the configured Python environment.
 
 | Task | Entry point or guide |
 | --- | --- |
+| Run the full or reduced GTAP cluster benchmark | [CFDHub setup and launch](cluster/gtap/README.md) |
 | Prepare regional inventories | `python scripts/run_disaggregation.py --help` |
 | Run or resume sequential model trials | `python scripts/run_model_trial.py --help` |
 | Publish an existing trial to configured shared storage | `python scripts/publish_model_trial.py --help` |
