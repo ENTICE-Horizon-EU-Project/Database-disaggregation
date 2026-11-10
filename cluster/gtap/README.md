@@ -23,12 +23,13 @@ conda activate gtap-cfdhub
 
 Il file [environment.yml](environment.yml) installa **Database disaggregation** dal checkout corrente, compresi preparazione, riconciliazione, esportazione e analisi. Installa **MARIO** e **CVXLab** come checkout Git modificabili, alle due revisioni registrate nel file. Con `PIP_SRC` i loro sorgenti sono in `../gtap-code/mariopy` e `../gtap-code/cvxlab`. Conservare i tre checkout finché si usa l'ambiente. L'installazione iniziale usa GitHub, conda-forge e PyPI. Il calcolo usa codice e dati locali.
 
-Copiare i due archivi interni da **`Data split/CFDHub/20261110 - GTAP/`** all'area di trasferimento autorizzata. Sostituire i due percorsi seguenti con quelli del cluster. Mantenere `ENTICE_DATA_ROOT` anche nell'ambiente del job.
+Copiare i due archivi interni e il file `SHA256SUMS` da **`Data split/CFDHub/20261110 - GTAP/`** all'area di trasferimento autorizzata. Sostituire i due percorsi seguenti con quelli del cluster. Mantenere `ENTICE_DATA_ROOT` anche nell'ambiente del job.
 
 ```bash
 export ENTICE_DATA_ROOT="/percorso/locale/entice"
 ARCHIVI="/percorso/locale/trasferimento"
 mkdir -p "$ENTICE_DATA_ROOT"
+(cd "$ARCHIVI" && sha256sum -c SHA256SUMS)
 unzip -q "$ARCHIVI/entice-sources.zip" -d "$ENTICE_DATA_ROOT"
 unzip -q "$ARCHIVI/gtap-inputs.zip" -d "$ENTICE_DATA_ROOT"
 (cd "$ENTICE_DATA_ROOT" && sha256sum --quiet -c entice-sources.sha256)
