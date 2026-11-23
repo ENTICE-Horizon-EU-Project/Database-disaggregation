@@ -15,6 +15,7 @@ import pandas as pd
 from database_disaggregation.core.parent_budgets import _sector_index
 from database_disaggregation.core.paths import data_path, find_data_file
 from database_disaggregation.core.registry import Registry
+from database_disaggregation.core import working_identity as identities
 from database_disaggregation.export.build_d24_inventories import read_sector_templates
 from database_disaggregation.reconciliation.audit import Audit
 from database_disaggregation.reconciliation.policy import load_policy
@@ -70,12 +71,15 @@ class SourceCollection:
         baseline_x = pd.read_parquet(baseline_path/'X.parquet').iloc[:, 0]
         baseline_x.index = _sector_index(baseline_x.index)
         native = SimpleNamespace(regions=list(regions), budgets=SimpleNamespace(output=baseline_x))
-        templates, skipped = read_sector_templates(inventory_dir, sector_codes=policy['sectors'])
+        identity_rules=identities.rules_for(policy)
+        source_codes=set(policy['sectors'])|{old for old,new in identity_rules.get('code_aliases',{}).items() if new in policy['sectors']}
+        templates, skipped = read_sector_templates(inventory_dir, sector_codes=source_codes)
         if skipped:
             raise ValueError(f'Incomplete source inventories: {skipped}')
         by_code = defaultdict(list)
         for template in templates:
             by_code[template.sector_code].append(template)
+        by_code=identities.select_sources(by_code,identity_rules,context='collected_inventory')
         if set(by_code) != set(policy['sectors']):
             raise ValueError(f'Active input coverage differs from the policy: missing={set(policy["sectors"])-set(by_code)}')
         parents = {r['id']: r.get('name', r['id']) for r in registry.adapters['GTAP12']['parent_catalogue']}
@@ -100,6 +104,10 @@ class SourceCollection:
             return key
 
         def item(kind, code, definitions, universe):
+            if kind=='Sector':
+                code=identities.sector_code(code,identity_rules)
+                definitions={group:list(dict.fromkeys(identities.sector_code(member,identity_rules) for member in values))
+                             for group,values in definitions.items()}
             members = sorted(expand(code, definitions, universe))
             is_group = code not in universe
             key = _key('i:'+kind+':', members)
@@ -148,7 +156,7 @@ class SourceCollection:
                             factor_universe |= {'Capital','Labor','Land','NatRes','Tax','TTM'}
                             candidate = []
                             for record in master:
-                                if record['Sector'] != sector:
+                                if identities.sector_code(record['Sector'],identity_rules) != sector:
                                     raise ValueError('Inventory contains a different activity identity.')
                                 label = record['Region']
                                 members = [label] if label in regions else region_groups.get(label)

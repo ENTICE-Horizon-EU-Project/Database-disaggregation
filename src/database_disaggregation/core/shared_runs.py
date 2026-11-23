@@ -14,6 +14,8 @@ from database_disaggregation.core.paths import data_path
 MODEL_DIAGNOSTICS = (
     'feasibility.json', 'model_solution.json', 'split_model_options.json',
     'entropy_support.json', 'model_definition.json', 'constraint_diagnostics.json',
+    'intermediate_prior_preparation.json', 'intermediate_prior_preparation.csv',
+    'output_roundoff.json',
     'raw_model_solution.json', 'raw_constraint_diagnostics.json',
     'solution_cleanup.json', 'solution_cleanup.csv',
     'returned_solution_scaled.npz', 'returned_solution_index.json',
@@ -47,7 +49,7 @@ def _copy(source,destination):
         raise RuntimeError(f'Copy checksum failed: {source}')
 
 
-def publish_trial(trial, *, inventory_root=None, database_root=None):
+def publish_trial(trial, *, inventory_root=None, database_root=None, started_at=None):
     """Copy a finished controlled trial; never edit its inputs or checkpoints.
 
     Failed attempts keep diagnostics with their inputs and have no database folder.
@@ -82,7 +84,7 @@ def publish_trial(trial, *, inventory_root=None, database_root=None):
     else:
         x=pd.read_parquet(source/'baseline/flows/X.parquet')
     regions=len(x.index.get_level_values(0).unique())
-    started=manifest.get('started_at')
+    started=started_at or manifest.get('started_at')
     if not started:
         timestamp=getattr(trial.stat(),'st_birthtime',None)
         if timestamp is None:

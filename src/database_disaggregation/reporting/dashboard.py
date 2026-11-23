@@ -59,6 +59,10 @@ def dashboard_payload(database, *, checks=None, references=None, labels=None, wo
         raise ValueError('Region names must cover the exact saved regions.')
     names = region_labels() if region_names is None else region_names
     sector_types = _sector_types(products, workbook, labels) if sector_metadata is None else sector_metadata
+    pcp_type=sector_types.get('PCP') or {}
+    if pcp_type.get('kind')=='new' and any(p['code']=='P_C' for p in pcp_type['parents']):
+        from database_disaggregation.core.residual_labels import post_split_display_names
+        labels=post_split_display_names(labels,{'PCP':'P_C'},['PCP'])
     if set(sector_types) != set(products):
         raise ValueError('Explicit sector metadata must cover the exact saved sectors.')
     target_profiles = target_profiles or {}
@@ -86,7 +90,14 @@ def dashboard_payload(database, *, checks=None, references=None, labels=None, wo
             "output": production.tolist(),
             "output_target": [archived_targets[r] if verified and r in archived_targets else
                               float(targets.loc[r]) if r in targets.index else archived_targets.get(r) for r in regions],
-            "output_reference_kind": 'Constraint' if verified else 'Prepared reference',
+            "output_reference_kind": recorded.get('output_reference_kind', 'Constraint') if verified else 'Prepared reference',
+            "finalized": recorded.get('finalized',False),
+            "cost_recipe_status": [
+                recorded.get('recipe_status_by_region',{}).get(r) or
+                ('Assigned inventory recipe; regional sourcing inferred' if 'inventories' in recorded.get('activation_recipe_source','')
+                 else 'Assigned global recipe; regional sourcing inferred') if r in recorded.get('activation_regions',{})
+                else 'Regional recipe retained from disaggregated database' if recorded.get('finalized')
+                else 'Resulting recipe from saved flows' for r in regions],
             "trade_constraint": [[trade_targets.get(origin, {}).get(destination) for destination in regions] for origin in regions],
             "trade_delta": recorded.get('trade_delta', 0.),
             "cost_shares": numeric(cost.shares.T) if cost is not None else None,

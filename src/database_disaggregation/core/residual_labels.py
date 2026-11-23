@@ -6,14 +6,22 @@ import pandas as pd
 
 
 def residual_names(parents, catalogue, existing):
-    """P_C becomes petroleum products after the coal-products split."""
+    """Name the remainder of P_C as petroleum manufacture after coke is split."""
     result = {}
     for parent in sorted(set(parents.values()) & set(existing)):
         label = catalogue.get(parent, parent)
-        result[parent] = ('Petroleum products' if parent == 'P_C'
+        result[parent] = ('Manufacture of petroleum products' if parent == 'P_C' and parents.get('PCP') == 'P_C'
                           else label if label.startswith('Rest of ') else 'Rest of '+label)
     if len(set(result.values())) != len(result) or (set(result.values()) & set(existing)):
         raise ValueError('Residual names collide with existing sector identifiers.')
+    return result
+
+
+def post_split_display_names(labels, parents, completed):
+    """Apply output-only names after successful splits; keep baseline codes."""
+    result=dict(labels)
+    if 'PCP' in completed and parents.get('PCP')=='P_C':
+        result.update(PCP='Manufacture of coke',P_C='Manufacture of petroleum products')
     return result
 
 

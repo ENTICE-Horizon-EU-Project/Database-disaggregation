@@ -10,6 +10,8 @@ from openpyxl import load_workbook
 ROOT=Path(__file__).resolve().parents[1]
 sys.path.insert(0,str(ROOT/'src'))
 from database_disaggregation.core.registry import Registry
+from database_disaggregation.core import working_identity as identities
+identity_rules=identities.default_rules()
 from database_disaggregation.core.paths import project_data_root, data_path
 parser=argparse.ArgumentParser(description=__doc__)
 parser.add_argument('--output-dir',type=Path,default=ROOT/'build/classifications')
@@ -25,11 +27,13 @@ def add(name,headers,data,widths,note=''):
  sheets.append({'name':name,'headers':headers,'rows':data,'widths':widths,'note':note})
 records=[];scopes=[]
 for s in reg.sectors.values():
- code=s['id'];c=s['classification'];h=historical[code];p=reg.parent(code)
+ code=s['id'];c=dict(s['classification']);h=historical[code];p=reg.parent(code)
+ if code=='NCM':c['note']='Historical D2.4 source identity. For new preparations use NMC with the former NCM output, trade and technical data (EEQ); do not add a second NCM activity.'
+ if code=='NMC':c['note']='Canonical working battery activity. Uses the former NCM/EEQ input data; the separate historical NMC/OME source is superseded, not summed. Published D2.4 facts remain historical.'
  records.append([code,s['name'],'Published' if s['lifecycle']=='published_d24' else 'Inactive',', '.join(p['nace_codes']),p['parent'] or '',p['status'],', '.join(dict.fromkeys(r['parent'] for r in h['legacy_matching_rows'])),h['published_parent'] or '',', '.join(h['declared_nace_codes']),', '.join(dict.fromkeys(r['pipeline'] for r in h['legacy_matching_rows'] if r['pipeline'])),c['note'],'; '.join(c['evidence'])])
  for scope in c['scopes']:
   pr=reg.parent(code,scope=scope['id'])
-  for nace in scope['codes']:scopes.append([code,scope['id'],scope['label'],nace,pr['parent'] or '',pr['status'],'; '.join(c['evidence'])])
+  for nace in scope['codes']:scopes.append([code,scope['id'],('Battery manufacture; canonical working NMC uses former NCM data' if code=='NMC' else scope['label']),nace,pr['parent'] or '',pr['status'],'; '.join(c['evidence'])])
 add('ENTICE sectors',['Code','Activity','D2.4 status','Reviewed NACE Rev. 2','NACE-derived GTAP12 parent','Resolution','Legacy pipeline parents','D2.4 parent','Declared NACE (unreviewed)','Source pipeline','Scope notes','Classification evidence'],records,[12,65,15,22,24,25,24,16,26,21,95,75], 'Review snapshot. Blank reviewed mappings remain unresolved. Pipeline mappings are preserved separately in Sector; changing a reviewed parent requires rebuilding dependent data.')
 add('Activity scopes',['Code','Scope ID','Activity scope','NACE Rev. 2','GTAP12 parent','Resolution','Evidence'],scopes,[12,30,85,18,20,27,90])
 add('GTAP sectors',['GTAP12 Power code','Sector name'],[[r['id'],r['name']] for r in gtap['parent_catalogue']],[22,95], '76 sector identifiers from the D2.4 baseline. Case is significant for electricity sectors.')
@@ -83,7 +87,10 @@ for row in rows(working,'New GTAP sectors list')[1:]:
  if not row[0]:continue
  code=str(row[0]);status=reg.parent(code)['status'] if code in reg.sectors else 'Outside current registry'
  catalogue.append(list(row[:5])+[status])
-add('Working catalogue',['Code','Activity','Split in D2.4 (source)','GTAP parent (source)','Parent description','Registry review status'],catalogue,[15,85,24,24,65,35], 'Current working classification, distinct from the published release catalogue. Source split flags and parent declarations are preserved, not activated or reclassified.')
+for row in catalogue:
+ row[0]=identities.sector_code(row[0],identity_rules)
+ row[1]=identities.sector_name(row[1],identity_rules)
+add('Working catalogue',['Code','Activity','Split in D2.4 (source)','GTAP parent (source)','Parent description','Registry review status'],catalogue,[15,85,24,24,65,35], 'Current working classification, distinct from the published release catalogue. NMC is the canonical working code for the former NCM data; historical source concordances retain their original labels. Source split flags and parent declarations are preserved.')
 declarations=[]
 for name in ['New GTAP - CPC concordances','New GTAP - NACE-ISIC levels','GTAP-CPC','GTAP-ISIC-NACE']:
  for row in rows(working,name)[1:]:

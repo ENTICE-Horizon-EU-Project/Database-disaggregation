@@ -18,6 +18,7 @@ from database_disaggregation.core.parent_budgets import (
     OUTPUT_COLUMNS, TRADE_COLUMNS,
 )
 from database_disaggregation.core.registry import Registry
+from database_disaggregation.core import working_identity as identities
 from .audit import Audit
 from .baseline import NativeBaseline
 from .policy import load_policy
@@ -59,7 +60,7 @@ def reconcile_inventories(source_dir,output_dir,*,geography=None,policy=True,bas
         code_fingerprints={p.name:hashlib.sha256(p.read_bytes()).hexdigest() for p in Path(__file__).parent.glob('*.py')}
         import mario
         integration_files=[(f'database_disaggregation/core/{name}.py',Path(__file__).parent.parent/'core'/f'{name}.py')
-                           for name in ('disaggregation','geography','parent_budgets','registry','paths','baseline')]
+                           for name in ('disaggregation','geography','parent_budgets','registry','paths','baseline','working_identity')]
         integration_files += [(f'mario/ops/{name}.py',Path(mario.__file__).parent/'ops'/f'{name}.py')
                               for name in ('add_sector_steps','add_sector_workbook')]
         integration_fingerprints={name:hashlib.sha256(path.read_bytes()).hexdigest() for name,path in integration_files}
@@ -79,12 +80,16 @@ def reconcile_inventories(source_dir,output_dir,*,geography=None,policy=True,bas
                       else load_baseline(baseline_path,baseline_format,geography=geography))
         files=sorted(p for p in Path(source_dir).glob('*.xlsx') if not p.name.startswith('~$'))
         if not files:raise ValueError('No resolved native inventory files supplied.')
+        identity_rules=identities.rules_for(policy)
+        files=list(identities.inventory_sources(files,identity_rules,audit=audit).values())
         references=None
         if output_reference_dir is not None:
             from database_disaggregation.core.disaggregation import read_output_references
             references=read_output_references(output_reference_dir,
                 read_bytes=lambda path:audit.read(path,role='original_output_reference'))
-        targets=read_child_targets(files,output_references=references)
+        references=identities.output_references(references,identity_rules,audit=audit)
+        targets=read_child_targets(files,output_references=references,
+                                   sector_aliases=identity_rules.get('code_aliases'))
         for path,digest in targets.sources.items():
             if path not in audit.files:
                 audit.files[path]={'sha256':digest,'bytes':Path(path).stat().st_size,'role':'resolved_inventory'}
@@ -119,6 +124,7 @@ def reconcile_inventories(source_dir,output_dir,*,geography=None,policy=True,bas
                 header,*data=book['Master'].values
                 sector=next(dict(zip(header,row))['Sector'] for row in data if row[1] is not None)
             finally:book.close()
+            sector=identities.sector_code(sector,identity_rules)
             logger.info('Preparing reconciled inventories: %s',sector)
             profiles,settings=builder.build(path,sector,old_parents[sector])
             destination=output_dir/'inventories'/f'{sector}.xlsx'

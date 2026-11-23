@@ -11,6 +11,33 @@ def _digest(path):
     return hashlib.sha256(Path(path).read_bytes()).hexdigest()
 
 
+def _historical_source_digest(path):
+    """Hash all source content except metadata and sheets not used by payload selection.
+
+    Historical payload selection discards intermediate_steps. The last source,
+    whose pending plan is retained, is always read separately without this cache.
+    DB units is a display-only preview: numeric units in Master, inventory and
+    support sheets are all included in the digest.
+    """
+    from zipfile import ZipFile
+    import xml.etree.ElementTree as ET
+    ns = 'http://schemas.openxmlformats.org/spreadsheetml/2006/main'
+    rel = 'http://schemas.openxmlformats.org/officeDocument/2006/relationships'
+    with ZipFile(path) as book:
+        ignored = {'docProps/core.xml'}
+        links = {e.attrib['Id']: e.attrib['Target']
+                 for e in ET.fromstring(book.read('xl/_rels/workbook.xml.rels'))}
+        for sheet in ET.fromstring(book.read('xl/workbook.xml')).find(f'{{{ns}}}sheets'):
+            if sheet.attrib['name'] in {'Intermediate steps', 'DB units'}:
+                target = links[sheet.attrib[f'{{{rel}}}id']]
+                ignored.add(target.lstrip('/') if target.startswith('/') else 'xl/'+target)
+        digest = hashlib.sha256()
+        for name in sorted(set(book.namelist()) - ignored):
+            digest.update(name.encode()); digest.update(b'\0')
+            digest.update(book.read(name)); digest.update(b'\0')
+        return digest.hexdigest()
+
+
 @dataclass(frozen=True)
 class InventoryStage:
     checkpoint: Path
@@ -44,10 +71,16 @@ def checkpoint_history(checkpoint, *, _seen=None):
     manifest = json.loads((trial/'trial.json').read_text())
     previous = manifest.get('source_checkpoint')
     history = checkpoint_history(previous, _seen=seen) if previous else []
+    # Resumed trial folders may also contain copies of inherited checkpoints.
+    # Their authoritative history was already followed through source_checkpoint.
+    inherited_index = history[-1].state['step_index'] if history else -1
     for path in sorted((trial/'checkpoints').glob('*/state.json')):
         current = json.loads(path.read_text())
-        if current['step_index'] > state['step_index']:
+        if not inherited_index < current['step_index'] <= state['step_index']:
             continue
+        completed = history[-1].state['completed_sectors'] if history else []
+        if current['completed_sectors'] != completed + current['step_sectors']:
+            raise ValueError('Incomplete or unordered checkpoint history.')
         source = path.parent/'source_add_sectors.xlsx'
         if not source.is_file():
             source = trial/'add_sectors.xlsx'
@@ -145,6 +178,7 @@ def assemble_inventory_history(stages, destination):
         raise ValueError('No accepted stages to assemble.')
     payloads, originals, plan, completed, sources = [], [], {}, [], []
     initial_existing = None
+    historical_sources = {}
     for i, stage in enumerate(stages, 1):
         state, sectors = stage.state, stage.state['step_sectors']
         if set(completed) & set(sectors):
@@ -159,7 +193,17 @@ def assemble_inventory_history(stages, destination):
             initial_existing = existing
         if existing != initial_existing | (set(completed) - set(sectors)):
             raise ValueError('Stage sector universe does not match its history.')
-        source = read(stage.source)
+        if i == len(stages):
+            source = read(stage.source)  # Preserve the actual final pending plan.
+        else:
+            key = _historical_source_digest(stage.source)
+            if key not in historical_sources:
+                # Each sequential trade projection can change the workbook.
+                # Keep a single source payload, rather than retaining every
+                # 4,000-sheet source until publication finishes.
+                historical_sources.clear()
+                historical_sources[key] = read(stage.source)
+            source = historical_sources[key]
         payloads.append(_select(source, sectors))
         originals.append((read(stage.applied), existing))
         name = state['step_name']

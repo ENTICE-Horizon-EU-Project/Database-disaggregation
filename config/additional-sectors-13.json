@@ -119,12 +119,12 @@
   "source_metadata_sha256": "b2a1b939f049b213fad6e22bff2bdc1ce277082841290c568665d63edd8e357e",
   "baseline_run": "Database/D2.8/20261021 0655 - 13 regions and 67 sectors",
   "labels": {
-    "PCP": "Coal products",
-    "P_C": "Petroleum products"
+    "PCP": "Manufacture of coke",
+    "P_C": "Manufacture of petroleum products"
   },
   "sectors": {
     "PCP": {
-      "name": "Manufacture of coal products",
+      "name": "Manufacture of coke",
       "declared_parent": "P_C",
       "output_source": {
         "kind": "template",

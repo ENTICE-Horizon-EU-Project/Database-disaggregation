@@ -1,0 +1,8 @@
+{
+  "Threads": 2,
+  "TimeLimit": 900.0,
+  "NumericFocus": 3,
+  "NonConvex": 0,
+  "OutputFlag": 1,
+  "Method": 0
+}

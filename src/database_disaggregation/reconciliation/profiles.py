@@ -74,6 +74,9 @@ def balance_profile(profile,policy,audit,*,sector,region):
     return profile
 
 
+from database_disaggregation.core import working_identity as identities
+
+
 class ProfileBuilder:
     def __init__(self,native,geography,parents,native_output,policy,audit, *,
                  missing_cost_structure='same_sector_then_parent'):
@@ -83,6 +86,9 @@ class ProfileBuilder:
 
     def canonical(self,profile,producing_region,parent,item_clusters,factor_clusters,region_clusters):
         result=[]
+        rules=identities.rules_for(self.policy)
+        item_clusters={name:list(dict.fromkeys(identities.sector_code(item,rules) for item in members))
+                       for name,members in item_clusters.items()}
         for raw in profile:
             row=dict(raw);kind=row.get('Item type')
             if kind not in ('Sector','Factor of production','Satellite account'):
@@ -92,7 +98,7 @@ class ProfileBuilder:
             value=float(row['Quantity'])
             if not math.isfinite(value):raise ValueError('Non-finite technology observation.')
             if kind=='Sector':
-                items=expand(row['DB Item'],item_clusters,set(self.native.sectors)|self.parents.keys())
+                items=expand(identities.sector_code(row['DB Item'],rules),item_clusters,set(self.native.sectors)|self.parents.keys())
             elif kind=='Factor of production':
                 items=expand(row['DB Item'],factor_clusters,set(self.native.units[kind].index))
             else:

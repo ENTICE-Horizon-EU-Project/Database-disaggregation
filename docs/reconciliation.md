@@ -87,6 +87,15 @@ and cumulative budgets are checked against its remaining parent capacities.
 The source checkpoint is hashed again after the run. An optional `--workbook`
 selects an edited remaining plan without changing that source checkpoint.
 
+When publishing cumulative inventories, the source checkpoint defines the inherited
+history. Copies of those older checkpoints inside a resumed trial folder are
+skipped, so each accepted stage appears once. The completed-sector sequence is
+validated before reading inventory workbooks; inconsistent history stops export.
+Historical sources with identical content apart from timestamps, the discarded
+step-plan sheet and the informational `DB units` preview share one parsed payload.
+Numeric units in the inventories and support tables remain part of the comparison. The latest source is read independently
+to retain its current pending plan. All stage-equivalence checks still run.
+
 For a first-group pilot, name its plan column `Mining` and add
 `--stop-after-step Mining` to that solve command. MARIO writes the accepted
 intermediate database and remaining workbook, then returns before the next
@@ -161,10 +170,11 @@ its completed results and cannot clean them again in place.
 ## Policy contract and sector identities
 
 `config/cleaning-policy.json` is versioned, contains no numerical source payload,
-and gives an explicit decision for all 67 released sector identities. Each entry
+and gives an explicit decision for 66 canonical working activities (67 historical
+release identities before consolidating NCM into NMC). Each entry
 contains the expected declared parent and an output-source recipe. A different
 declared input parent or an unknown child fails rather than silently changing
-the meaning of a frozen policy. The default policy requires all 67 sectors;
+the meaning of a frozen policy. The default policy requires all 66 working activities;
 custom policies can define smaller complete sets.
 
 Reviewed registry parents take precedence. An explicitly selected conditional
@@ -187,9 +197,63 @@ The initial scope conventions are:
 These are modelling conventions, not new NACE/HS certification. In particular,
 the recovery/manufacturing and turbine/generator boundaries remain visible.
 GAR and NMC also use their reviewed NFM and EEQ parents. A changed parent triggers
-a new parent technology prior; it is not a label-only edit. NMC remains distinct
-from NCM: absent an independently identified template, its historical global
-child/old-parent share is transferred to the reviewed parent and labelled imputed.
+a new parent technology prior; it is not a label-only edit.
+
+Since the 23 November 2026 identity correction, **NMC** is the only active working
+code for nickel-manganese-cobalt batteries. Its production observations, trade
+and technology come from the former **NCM/EEQ** source. The separate historical
+**NMC/OME** input is superseded, never added to it. The explicit alias and source
+precedence are frozen in `sector_identities` inside the policy. Both preparation
+entry points select one complete source inventory and output reference before
+reading targets, map NCM input references to NMC, and collapse the old pair in
+step plans. Customs data use one source table, never the sum of aliases.
+
+The current partner input is `Inventory_Manufacture of NMC batteries.xlsx` in
+`Data collection/Final`; the original NCM submission is retained in
+`Data collection/Raw data/NMC identity correction`. Only identity metadata is
+corrected; numerical cells, formulas and their cached values remain unchanged.
+The operational matching and working classification use NMC/EEQ. Published
+classification rows and source concordances retain their historical identifiers
+with explanatory notes. The historical registry continues to expose both IDs;
+it is not the list of active activities for a new preparation.
+
+This reduces the full collected plan from 69 to **68 additions**, or **144 total
+sectors** with the 76-sector baseline. Existing 145-sector databases and frozen
+old policies are not migrated or relabelled.
+
+After a successful PCP split, PCP is labelled **Manufacture of coke** and the
+P_C remainder **Manufacture of petroleum products**. The unsplit baseline keeps
+its original Petroleum and coal products description. Codes and numerical flows
+are unchanged; a failed/skipped PCP does not relabel P_C as petroleum only. For a saved
+result, `python scripts/refresh_sector_names.py --database PATH` refreshes the
+paired report/dashboard from saved flows only. Then
+`python scripts/export_saved_gdx.py --database PATH --overwrite` updates GDX set
+descriptions and checks every exported value against the unchanged source flows.
+The saved result carries `sector-names.json`; baseline labels, original inputs,
+sector codes and numerical matrices remain unchanged. An explicitly supplied older policy
+without `sector_identities` retains its original separate identities.
+
+### Consolidating a previously saved result
+
+The 61-region model-ready result initially still contained both historical
+accounts. `scripts/consolidate_saved_identities.py --database OLD --output NEW`
+consolidates these saved accounts through MARIO's public sector aggregation API.
+This differs from choosing a single raw source: every existing flow is retained,
+with Z aggregated on both axes (including all four self-consumption cells),
+Y on its supplying-sector axis, V/E on their producing-sector axis, and the
+independently recorded X summed and restored. Coefficients are calculated from
+the combined flows and X, so the combined recipe is production-weighted. No
+optimisation or IO quantity solve is performed.
+
+The original 145-sector result is preserved. The consolidated result has 144
+sectors (68 added activities). A separate check compares every flow block with
+an independent aggregation and verifies global production, final demand and
+value added. GDX is read back cell by cell. Historical NCM and NMC constraint
+observations are summed with both source files/cells retained; they were not
+jointly imposed in one model. Dashboard and reference comparisons are rebuilt
+from saved flows and verified 2023 caches. Original activation evidence remains
+labelled as belonging to the predecessor. E remains pending recalculation.
+
 
 The policy explicitly pairs one file with one identity. Copied `General info`
 labels are logged as context and do not select a different activity or merge
@@ -548,3 +612,25 @@ EXIOIOT and exports two explicit parent-factor scenarios with joint Z/V
 reconciliation. It also flags broader technology concerns. These are data-only
 proposals; the ordinary preparation and input workbooks are unchanged. A sign
 repair should not be mistaken for independent economic validation.
+
+
+## Reconciliation during sequential insertion
+
+The [sequential build guide](conservative-priors.md) documents the integrated
+runner. Before each step it jointly reconciles all pending siblings of the
+affected parents against the actual last accepted database. The baseline and
+profiles remain fixed; prepared outputs have only the audited sub-precision
+support/excess normalization described in the sequential guide. The standalone checkpoint projection remains
+available, but manual workbook patching is not needed for this build path.
+Every fitted target and previously absent route is audited; fitted zeros are
+explicit scenario constraints, not certified observations. No CVXLab changes
+or objective/solver fallback are introduced.
+
+The projection's export cap includes the positive inherited row discrepancy,
+as required by the main model's accounting convention. Per-row numerical scaling
+is deterministic and retains the same mathematical loss. A fully allocated
+single child with nonnegative deliveries has uniquely determined foreign trade;
+those budgets are copied exactly. Hard zero trade capacities also remain exact
+zeros. All scenario changes and their original source values are retained.
+See [input consistency and zero support](conservative-priors.md#input-consistency-with-inherited-accounting-and-zero-support)
+for the policies, numeric examples and limits.

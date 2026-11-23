@@ -34,9 +34,14 @@ def budgets(regions=('R1','R2','R3'),output=10.,trade=5.):
     return ParentBudgets(pd.Series(output,index=axis),pd.DataFrame(trade,index=axis,columns=regions),{'Parent':'M USD'})
 
 
-def test_policy_freezes_all_67_explicit_decisions_and_rejects_unsupported_rules():
+def test_policy_freezes_66_canonical_decisions_and_rejects_unsupported_rules():
     policy,digest=load_policy()
-    assert len(policy['sectors'])==67 and len(digest)==64
+    assert len(policy['sectors'])==66 and len(digest)==64
+    assert 'NCM' not in policy['sectors']
+    assert policy['sectors']['NMC']['declared_parent']=='EEQ'
+    assert policy['sectors']['NMC']['output_source']['kind']=='template'
+    assert policy['trade']['composites']['LBT'].count('NMC')==1
+    assert 'NCM' not in policy['trade']['composites']['LBT']
     assert policy['sectors']['MSI']['output_source']['factor']==1e-6
     assert policy['sectors']['PLSR']['output_source']['column']=='E'
     assert policy['sectors']['RBR']['output_source']['kind']=='template_share'

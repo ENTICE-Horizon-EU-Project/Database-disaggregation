@@ -4,6 +4,7 @@ from functools import lru_cache
 import math
 
 from openpyxl.utils.cell import column_index_from_string
+from database_disaggregation.core import working_identity as identities
 
 
 def number(value, *, context):
@@ -112,7 +113,8 @@ class Sources:
                 if (origin,destination) in tables[sector]:
                     raise ValueError(f'Duplicate NTSCIF coordinate: {sector}/{origin}/{destination}')
                 tables[sector][(origin,destination)] = value or 0.
-            self.customs_trade = dict(tables)
+            self.customs_trade = identities.select_sources(dict(tables),identities.rules_for(self.policy),
+                                                           audit=self.audit,context='customs_trade')
         finally:
             book.close()
 
@@ -151,6 +153,10 @@ class Sources:
                     before=value,after=value,source=source,state=state,unit='M USD',assumption=rule['assumption'])
             return result
         path = self.paths['partner_templates']/rule['file']
+        if not path.exists() and rule.get('legacy_file'):
+            path = self.paths['partner_templates']/rule['legacy_file']
+            self.audit.record('legacy_template_filename',kind='identity',sector=sector,source=str(path),
+                              assumption='Explicit former NCM snapshot; canonical working code is NMC')
         book = self.audit.workbook(path,role='partner_template')
         formulas = self.audit.workbook(path,role='partner_template',data_only=False)
         try:

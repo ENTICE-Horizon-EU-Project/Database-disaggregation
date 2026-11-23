@@ -12,7 +12,7 @@ const path=require('node:path');
   await page.goto(pathToFileURL(path.resolve(process.argv[2])).href);
   await page.waitForFunction(()=>document.getElementById('costs').data?.length>0);
   const meta=await page.evaluate(()=>({regions:D.regions.length,sectors:D.products.length,
-    child:D.products.find(p=>D.payload[p].output_reference_kind==='Constraint'),
+    child:D.products.find(p=>D.payload[p].output_reference_kind.toLowerCase().includes('constraint')),
     references:D.references.rows.length}));
   assert.ok(meta.child);
   await pickSector(meta.child);
@@ -26,9 +26,9 @@ const path=require('node:path');
     costRows:[...cost.data[0].y].sort(),expectedRows:[...D.cost_items].sort(),
     costX:cost.layout.xaxis.title.text,costY:cost.layout.yaxis.title.text,
     usesX:uses.layout.xaxis.title.text,usesY:uses.layout.yaxis.title.text,
-    closure:v.cost_shares.every(row=>row.every(x=>x===null)||Math.abs(row.reduce((sum,value)=>sum+(value||0),0)-100)<1e-8)};
+    closure:v.cost_shares.every(row=>row.every(x=>x===null)||Math.abs(row.reduce((sum,value)=>sum+(value||0),0)-100)<=Math.max(1e-8,4*Number.EPSILON*row.length*row.reduce((sum,value)=>sum+Math.abs(value||0),0)))};
   });
-  assert.ok(before.names.includes('Constraint'));
+  assert.ok(before.names.includes(await page.evaluate(()=>D.payload[selectedProduct].output_reference_kind)));
   assert.equal(await page.locator('#input-evidence').count(),0);
   assert.ok(await page.evaluate(()=>Object.values(D.payload).every(v=>!('input_provenance' in v)&&!('output_cells' in v)&&!('trade_cells' in v))));
   assert.ok(await page.evaluate(()=>D.references.sources.every(s=>!('path' in s)&&!('profile_cache' in s))));
@@ -75,7 +75,7 @@ const path=require('node:path');
   await page.click('#destination-picker summary');
   const hover=await page.evaluate(()=>document.getElementById('trade').data[0].link.customdata[0]);
   const routeNames=await page.evaluate(route=>[D.region_names[route.origin],D.region_names[route.destination]],route);for(const name of routeNames)assert.ok(hover.replaceAll('<br>',' ').includes(name));
-  assert.match(hover,/Result:/);assert.match(hover,/Constraint:/);assert.match(hover,/Difference:/);assert.match(hover,/total Z \+ all Y/);assert.doesNotMatch(hover,/Input:|Trades!/);
+  assert.match(hover,/Result:/);assert.match(hover,await page.evaluate(()=>D.payload[selectedProduct].finalized)?/Original disaggregation constraint:/:/Constraint:/);assert.match(hover,/Difference:/);assert.match(hover,/total Z \+ all Y/);assert.doesNotMatch(hover,/Input:|Trades!/);
   await page.selectOption('#tradeview','matrix');
   assert.equal(await page.evaluate(()=>document.getElementById('trade').data[0].text[0][0]),hover);
   assert.ok(await page.evaluate(()=>document.getElementById('trade').layout.height<=740));
@@ -87,6 +87,14 @@ const path=require('node:path');
   await page.waitForFunction(()=>document.documentElement.scrollWidth<=innerWidth+1);
   await page.click('#show-results');
   await page.waitForFunction(()=>document.documentElement.scrollWidth<=innerWidth+1);
+  if(await page.evaluate(()=>D.payload[selectedProduct].finalized)){
+   await pickSector('LFP');
+   const assigned=await page.evaluate(()=>{const i=D.regions.indexOf('RUS'),v=D.payload.LFP;return {output:v.output[i],status:v.cost_recipe_status[i],shares:v.cost_shares[i],hover:document.getElementById('costs').data[0].customdata[0][i][3]}});
+   assert.ok(Math.abs(assigned.output-1e-5)<1e-12);
+   assert.match(assigned.status,/Assigned global recipe/);assert.equal(assigned.hover,assigned.status);
+   assert.ok(assigned.shares.every(x=>x!==null&&x>=0&&x<=100));
+   assert.ok(Math.abs(assigned.shares.reduce((a,b)=>a+b,0)-100)<1e-8);
+  }
   assert.deepEqual(errors,[]);assert.deepEqual(requests,[]);
   console.log(JSON.stringify({meta,all_cost_rows:true,signed_cost_closure:true,search_by_code_and_name:true,sector_type_filter:true,original_row_order:true,production_click_evidence:true,region_full_names:true,bar_full_name:true,effective_constraints:true,
    no_external_file_links:true,bilateral_hover_scope:true,sibling_navigation:true,reference_export:true,mobile_overflow:false,errors,requests}));

@@ -1,4 +1,4 @@
-"""Prepare all 69 activities on the native-compatible model geography."""
+"""Prepare the canonical working activities on the native-compatible geography."""
 import argparse
 from collections import defaultdict
 from copy import deepcopy
@@ -13,6 +13,7 @@ from database_disaggregation.core.paths import PROJECT_ROOT, data_path, project_
 from database_disaggregation.core.geography import Geography
 from database_disaggregation.core.baseline import load_baseline
 from database_disaggregation.core.registry import Registry
+from database_disaggregation.core import working_identity as identities
 from database_disaggregation.core.disaggregation import read_output_references
 from database_disaggregation.core.parent_budgets import ChildTargets, read_child_targets, require_parent_budgets, ParentBudgets
 from database_disaggregation.reconciliation.audit import Audit
@@ -32,7 +33,8 @@ def main():
     audit=Audit(root/'audit')
     extra=json.loads((PROJECT_ROOT/'config/additional-sectors-13.json').read_text())
     policy,_=load_policy();policy=deepcopy(policy)
-    policy['id']='entice-69-model-regions-v1'
+    policy['id']='entice-collected-model-regions-v2-nmc'
+    identity_rules=identities.rules_for(policy)
     for sector,rule in extra['sectors'].items():
         policy['sectors'][sector]=deepcopy(rule)
         if sector in extra['country_components']:
@@ -49,11 +51,17 @@ def main():
     native=NativeBaseline(baseline,audit=audit)
     geo.validate(native.regions)
     database=load_baseline(baseline,'mario_parquet',geography=geo)
-    files={p.stem:p for p in data_path('resolved_inventories',required=True).glob('*.xlsx') if p.stem not in extra['sectors']}
-    assert len(files)==66 and len(policy['sectors'])==69
+    files=identities.inventory_sources(
+        (p for p in data_path('resolved_inventories',required=True).glob('*.xlsx')
+         if p.stem not in extra['sectors'] and not p.name.startswith('~$')),identity_rules,audit=audit)
+    expected=set(policy['sectors'])-set(extra['sectors'])
+    if set(files)!=expected:
+        raise ValueError(f'Native inventory coverage differs from policy: missing={expected-set(files)}, extra={set(files)-expected}')
     references=read_output_references(data_path('mario_inventories',required=True),
         read_bytes=lambda p:audit.read(p,role='native_output_reference'))
-    targets=read_child_targets(list(files.values()),output_references=references)
+    references=identities.output_references(references,identity_rules,audit=audit)
+    targets=read_child_targets(list(files.values()),output_references=references,
+                               sector_aliases=identity_rules.get('code_aliases'))
     for p,h in targets.sources.items():audit.files[p]={'sha256':h,'bytes':Path(p).stat().st_size,'role':'native_resolved_inventory'}
     master=pd.concat([targets.master,pd.DataFrame([{'Sector':s,'Parent Sector':r['declared_parent'],'Add or Split':'Split'}
         for s,r in extra['sectors'].items()])],ignore_index=True)
@@ -61,7 +69,7 @@ def main():
     parents,old=resolve_parents(policy,targets,Registry.load(),native,audit)
     paths={name:data_path(name,required=True) for name in ['purdue_split_targets','purdue_trade','partner_templates']}
     sources=CountryComponentSources(Sources(paths,Registry.load(),native,policy,audit),extra['country_components'],audit)
-    logging.info('Reconciling outputs jointly for all 69 activities')
+    logging.info('Reconciling outputs jointly for %s activities',len(policy['sectors']))
     native_outputs,outputs,_=prepare_outputs(policy,sources,native,geo,targets,parents,old,audit)
     priors,kinds=prepare_trade(policy,sources,native,geo,parents,native_outputs,outputs,audit)
     trade,records=reconcile_trade(priors,kinds,parents,outputs,native.budgets.aggregate(geo),policy,audit)
@@ -114,7 +122,10 @@ def main():
     payload=database.add_sectors_workbook
     previous_state=json.loads((project_data_root()/'Database/D2.8/20261021 0655 - 13 regions and 67 sectors/state.json').read_text())
     order=[*previous_state['completed_sectors'],'BAR','SGI']
-    assert set(order)==set(parents) and len(order)==69
+    steps=identities.intermediate_steps({f'Source {i}':[s] for i,s in enumerate(order)},identity_rules)
+    order=[s for group in steps.values() for s in group]
+    if set(order)!=set(parents):
+        raise ValueError('Historical order differs from the prepared working sector universe.')
     steps={f'Sector {s}':[s] for s in order}
     support=dict(payload.split_info)
     # Explicit complete foreign routes preserve subsequent sibling budgets.
@@ -129,7 +140,8 @@ def main():
     database.to_parquet(path=root/'baseline',flows=True,coefficients=False,include_meta=True)
     summary=dict(status='prepared',regions=len(geo.regions),sectors=order,profiles=len(payload.master_sheet),
         steps=steps,geography=geo.mapping,policy=str(root/'policy.json'),MRIO_split_solved=False,
-        excluded=['AMM','HYS','new_silicon_extraction'],scope='66 original activities plus rebuilt PCP and new BAR/SGI')
+        excluded=['AMM','HYS','new_silicon_extraction'],scope='Canonical working collection including rebuilt PCP and new BAR/SGI',
+        sector_identities=identity_rules)
     (root/'preparation.json').write_text(json.dumps(summary,indent=2)+'\n')
     audit.finish(summary);audit.close()
     logging.info('Preparation complete: %s regions, %s activities, %s profiles',len(geo.regions),len(order),len(payload.master_sheet))

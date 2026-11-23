@@ -299,7 +299,9 @@ def build_comparisons(report,mapping,baskets,*,reference_root,cache,mario_source
         scale=baskets['currency']['exiobase_EUR_to_USD'] if family=='EXIOBASE' else .001 if family=='GLORIA' else 1.
         for basket in baskets['baskets']:
             if basket['family']!=family:continue
-            fsectors,bsectors,missing = basket_sector_selection(basket,final['sector_codes'],baseline['sector_codes'],parents)
+            aliases=report.get('identity_consolidation',{}).get('aliases',{})
+            selected_basket={**basket,'entice_children':list(dict.fromkeys(aliases.get(s,s) for s in basket.get('entice_children',[])))}
+            fsectors,bsectors,missing = basket_sector_selection(selected_basket,final['sector_codes'],baseline['sector_codes'],parents)
             if missing:
                 unavailable_baskets.append(dict(family=family,basket=basket['id'],label=basket['label'],missing_entice_children=missing,reason='Activity not separated in this checkpoint; retained in its parent.'))
                 continue

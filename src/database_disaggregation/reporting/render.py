@@ -21,6 +21,12 @@ def _audit(report, audit_stem):
         (esc(str(len(skipped))+' planned activities remain inside their parents: '+', '.join(skipped)+'. ') if skipped else '')+
         esc(str(review)+' comparisons outside the strict recorded tolerance; residuals remain visible in the audit. ' if review else '')+
         'Economic review and environmental extensions remain separate.</div>')
+    finalization=report.get('finalization')
+    if finalization:
+        notice += ('<div class="checks muted"><b>Finalized modelling scenario.</b> '+
+            esc(('In the predecessor scenario, ' if finalization.get('source_activity_count') else '')+str(finalization['activated_accounts'])+' inactive accounts received a global or inventory recipe and '+
+                str(finalization['policy']['final_demand_usd'])+' USD of additional domestic household demand each. ')+
+            'Production and trade were recomputed. Original split constraints are historical references; economic review and E recalculation remain pending.</div>')
     panel=('<details class="panel"><summary><b>Numerical audit</b></summary><p class="muted">'+
         'Saved monetary flows and baseline are unchanged. Numerical policy: '+esc(policy.get('numerical_validation','strict'))+
         '. Strict deviations are reported without altering the saved result. Targets are prepared model inputs, not independent validation.</p>'+

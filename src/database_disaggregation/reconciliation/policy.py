@@ -35,6 +35,16 @@ def load_policy(value=True):
             raise ValueError(f'{sector}: an explicit template file and value column are required.')
         if float(source.get('factor',1)) <= 0:
             raise ValueError('Unit conversion factors must be positive.')
+    identity = document.get('sector_identities', {})
+    aliases = identity.get('code_aliases', {})
+    for old, canonical in aliases.items():
+        if old == canonical or canonical in aliases:
+            raise ValueError('Working sector aliases must be direct and acyclic.')
+        if old in document['sectors']:
+            raise ValueError(f'Alias {old} must not also be an active working sector.')
+        preferred = identity.get('preferred_sources', {}).get(canonical, [])
+        if set(preferred) != {canonical, *(key for key, value in aliases.items() if value == canonical)} or len(preferred) != len(set(preferred)):
+            raise ValueError(f'Explicit complete source precedence is required for {canonical}.')
     for group in document.get('overlap_groups',[]):
         if set(group['members']) - document['sectors'].keys() or group['reference'] not in group['members']:
             raise ValueError('An overlap group must refer to known sector identities.')

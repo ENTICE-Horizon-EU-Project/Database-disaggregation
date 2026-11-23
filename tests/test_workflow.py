@@ -31,6 +31,9 @@ def small_database():
 
 
 def test_full_explicit_workflow_and_orchestrator_match(tmp_path, monkeypatch):
+    import mario
+    if not hasattr(mario.Database,'build_split_model'):
+        pytest.skip('Separated stages require the documented MARIO explicit-workflow checkout.')
     native = small_database()
     original = {n: native.resolve(n).copy() for n in ['Z','Y','V','E','EY','X']}
     source = tmp_path/'collection'; source.mkdir()

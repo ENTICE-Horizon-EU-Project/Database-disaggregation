@@ -6,6 +6,7 @@ from pathlib import Path
 import openpyxl
 
 from database_disaggregation.core.paths import find_data_file
+from database_disaggregation.core import working_identity as identities
 
 
 @dataclass(frozen=True)
@@ -82,6 +83,9 @@ def load_legacy_gtap12_maps(path_or_repo: str | Path) -> tuple[dict[str, str], d
 
     sector_map = _load_firstcol_to_namedcol(workbook['Sector'], 'GTAP12')
     factor_map = _load_firstcol_to_namedcol(workbook['Factor of production'], 'GTAP12')
+    for old,new in identities.default_rules().get('name_aliases',{}).items():
+        if new in sector_map:
+            sector_map[old]=sector_map[new]
     return sector_map, factor_map
 
 
@@ -170,7 +174,7 @@ def find_sector_match(
     path_or_repo: str | Path,
     inventory_name: str,
 ) -> SectorMatch | None:
-    needle = inventory_name.strip().casefold()
+    needle = identities.sector_name(inventory_name,identities.default_rules()).strip().casefold()
     sector_rows, _ = load_matching_rows(path_or_repo)
     for row in sector_rows:
         if row.entice_name.casefold() == needle:
@@ -182,7 +186,7 @@ def find_sector_matches_by_code(
     path_or_repo: str | Path,
     sector_code: str,
 ) -> list[SectorMatch]:
-    needle = sector_code.strip().upper()
+    needle = identities.sector_code(sector_code.strip().upper(),identities.default_rules())
     if not needle:
         return []
 

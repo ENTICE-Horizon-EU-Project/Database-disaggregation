@@ -135,3 +135,70 @@ def test_region_display_names_are_metadata_and_do_not_rename_flow_coordinates():
     assert list(db.Z.index.get_level_values('Region').unique()) == ['A', 'B']
     with pytest.raises(ValueError, match='cover the exact saved regions'):
         dashboard_payload(db, labels={}, region_names={'A': 'Country A'})
+
+
+def test_cumulative_accepted_history_matches_legacy_constraints_and_checks_payloads(tmp_path):
+    from hashlib import sha256
+    root, payload = effective_archive(tmp_path)
+    legacy, old_rows = archived_constraints(root)
+    folder = root / 'reproducibility'
+    folder.mkdir()
+    member = 'accepted/001_p/compiled_step_add_sectors.xlsx'
+    manifest = dict(format='entice-accepted-history-v1',
+        completed_steps=[dict(step=1, sectors=['p'], compiled=member,
+                             exact_source='accepted/001_p/exact_source_add_sectors.xlsx')],
+        files={member: dict(archived_sha256=sha256(payload).hexdigest())})
+    def write(content):
+        with ZipFile(folder / 'accepted-history.zip', 'w') as z:
+            z.writestr('MANIFEST.json', json.dumps(manifest))
+            z.writestr(member, content)
+    write(payload)
+    current, rows = archived_constraints(root)
+    for key in ['output_targets', 'trade_targets', 'trade_delta']:
+        assert current['p'][key] == legacy['p'][key]
+    assert current['p']['exact_source_member'].endswith('exact_source_add_sectors.xlsx')
+    assert rows.constraint.tolist() == old_rows.constraint.tolist()
+    # A modified compiled snapshot must not silently become a model constraint.
+    write(payload + b'changed')
+    with pytest.raises(ValueError, match='checksum failed'):
+        archived_constraints(root)
+
+
+def test_signed_cost_cancellation_does_not_block_reporting_or_change_values():
+    db = database()
+    zsum = db.Z.sum(axis=0).to_numpy()
+    db.V = pd.DataFrame([np.full(len(zsum), 1e9), -1e9 - zsum + 3.2],
+                        index=['Labor', 'Tax'], columns=db.Z.columns)
+    before_z, before_v = db.Z.copy(), db.V.copy()
+    result = cost_profile(db, 'p')
+    # Raw signed costs, including large offsets, must remain inspectable.
+    assert result.shares.loc['VA · Tax'].lt(0).all()
+    assert result.shares.abs().max().max() > 1e9
+    pd.testing.assert_frame_equal(db.Z, before_z)
+    pd.testing.assert_frame_equal(db.V, before_v)
+    from database_disaggregation.analysis.flows import _check_share_closure
+    with pytest.raises(ValueError, match='roundoff bound'):
+        _check_share_closure(pd.DataFrame([[40.], [50.]]), axis=0)
+
+
+def test_finalization_reuses_source_constraints_without_copying_the_archive(tmp_path):
+    source, _ = effective_archive(tmp_path)
+    final = tmp_path / 'model-ready'
+    final.mkdir()
+    (final / 'state.json').write_text(json.dumps(dict(format='entice-finalized-database-v1',
+        completed_sectors=['p'], source_database_directory='../saved')))
+    constraints, rows = archived_constraints(final)
+    assert constraints['p']['trade_targets'] == {'A': {'B': 0.}}
+    assert len(rows) == 3
+    assert not (final / 'diagnostics/step-artifacts.zip').exists()
+
+
+def test_finalization_labels_assigned_recipes_and_historical_constraints():
+    data = dashboard_payload(database(), labels={}, target_profiles={'p': dict(
+        constraints_verified=True, finalized=True, output_reference_kind='Original disaggregation constraint',
+        activation_regions={'A':0.}, activation_recipe_source='output-weighted active producers',
+        output_targets={'A':0.})})['payload']['p']
+    assert data['output_reference_kind'] == 'Original disaggregation constraint'
+    assert data['finalized']
+    assert data['cost_recipe_status'][0].startswith('Assigned global recipe')
+    assert data['cost_recipe_status'][1].startswith('Regional recipe retained')

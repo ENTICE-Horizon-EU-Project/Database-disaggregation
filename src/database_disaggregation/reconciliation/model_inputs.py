@@ -1,4 +1,4 @@
-"""Prepare all 69 activities on the native-compatible model geography."""
+"""Prepare the collected working activities on the native-compatible geography."""
 from collections import defaultdict
 from copy import deepcopy
 from dataclasses import replace
@@ -12,6 +12,7 @@ from database_disaggregation.core.paths import PROJECT_ROOT, data_path, project_
 from database_disaggregation.core.geography import Geography
 from database_disaggregation.core.baseline import copy_database
 from database_disaggregation.core.registry import Registry
+from database_disaggregation.core import working_identity as identities
 from database_disaggregation.core.disaggregation import PreprocessedData, read_output_references
 from database_disaggregation.core.parent_budgets import ChildTargets, read_child_targets, require_parent_budgets, ParentBudgets
 from database_disaggregation.reconciliation.audit import Audit
@@ -81,7 +82,8 @@ def _prepare_model_inputs(database, output_dir, *, geography=None, steps=None, s
     try:
         extra=json.loads(Path(extra_config or PROJECT_ROOT/'config/additional-sectors-13.json').read_text())
         policy,_=load_policy();policy=deepcopy(policy)
-        policy['id']='entice-69-model-regions-v1'
+        policy['id']='entice-collected-model-regions-v2-nmc'
+        identity_rules=identities.rules_for(policy)
         for sector,rule in extra['sectors'].items():
             policy['sectors'][sector]=deepcopy(rule)
             if sector in extra['country_components']:
@@ -98,15 +100,19 @@ def _prepare_model_inputs(database, output_dir, *, geography=None, steps=None, s
         native=NativeBaseline(database=database,audit=audit)
         geo.validate(native.regions)
         database=copy_database(database,geo)
-        files={p.stem:p for p in Path(source_dir or source_path('resolved_inventories')).glob('*.xlsx')
-               if p.stem not in extra['sectors'] and not p.name.startswith('~$')}
+        files=identities.inventory_sources(
+            (p for p in Path(source_dir or source_path('resolved_inventories')).glob('*.xlsx')
+             if p.stem not in extra['sectors'] and not p.name.startswith('~$')),
+            identity_rules,audit=audit)
         expected=set(policy['sectors'])-set(extra['sectors'])
         if set(files)!=expected:
             raise ValueError(f'Native inventory coverage differs from the policy: missing={expected-set(files)}, extra={set(files)-expected}')
         reference_dir = source_path('mario_inventories')
         references=read_output_references(reference_dir,
             read_bytes=lambda p:audit.read(p,role='native_output_reference')) if reference_dir is not None else {}
-        targets=read_child_targets(list(files.values()),output_references=references)
+        references=identities.output_references(references,identity_rules,audit=audit)
+        targets=read_child_targets(list(files.values()),output_references=references,
+                                   sector_aliases=identity_rules.get('code_aliases'))
         for p,h in targets.sources.items():audit.files[p]={'sha256':h,'bytes':Path(p).stat().st_size,'role':'native_resolved_inventory'}
         master=pd.concat([targets.master,pd.DataFrame([{'Sector':s,'Parent Sector':r['declared_parent'],'Add or Split':'Split'}
             for s,r in extra['sectors'].items()])],ignore_index=True)
@@ -114,7 +120,7 @@ def _prepare_model_inputs(database, output_dir, *, geography=None, steps=None, s
         parents,old=resolve_parents(policy,targets,Registry.load(),native,audit)
         paths={name:source_path(name) for name in ['purdue_split_targets','purdue_trade','partner_templates']}
         sources=CountryComponentSources(Sources(paths,Registry.load(),native,policy,audit),extra['country_components'],audit)
-        logging.info('Reconciling outputs jointly for all 69 activities')
+        logging.info('Reconciling outputs jointly for %s activities',len(policy['sectors']))
         native_outputs,outputs,_=prepare_outputs(policy,sources,native,geo,targets,parents,old,audit,
             missing_output=missing_output, inconsistent_targets=inconsistent_targets)
         priors,kinds=prepare_trade(policy,sources,native,geo,parents,native_outputs,outputs,audit)
@@ -177,7 +183,7 @@ def _prepare_model_inputs(database, output_dir, *, geography=None, steps=None, s
         logging.info('Reading native MARIO inventory payload and building one-sector steps')
         database.read_add_sectors_excel(root/'inventories',read_inventories=True,split=True)
         payload=database.add_sectors_workbook
-        steps=steps or {f'Sector {sector}':[sector] for sector in policy['sectors']}
+        steps=identities.intermediate_steps(steps,identity_rules) if steps else {f'Sector {sector}':[sector] for sector in policy['sectors']}
         order=[sector for group in steps.values() for sector in group]
         if len(order)!=len(set(order)) or set(order)!=set(parents):
             raise ValueError('The step plan must contain each prepared sector exactly once.')
@@ -195,7 +201,8 @@ def _prepare_model_inputs(database, output_dir, *, geography=None, steps=None, s
         summary=dict(status='prepared',regions=len(geo.regions),sectors=order,profiles=len(payload.master_sheet),
             steps=steps,geography=geo.mapping,policy=str(root/'policy.json'),MRIO_split_solved=False,
             preprocessing_options=options,data_root=str(data_root or project_data_root()),baseline_exported=False,
-            excluded=['AMM','HYS','new_silicon_extraction'],scope='66 original activities plus rebuilt PCP and new BAR/SGI')
+            excluded=['AMM','HYS','new_silicon_extraction'],scope='Canonical working collection including rebuilt PCP and new BAR/SGI',
+            sector_identities=identity_rules)
         (root/'preparation.json').write_text(json.dumps(summary,indent=2)+'\n')
         audit.finish(summary)
         logging.info('Preparation complete: %s regions, %s activities, %s profiles',len(geo.regions),len(order),len(payload.master_sheet))

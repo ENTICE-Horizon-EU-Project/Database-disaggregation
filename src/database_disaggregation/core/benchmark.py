@@ -289,7 +289,19 @@ def prepared_targets(final, state):
     manifest = final.root / 'execution_report.json'
     if not manifest.exists():
         manifest = final.root / 'diagnostics/run_report.json'
-    if archive.is_file() and manifest.is_file():
+    history = final.root / 'reproducibility/accepted-history.zip'
+    if history.is_file() or state.get('format') == 'entice-finalized-database-v1':
+        from database_disaggregation.reporting.constraints import archived_constraints, constraint_archive
+        history = constraint_archive(final.root)
+        _, records = archived_constraints(final.root)
+        for row in records.itertuples():
+            if row.kind == 'Output':
+                outputs[(row.product, row.origin)] = row.constraint
+            else:
+                trades[(row.product, row.origin, row.destination)] = row.constraint
+        sources.append(dict(path=str(history), sha256=sha256(history)))
+        current = Path('/nonexistent-benchmark-history')
+    elif archive.is_file() and manifest.is_file():
         attempts = json.loads(manifest.read_text())['attempts']
         accepted = [a for a in attempts if a['status'] == 'accepted']
         accepted_sectors = [s for a in accepted for s in a['sectors']]
@@ -531,6 +543,8 @@ def build_report(baseline, database, *, system=True):
                                 for item in registry.adapters['GTAP12']['parent_catalogue']})
     dims['baseline_sector_names'] = dict(dims['sector_names'])
     dims['sector_names'].update(state.get('residual_index_renames', {}))
+    from database_disaggregation.core.residual_labels import post_split_display_names
+    dims['sector_names']=post_split_display_names(dims['sector_names'],parents,completed)
     region_name_source = final.root / 'diagnostics/provenance/region-names.csv'
     region_name_provenance = None
     if region_name_source.is_file():
@@ -550,7 +564,26 @@ def build_report(baseline, database, *, system=True):
         if sha256(additions) != digest:
             raise RuntimeError('Published sector-name source changed during benchmarking.')
         name_sources.append(dict(path=str(additions), sha256=digest))
-    return dict(format='entice-benchmark-v2', generated_at=datetime.now(timezone.utc).isoformat(),
+    finalization = None
+    if state.get('format') == 'entice-finalized-database-v1':
+        evidence_root = ((final.root / state['source_database_directory']).resolve()
+                         if state.get('identity_consolidation') else final.root)
+        evidence = evidence_root / 'finalization-report.json'
+        changes_path = evidence_root / 'production-changes.csv'
+        details = json.loads(evidence.read_text())
+        changes_table = pd.read_csv(changes_path)
+        activated = changes_table.loc[changes_table.activated]
+        finalization = dict(policy=details['policy'], activated_accounts=details['activated_accounts'],
+            added_final_demand_USD=details['total_added_final_demand_USD'],
+            recipe_sources=details['recipe_sources'],
+            activation_profiles={sector: {row.region: float(row.source_X_MUSD) for row in table.itertuples()}
+                                 for sector,table in activated.groupby('sector')})
+        if state.get('identity_consolidation'):
+            from database_disaggregation.reconciliation.saved_identity import consolidate_finalization
+            finalization=consolidate_finalization(finalization,state['identity_consolidation']['aliases'],
+                dims['regions'],len(state['completed_sectors'])+len(state['identity_consolidation']['aliases']))
+        sources.extend(dict(path=str(p), sha256=sha256(p)) for p in [evidence, changes_path])
+    return dict(finalization=finalization, format='entice-benchmark-v2', generated_at=datetime.now(timezone.utc).isoformat(),
                 summary=summary, dimensions=dims, checks=checks, targets=target_summary,
                 sectors=rows, baseline_sectors=b_rows, issues=issues, systems=systems,
                 trade_changes=changes,

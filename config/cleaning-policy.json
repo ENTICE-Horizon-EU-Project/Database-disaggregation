@@ -1,6 +1,6 @@
 {
   "schema_version": 1,
-  "id": "entice-reconciliation-v1",
+  "id": "entice-reconciliation-v2-nmc",
   "status": "Project assumptions for reproducible reconciliation; not source certification",
   "target_year": 2023,
   "currency_unit": "M USD",
@@ -14,7 +14,8 @@
     "LMO monetary row labels are interpreted as 2023 despite the older header.",
     "SDG monetary row units take precedence over the physical unit in its header; CEM formulas are interpreted dimensionally as MUSD.",
     "Raw trade is a prior on model deliveries; CIF/customs observations are not exact basic-price or domestic-origin observations.",
-    "All coefficients and imputed targets remain estimates; baseline matrices and signed accounts are not cleaned away."
+    "All coefficients and imputed targets remain estimates; baseline matrices and signed accounts are not cleaned away.",
+    "NMC is the canonical working activity. Use the former NCM output, trade and technical inventory (EEQ); retire the separate historical NMC/OME working record. Do not sum the two records."
   ],
   "sectors": {
     "AGT": {
@@ -449,22 +450,6 @@
         ]
       }
     },
-    "NCM": {
-      "name": "Manufacture of NCM batteries",
-      "declared_parent": "EEQ",
-      "output_source": {
-        "kind": "template",
-        "file": "Inventory_Manufacture of NCM batteries.xlsx",
-        "column": "E",
-        "unit_column": "F",
-        "factor": 1.0,
-        "assumption": "explicit_monetary_candidate",
-        "expected_headers": [
-          "2023 Value",
-          "(free to fill)"
-        ]
-      }
-    },
     "NFR": {
       "name": "Manufacture of nitrogen fertilizer",
       "declared_parent": "CHM",
@@ -499,10 +484,19 @@
     },
     "NMC": {
       "name": "Manufacture of NMC batteries",
-      "declared_parent": "OME",
+      "declared_parent": "EEQ",
       "output_source": {
-        "kind": "legacy_share",
-        "assumption": "Distinct NMC working identity; transfer historical share to reviewed EEQ parent, do not alias to NCM"
+        "kind": "template",
+        "file": "Inventory_Manufacture of NMC batteries.xlsx",
+        "column": "E",
+        "unit_column": "F",
+        "factor": 1.0,
+        "assumption": "Canonical NMC uses the former NCM monetary input snapshot; explicit monetary candidate, no summation with historical NMC",
+        "expected_headers": [
+          "2023 Value",
+          "(free to fill)"
+        ],
+        "legacy_file": "Inventory_Manufacture of NCM batteries.xlsx"
       }
     },
     "PCP": {
@@ -907,7 +901,6 @@
         "LFP",
         "LMO",
         "NCA",
-        "NCM",
         "NMC"
       ],
       "PLT": [
@@ -924,5 +917,20 @@
     "reparent": "baseline_parent",
     "missing": "same_child_macro_then_global_then_parent",
     "origin_cluster_allocation": "baseline_parent_weights"
+  },
+  "sector_identities": {
+    "code_aliases": {
+      "NCM": "NMC"
+    },
+    "name_aliases": {
+      "Manufacture of NCM batteries": "Manufacture of NMC batteries"
+    },
+    "preferred_sources": {
+      "NMC": [
+        "NCM",
+        "NMC"
+      ]
+    },
+    "decision": "NMC is the canonical working activity. Use the former NCM output, trade and technical inventory (EEQ); retire the separate historical NMC/OME working record. Do not sum the two records."
   }
 }

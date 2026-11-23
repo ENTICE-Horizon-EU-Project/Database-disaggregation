@@ -15,13 +15,13 @@ from database_disaggregation.core.benchmark import Flows, build_report, fingerpr
 from database_disaggregation.core.paths import PROJECT_ROOT
 from database_disaggregation.core import reference_benchmark as reference
 from database_disaggregation.core.reference_mapping import verify_artifacts, checkpoint_geography
-from database_disaggregation.reporting.constraints import archived_constraints
+from database_disaggregation.reporting.constraints import archived_constraints, constraint_archive
 
 
-def refresh(database, cached_references, geography_path, mario_source, baskets_path, *, backup_dir=None, region_names_path=None):
+def refresh(database, cached_references, geography_path, mario_source, baskets_path, *, backup_dir=None, region_names_path=None, baseline_path=None):
     database, cached_references = Path(database).resolve(), Path(cached_references).resolve()
     before = fingerprints(database)
-    baseline = database / 'baseline'
+    baseline = Path(baseline_path).resolve() if baseline_path is not None else database / 'baseline'
     baseline_before = fingerprints(baseline)
     state = json.loads((database / 'state.json').read_text())
     if backup_dir is not None:
@@ -70,6 +70,8 @@ def refresh(database, cached_references, geography_path, mario_source, baskets_p
 
     print('Build numerical report from saved baseline and final flows; Leontief calculations disabled.', flush=True)
     report = build_report(baseline, database, system=False)
+    if state.get('identity_consolidation'):
+        report['identity_consolidation']=state['identity_consolidation']
     constraints, rows = archived_constraints(database, export_inputs=database / 'inputs/steps')
     for sector, values in constraints.items():
         report['targets']['by_sector'][sector].update(values)
@@ -127,7 +129,7 @@ def refresh(database, cached_references, geography_path, mario_source, baskets_p
         reference_sources_reread=False, reference_cache_source_report=str(old_comparisons_path),
         reference_cache_source_report_sha256=sha256(old_comparisons_path),
         effective_constraints=dict(path='constraints.csv', sha256=sha256(database / 'constraints.csv'),
-                                   archive_sha256=sha256(database / 'diagnostics/step-artifacts.zip')))
+                                   archive_sha256=sha256(constraint_archive(database))))
     if fingerprints(database) != before or fingerprints(baseline) != baseline_before:
         raise ValueError('Saved database changed during read-only benchmarking.')
     for path, digest in source_hashes.items():
@@ -158,7 +160,8 @@ if __name__ == '__main__':
     cli.add_argument('--mario-source', type=Path, required=True)
     cli.add_argument('--baskets', type=Path, default=PROJECT_ROOT / 'data/benchmarking/comparison_baskets.json')
     cli.add_argument('--backup-dir', type=Path)
+    cli.add_argument('--baseline', type=Path, help='Saved unsplit baseline; defaults to DATABASE/baseline.')
     cli.add_argument('--region-names', type=Path, help='Reviewed code/name/native_regions CSV for this exact geography.')
     args = cli.parse_args()
     refresh(args.database, args.cached_references, args.geography, args.mario_source, args.baskets,
-            backup_dir=args.backup_dir, region_names_path=args.region_names)
+            backup_dir=args.backup_dir, region_names_path=args.region_names, baseline_path=args.baseline)

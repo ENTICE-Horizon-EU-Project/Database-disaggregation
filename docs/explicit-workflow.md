@@ -2,7 +2,7 @@
 
 Database disaggregation's APIs are consolidated on **`main`**, under the
 `database_disaggregation` namespace. The separated MARIO model stages currently
-require its experimental **`codex/explicit-workflow`** checkout. Use an environment
+require its experimental **`explicit-workflow`** checkout. Use an environment
 with both checkouts importable, CVXLab and the chosen solver.
 
 The example notebook uses configured real data and has at most two code lines

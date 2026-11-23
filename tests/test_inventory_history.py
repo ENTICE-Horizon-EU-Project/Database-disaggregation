@@ -152,3 +152,74 @@ def test_upgrade_archives_legacy_input_and_does_not_touch_database(tmp_path):
     assert all(hashlib.sha256(Path(p).read_bytes()).hexdigest() == h for p, h in before.items())
     with pytest.raises(FileExistsError):
         upgrade(database)
+
+
+def test_resumed_history_ignores_copied_inherited_checkpoints(tmp_path):
+    import shutil
+    first_root = tmp_path/'first'; first_root.mkdir()
+    _, first_step = make_trial(first_root, payload(), active=['A'], completed=['A'], index=1)
+    second_root = tmp_path/'second'; second_root.mkdir()
+    second, second_step = make_trial(second_root, payload(('B',)), active=['B'],
+                                    completed=['A', 'B'], index=2, previous=first_step)
+    copied = second/'checkpoints'/first_step.name
+    shutil.copytree(first_step, copied)
+    history = checkpoint_history(second_step)
+    assert [s.checkpoint for s in history] == [first_step, second_step]
+    coverage = assemble_inventory_history(history, tmp_path/'cumulative.xlsx')
+    assert coverage['completed_sectors'] == ['A', 'B']
+    assert [s['sectors'] for s in coverage['stages']] == [['A'], ['B']]
+
+
+def test_historical_read_cache_preserves_latest_pending_plan(tmp_path, monkeypatch):
+    import mario.ops.add_sector_workbook as module
+    full = payload(('A', 'B', 'C', 'D'))
+    first_root = tmp_path/'first'; first_root.mkdir()
+    _, first_step = make_trial(first_root, full, active=['A'], completed=['A'], index=1)
+    second_root = tmp_path/'second'; second_root.mkdir()
+    renamed = replace(full, intermediate_steps={'Renamed '+k: v for k, v in full.intermediate_steps.items()})
+    _, second_step = make_trial(second_root, renamed, active=['B'], completed=['A', 'B'],
+                                index=2, previous=first_step)
+    third_root = tmp_path/'third'; third_root.mkdir()
+    latest = replace(full, intermediate_steps={'Done A': ['A'], 'Done B': ['B'], 'Current C': ['C'], 'Pending D': ['D']})
+    _, third_step = make_trial(third_root, latest, active=['C'], completed=['A', 'B', 'C'],
+                               index=3, previous=second_step)
+    # DB units grows with the preceding sector universe, but is only a preview.
+    # Actual inventory/support unit fields must remain part of the cache key.
+    from openpyxl import load_workbook
+    for step, items in [(first_step, ['Parent']), (second_step, ['Parent', 'A']),
+                        (third_step, ['Parent', 'A', 'B'])]:
+        path = step/'source_add_sectors.xlsx'
+        book = load_workbook(path)
+        sheet = book.create_sheet('DB units')
+        sheet.append(['Sector', 'Unit'])
+        for item in items:
+            sheet.append([item, 'M USD'])
+        book.save(path); book.close()
+    calls = []
+    original = module.load_add_sector_workbook_input
+    def counted(path, **kwargs):
+        calls.append(Path(path))
+        return original(path, **kwargs)
+    monkeypatch.setattr(module, 'load_add_sector_workbook_input', counted)
+    coverage = assemble_inventory_history(checkpoint_history(third_step), tmp_path/'all.xlsx')
+    assert coverage['completed_sectors'] == ['A', 'B', 'C']
+    assert coverage['plan']['Pending D'] == ['D']
+    assert first_step/'source_add_sectors.xlsx' in calls
+    assert second_step/'source_add_sectors.xlsx' not in calls
+    assert third_step/'source_add_sectors.xlsx' in calls
+
+
+def test_historical_read_cache_keeps_changed_numeric_trade_targets(tmp_path):
+    first_root = tmp_path/'first'; first_root.mkdir()
+    _, first_step = make_trial(first_root, payload(('A', 'B', 'C'), trade=2.),
+                               active=['A'], completed=['A'], index=1)
+    second_root = tmp_path/'second'; second_root.mkdir()
+    _, second_step = make_trial(second_root, payload(('A', 'B', 'C'), trade=7.),
+                                active=['B'], completed=['A', 'B'], index=2, previous=first_step)
+    third_root = tmp_path/'third'; third_root.mkdir()
+    _, third_step = make_trial(third_root, payload(('C',), trade=9.), active=['C'],
+                               completed=['A', 'B', 'C'], index=3, previous=second_step)
+    destination = tmp_path/'all.xlsx'
+    assemble_inventory_history(checkpoint_history(third_step), destination)
+    trades = pd.read_excel(destination, sheet_name='Trades')
+    assert trades.set_index('Sector_from').Quantity.to_dict() == {'A': 2., 'B': 7., 'C': 9.}

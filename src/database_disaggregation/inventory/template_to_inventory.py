@@ -445,6 +445,9 @@ def make_inventory(inventory_path: str | Path,
     -------
     Path of the written inventory file.
     """
+    from database_disaggregation.core import working_identity as identities
+    identity_rules=identities.default_rules()
+    sector_code=identities.sector_code(sector_code,identity_rules)
     inventory_path = Path(inventory_path)
     repo_path = Path(repo_path)
     output_path = (Path(output_path) if output_path
@@ -454,7 +457,8 @@ def make_inventory(inventory_path: str | Path,
     importlib.reload(template_checker)
     result = template_checker.parse_template(inventory_path)
 
-    gi          = result['general_info']
+    gi          = dict(result['general_info'])
+    gi['new_sector']=identities.sector_name(gi['new_sector'],identity_rules)
     parent_code = gi['parent_code']   # e.g. 'GRO' (from the template's D7)
 
     # ── Authoritative parent from GTAP12_matching ────────────────────────────

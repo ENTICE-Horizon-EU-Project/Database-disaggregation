@@ -32,7 +32,8 @@ def inventory(path, code, lead, amount=1., coefficient=.3):
 @pytest.fixture
 def source_fixture(tmp_path):
     root=tmp_path/'inputs';root.mkdir();inv=root/'inventories';inv.mkdir();partner=root/'partners';partner.mkdir();base=root/'baseline';base.mkdir()
-    for code,lead in [('APP','ORDECSYS'),('MCU','EXIOIOT pipeline'),('NMC','ICCS')]:inventory(inv/f'{code}.xlsx',code,lead)
+    for code,lead in [('APP','ORDECSYS'),('MCU','EXIOIOT pipeline'),('NCM','ICCS'),('NMC','ICCS')]:inventory(inv/f'{code}.xlsx',code,lead)
+    inventory(inv/'NMC.xlsx','NMC','ICCS',coefficient=.9) # superseded historical identity; use NCM data once
     b=Workbook();s=b.active;s.title='General info';s['A4']='Lead';s['D4']='ORDECSYS';s['A5']='New sector';s['D5']='Copied name does not define the activity';s['D7']='NFM'
     s=b.create_sheet('Region');s.append(['Groups','Name','Code']);s.append([]);s.append(['GLOBAL','Global','GLOBAL']);s.append(['OCEANIA','Australia','AUS']);s.append(['NORTH AMERICA','United States of America','USA'])
     s=b.create_sheet('Total production');s.append(['Region','Parent','Source','Notes','2017','Unit','2023 Value','Unit']);s.append(['Region',None,None,None,None,None,'(free to fill)','MUSD']);s.append(['United States of America',None,None,None,None,None,25,'MUSD']);s.append(['Australia',None,None,None,None,None,'=G3*2','MUSD']);b.save(partner/'production.xlsx')
@@ -45,7 +46,7 @@ def source_fixture(tmp_path):
     for row in [['Sector','Origin','Destination','Value'],['MCU','USA','AUS',999],['ALM','USA','AUS',3],['ALM','USA','USA',7]]:s.append(row)
     customs=root/'customs.xlsx';b.save(customs)
     x=pd.DataFrame({'X':[100.,100.,100.,100.,100.,100.]},index=pd.MultiIndex.from_product([['USA','AUS'],['NFM','OXT','EEQ']],names=['Region','Sector']));x.to_parquet(base/'X.parquet')
-    policy,_=load_policy();policy=copy.deepcopy(policy);policy['sectors']={k:v for k,v in policy['sectors'].items() if k in ('APP','MCU','NMC')};policy['sectors']['APP']['output_source'].update(file='production.xlsx');policy['overlap_groups']=[];policy['trade']['composites']={'ALM':['APP']};policy['trade']['parent_pattern_only']=[]
+    policy,_=load_policy();policy=copy.deepcopy(policy);policy['sectors']={k:v for k,v in policy['sectors'].items() if k in ('APP','MCU','NMC')};policy['sectors']['APP']['output_source'].update(file='production.xlsx');policy['sectors']['NMC']['output_source']={**policy['sectors']['APP']['output_source'],'assumption':'Synthetic monetary NMC input'};policy['overlap_groups']=[];policy['trade']['composites']={'ALM':['APP']};policy['trade']['parent_pattern_only']=[]
     registry=SimpleNamespace(regions=lambda:[{'id':'USA','name':'United States of America'},{'id':'AUS','name':'Australia'}],adapters={'GTAP12':{'parent_catalogue':[{'id':c,'name':c+' name'} for c in ['NFM','OXT','EEQ','CoalBL','WindBL']]}},fingerprints={'fixture':'test'})
     return dict(inventory_dir=inv,baseline_path=base,policy=policy,registry=registry,source_paths={'partner_templates':partner,'purdue_split_targets':paired,'purdue_trade':customs})
 
@@ -60,7 +61,8 @@ def test_pipeline_selection_complete_coverage_and_role_specific_collection(sourc
     assert c.sectors['APP']['production'][0]['value']==25
     assert not any(p['geo']=='AUS' for p in c.sectors['APP']['production']) # uncached formula is missing
     outputs={p['geo']:p['value'] for p in c.sectors['MCU']['production']};assert outputs=={'USA':20,'AUS':0} # declared sparse parameter zero
-    assert not c.sectors['NMC']['production']
+    assert c.sectors['NMC']['production'][0]['value']==25
+    assert 'NCM' not in c.sectors
     assert c.sectors['MCU']['trade']['edges']==[['USA','AUS',5.]] # paired source precedes customs
     assert c.sectors['APP']['trade']['scope']=='product_group' and c.sectors['APP']['trade']['edges']==[['USA','AUS',3.]]
     assert c.sectors['NMC']['trade']['scope']=='unavailable'

@@ -5,6 +5,11 @@ results for the **ENTICE** project. This repository connects partner data to
 **MARIO** and **CVXLab**, and provides the preparation rules, workflow APIs and
 interactive dashboards used around the model.
 
+The final handoff must run from initial inputs to published results without
+manual model/solver adjustments. The current numerical builds remain
+experiments until the [reproducibility acceptance requirements](docs/reproducibility-requirements.md)
+are met.
+
 The workflow has three phases: **data preparation**, **model solution** and
 **results analysis**. These match the *Overall workflow* diagram on slide 9 of
 the MARIO workshop presentation (General Assembly, November 2026).
@@ -79,6 +84,14 @@ intermediate_steps=True)` and the controlled trial runner instead.
 See [stage contracts and examples](docs/explicit-workflow.md) and the
 [model and solver policy](docs/model-policy.md).
 
+For a fresh sequential build with joint pending-sibling trade reconciliation
+before each step, use `scripts/run_sequential_model.py`. The
+[conservative-prior and reproducibility guide](docs/conservative-priors.md)
+provides the command, exact input contracts and failure/archive behaviour. Prepared inputs retain source observations and audit their effective scenario targets,
+including inherited accounting discrepancies and sub-precision output support.
+Fully allocated single-child rows with nonnegative deliveries use their exact
+foreign budgets; no numerical trade fitting is needed for these determined cases.
+
 ### 3. Results analysis
 
 Save the resulting database, then compute checks and render an offline HTML
@@ -99,8 +112,8 @@ See [benchmarking and saved-result dashboards](docs/benchmarking.md) and the
 
 Use Python **3.10 or later** and compatible MARIO/CVXLab checkouts. The separated
 build, solve and assembly APIs currently require MARIO's
-`codex/explicit-workflow` checkout. The saved sequential MRIO cases use the
-versions recorded with their runs, including MARIO's `codex/mrio-memory`
+`explicit-workflow` checkout. The saved sequential MRIO cases use the
+versions recorded with their runs, including MARIO's `mrio-memory`
 workflow. Match these dependencies to the operation or checkpoint you select.
 
 ```bash
@@ -264,3 +277,13 @@ python -m pytest tests -q
 
 The tests include small numerical solves. Full shared MRIO runs are separate
 experiments with their own data, solver settings and provenance records.
+
+## Final modelling preparation
+
+After the final split, the optional [inactive-account finalization stage](docs/zero-activity-finalization.md)
+creates a separate modelling database with a small domestic final-demand seed
+and regionalized global recipes where original production is zero or numerical
+dust. It uses MARIO scenario/reset/recalculation APIs; it does not rerun CVXLab.
+The settings are versioned in `config/zero-activity-finalization.json`.
+Production and trade can change, and the stage reports those changes against
+the accepted disaggregation. The original checkpoint remains available.

@@ -13,8 +13,9 @@ def test_residual_names_distinguish_petroleum_products_from_crude_oil():
     mapping = residual_names({'PCP':'P_C', 'BAR':'GRO'},
         {'P_C':'Petroleum and coal products', 'GRO':'Cereal grains nec', 'OIL':'Oil extraction'},
         ['PCP','P_C','GRO','BAR','OIL'])
-    assert mapping == {'GRO':'Rest of Cereal grains nec', 'P_C':'Petroleum products'}
+    assert mapping == {'GRO':'Rest of Cereal grains nec', 'P_C':'Manufacture of petroleum products'}
     assert 'OIL' not in mapping
+    assert residual_names({'OTHER':'P_C'}, {'P_C':'Petroleum and coal products'}, ['P_C','OTHER']) == {'P_C':'Rest of Petroleum and coal products'}
     assert residual_names({'CHILD':'EEQ'}, {'EEQ':'Rest of Electrical equipment'}, ['EEQ']) == {'EEQ':'Rest of Electrical equipment'}
     with pytest.raises(ValueError, match='collide'):
         residual_names({'BAR':'GRO'}, {'GRO':'Grains'}, ['GRO','Rest of Grains'])
@@ -46,3 +47,14 @@ def test_named_checkpoint_preserves_independent_output_and_restores_exact_values
     for name, expected in raw.items():
         actual = coded.resolve(name).reindex(index=expected.index, columns=expected.columns)
         pd.testing.assert_frame_equal(actual, expected, check_exact=True)
+
+
+def test_post_split_display_names_require_completed_coke_and_preserve_baseline():
+    from database_disaggregation.core.residual_labels import post_split_display_names
+    labels={'P_C':'Petroleum and coal products','PCP':'Manufacture of coke','OIL':'Oil extraction'}
+    assert post_split_display_names(labels,{'PCP':'P_C'},[])==labels
+    final=post_split_display_names(labels,{'PCP':'P_C'},['PCP'])
+    assert final['P_C']=='Manufacture of petroleum products'
+    assert final['PCP']=='Manufacture of coke'
+    assert final['OIL']==labels['OIL']
+    assert labels['P_C']=='Petroleum and coal products'

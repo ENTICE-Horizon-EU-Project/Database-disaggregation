@@ -33,6 +33,21 @@ def final_demand_mapping(database):
             records.append({"Use": str(name), "Source categories": str(name), "Included in denominator": False})
     return pd.DataFrame(records)
 
+def _check_share_closure(shares, *, axis):
+    """Account for floating-point cancellation when summing signed shares.
+
+    This is a reporting arithmetic check, not an economic or solver tolerance.
+    No share or underlying amount is changed. The usual 1e-8 percentage-point
+    bound is retained; ill-conditioned signed sums use a roundoff bound based
+    on machine epsilon, the term count and the sum of absolute terms.
+    """
+    count = shares.notna().sum(axis=axis)
+    bound = np.maximum(1e-8, 4 * np.finfo(float).eps * count * shares.abs().sum(axis=axis))
+    error = (shares.sum(axis=axis) - 100).abs()
+    if (error > bound).any():
+        raise ValueError('Share closure exceeds its floating-point roundoff bound.')
+
+
 def _selected_uses(database, product, *, final_demand=None, minimum_total=1e-6):
     """Destination x users; all origins; all native final demand by default.
 
@@ -57,7 +72,7 @@ def _selected_uses(database, product, *, final_demand=None, minimum_total=1e-6):
     total = uses.sum(axis=1, min_count=1)
     shares = uses.div(total.where(total > minimum_total), axis=0) * 100
     valid = total > minimum_total
-    np.testing.assert_allclose(shares.loc[valid].sum(axis=1), 100, atol=1e-8, rtol=0)
+    _check_share_closure(shares.loc[valid], axis=1)
     return shares, uses, total
 
 def trade_matrix(database, product):
@@ -163,5 +178,5 @@ def cost_profile(database, product, *, minimum_total=1e-6):
     totals = amounts.sum(axis=0, min_count=1)
     shares = amounts.div(totals.where(totals > minimum_total), axis=1) * 100
     valid = totals > minimum_total
-    np.testing.assert_allclose(shares.loc[:, valid].sum(axis=0), 100, atol=1e-8, rtol=0)
+    _check_share_closure(shares.loc[:, valid], axis=0)
     return UseProfile(product, shares, amounts, totals)

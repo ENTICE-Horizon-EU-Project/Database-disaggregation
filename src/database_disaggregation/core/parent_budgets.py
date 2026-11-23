@@ -120,7 +120,7 @@ class ChildTargets:
                             {k: sorted(v) for k, v in incomplete.items()})
 
 
-def read_child_targets(paths, *, output_references=None):
+def read_child_targets(paths, *, output_references=None, sector_aliases=None):
     """Read only target/support sheets; unresolved profiles are not evaluated.
 
     Sparse exported output rows may be supplemented by explicit native output
@@ -134,6 +134,7 @@ def read_child_targets(paths, *, output_references=None):
         header, *rows = book[name].values
         return pd.DataFrame(rows, columns=header).dropna(how='all').reindex(columns=columns)
 
+    aliases = sector_aliases or {}
     masters, outputs, trades, sources, seen = [], [], [], {}, set()
     for path in paths:
         path = Path(path)
@@ -142,12 +143,14 @@ def read_child_targets(paths, *, output_references=None):
         book = load_workbook(BytesIO(raw), read_only=True, data_only=True)
         try:
             master = frame(book, 'Master', ['Sector', 'Parent Sector', 'Add or Split'])
+            master['Sector'] = master['Sector'].replace(aliases)
             sectors = set(master['Sector'].dropna())
             if len(sectors) != 1 or sectors & seen:
                 raise ValueError(f'Expected one unique child sector per workbook: {path}')
             seen.update(sectors)
             sector = next(iter(sectors))
             output = frame(book, 'Total outputs', OUTPUT_COLUMNS)
+            output['Sector'] = output['Sector'].replace(aliases)
             reference = (output_references or {}).get(sector)
             if reference:
                 extra = pd.DataFrame(reference['rows'], columns=OUTPUT_COLUMNS)
@@ -159,7 +162,9 @@ def read_child_targets(paths, *, output_references=None):
                     sources[reference['source']] = reference['sha256']
             masters.append(master)
             outputs.append(output)
-            trades.append(frame(book, 'Trades', TRADE_COLUMNS))
+            trade = frame(book, 'Trades', TRADE_COLUMNS)
+            trade['Sector_from'] = trade['Sector_from'].replace(aliases)
+            trades.append(trade)
         finally:
             book.close()
     if not masters:
